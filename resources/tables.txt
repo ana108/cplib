@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS RATE_CODE_MAPPING (
+	source text NOT NULL,
+   	destination text NOT NULL,
+	rate_code text NOT NULL,
+	country text
+);
+
+CREATE TABLE IF NOT EXISTS RATES (
+	year integer NOT NULL,
+   	max_weight decimal(10,3) NOT NULL,
+	weight_type text DEFAULT 'kg' NOT NULL,
+	rate_code text NOT NULL,
+	price decimal(10, 3) NOT NULL,
+	type text DEFAULT 'regular' NOT NULL,
+	country text
+);
+
+CREATE TABLE IF NOT EXISTS POSTAL_CODES (
+	postal_code text
+);

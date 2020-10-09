@@ -157,7 +157,7 @@
         "affectsGlobalScope": false
       },
       "./src/index.ts": {
-        "version": "e3316cf704bec11137fcedb69d33ac2266571f4651d6be125fa5fc1ae944a5c5",
+        "version": "a4eb4611b17a8e83bcc8ccd152d227ed38a7109122e32580192984b26e9950e4",
         "signature": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6",
         "affectsGlobalScope": false
       },
@@ -1240,8 +1240,10 @@
         "./node_modules/@types/node/util.d.ts"
       ],
       "./src/index.ts": [
+        "./node_modules/@types/node/events.d.ts",
         "./node_modules/@types/node/fs.d.ts",
         "./node_modules/@types/node/process.d.ts",
+        "./node_modules/@types/node/readline.d.ts",
         "./node_modules/@types/node/ts3.2/fs.d.ts",
         "./node_modules/@types/node/ts3.2/process.d.ts",
         "./node_modules/@types/node/ts3.2/util.d.ts",
