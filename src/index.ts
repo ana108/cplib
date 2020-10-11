@@ -9,7 +9,15 @@ exports.calculateShippingCost = function (sourceAddress: any, destinationAddress
 }
 let postalData: sqlite3.Database;
 const db_name = 'C:/Users/flute/Documents/GitHub/cplib/resources/cplib2.db';
-exports.writeToDB = function (sqlStmt: string): Promise<string> {
+
+// for unit testing; stub database
+export const setDB = function (anyNewDB: any): void {
+    // exports.setDB = function (anyNewDB: any) {
+    postalData = anyNewDB;
+}
+
+export const writeToDB = async function (sqlStmt: string): Promise<string> {
+    // exports.writeToDB = function (sqlStmt: string): Promise<string> {
     const prom = new Promise<string>((resolve, reject) => {
         if (!postalData) {
             console.log('Open Database');
@@ -45,7 +53,9 @@ exports.writeToDB = function (sqlStmt: string): Promise<string> {
     });
     return prom;
 }
-exports.readFile = async function (fileName: string) {
+
+export const readFile = async function (fileName: string): Promise<any> {
+    //exports.readFile = async function (fileName: string) {
     console.log(`Start reading file ${fileName}`);
     const stream = fs.createReadStream(fileName, { emitClose: true });
     const rl = readline.createInterface(stream);
@@ -79,7 +89,9 @@ exports.readFile = async function (fileName: string) {
 
     }));
 }
-exports.files = async function () {
+
+export const files = async function (): Promise<any> {
+    //exports.files = async function () {
     const YEAR = new Date().getFullYear();
     const base_dir = `../resources/${YEAR}/`;
     const FILES = ['express_canada_1.txt', 'express_canada_2.txt', 'priority_canada_1.txt', 'priority_canada_2.txt', 'express_canada_1.txt', 'express_canada_2.txt'];
