@@ -3,6 +3,8 @@ import * as index from './index';
 import { expect } from 'chai';
 import 'mocha';
 
+const YEAR = new Date().getFullYear();
+
 describe('Files functionality', () => {
     let readFileStub;
     beforeEach(() => {
@@ -11,10 +13,9 @@ describe('Files functionality', () => {
     afterEach(() => {
         readFileStub.restore();
     });
-    it('should return hello world', async () => {
+    it('Should return a success message', async () => {
         const result = await index.files();
-        // console.log(JSON.stringify([["Success"], ["Success"], ["Success"], ["Success"], ["Success"], ["Success"]]));
-        expect(result.length).to.equal(6);
+        expect(result).to.equal(`Successfully loaded the data for year ${YEAR}`);
     });
 
 });
