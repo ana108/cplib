@@ -35,7 +35,6 @@ export function calculateShippingCost(packageDimensions: ShippingDetails): Promi
 
             // get weight on kg
             let weightInKg = packageDimensions.bookDimensions.weightInGrams/1000;
-
             // get cost for priority
             // get province of source
             // calculate final cost
