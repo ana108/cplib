@@ -1,5 +1,6 @@
 CREATE TABLE POSTAL_CODES (
-	postal_code text
+	postal_code text,
+	province text
 );
 
 CREATE TABLE RATE_CODE_MAPPING (
@@ -20,3 +21,7 @@ CREATE TABLE RATES (
         customer_type text DEFAULT 'regular'
 );
 
+CREATE TABLE FUEL_SURCHARGE (
+	percentage decimal(2, 0),
+	date text
+)
