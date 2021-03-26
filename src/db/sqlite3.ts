@@ -36,24 +36,25 @@ export function saveToDb(sqlStmt): Promise<any> {
 interface options {
   country?: string
   weight_type?: string
-  type?: 'regular' | 'priority' | 'express'
-  customerType?: 'regular' | 'small_business'
+  type?: string // 'regular' | 'priority' | 'express'
+  customerType?: string // 'regular' | 'small_business'
   year?: number
 }
 export function getRate(rateCode: string, weight: number,
   opts: options = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<number> {
+  let defaults = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
+  let options = { ...defaults, ...opts };
   const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and max_weight >= $weight and year = $year ' +
     'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
-
   return new Promise<number>((resolve, reject) => {
     const stmt = db.prepare(getPrice)
     stmt.get({
-      $country: opts.country,
+      $country: options.country,
       $rateCode: rateCode,
       $weight: weight,
-      $year: opts.year,
-      $deliverySpeed: opts.type,
-      $customerType: opts.customerType
+      $year: options.year,
+      $deliverySpeed: options.type,
+      $customerType: options.customerType
     }, (err, row) => {
       if (err) {
         reject(err);
