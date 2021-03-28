@@ -56,7 +56,7 @@ export function getRate(rateCode: string, weight: number,
       $deliverySpeed: options.type,
       $customerType: options.customerType
     }, (err, row) => {
-      if (err) {
+      if (err || !row) {
         reject(err);
       } else {
         resolve(parseFloat(row.price));
@@ -67,15 +67,15 @@ export function getRate(rateCode: string, weight: number,
 }
 
 export function getProvince(postalCode: string): Promise<string> {
-  const getProvince = 'select province from postal_codes where postal_code = $postalCode';
+  const getProvince = `select province from postal_codes where postal_code like '${postalCode.substr(0, 3)}%' limit 1`;
   return new Promise<string>((resolve, reject) => {
     const stmt = db.prepare(getProvince);
-    stmt.get({
-      $postalCode: postalCode
-    }, (err, row) => {
-      if (err) {
+    stmt.get([], (err, row) => {
+      if (err || !row) {
         reject(err);
       } else {
+        // careful: for NL/NT the province returned is NT,NU which may need to 
+        // be handled carefully
         resolve(row.province);
       }
     })

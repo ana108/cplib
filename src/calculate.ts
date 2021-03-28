@@ -85,25 +85,36 @@ function mapProvinceToCode(region: string): string {
         'WISCONSIN': 'WI',
         'WYOMING': 'WY'
     }
-    if (region.length == 2) {
+    if (region.length == 2 || region.length === 3) {
         return region;
     } else {
         return canadianProvinceMap[region] || americanProvinceMap[region];
     }
 }
 export function validateAddress(address: Address): Address {
+    if (!address || !address.country) {
+        throw new Error('Missing country property of the address');
+    }
     const cleanAddress: Address = {
         streetAddress: address.streetAddress,
         city: address.city,
-        region: address.region.toUpperCase().trim().replace('  ', ' '),
-        postalCode: address.postalCode.toUpperCase().trim().replace(' ', ''),
+        region: address.region,
+        postalCode: address.postalCode,
         country: address.country.toUpperCase().trim().replace(' ', '')
+    }
+    if (cleanAddress.country === 'CA' || cleanAddress.country === 'CANADA' || cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITEDSTATES') {
+        if (!address.postalCode || !address.region) {
+            throw new Error('For north american shipments, region and zip code must be provided.');
+        } else {
+            cleanAddress.region = address.region.toUpperCase().trim().replace('  ', ' ');
+            cleanAddress.postalCode = address.postalCode.toUpperCase().trim().replace(' ', '');
+        }
     }
     if (cleanAddress.country === 'CA' || cleanAddress.country === 'CANADA') {
         cleanAddress.country = 'Canada';
         cleanAddress.postalCode = cleanAddress.postalCode.replace('-', '');
-        const postalCodeRegExp = new RegExp('^[A-Za-z]{1}[0-9]{1}[A-Za-z]{1}[0-9]{1}[A-Za-z]{1}[0-9]{1}$');
-        if (postalCodeRegExp.test(cleanAddress.postalCode)) {
+        const postalCodeRegExp = new RegExp('^[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9]{1}$');
+        if (!postalCodeRegExp.test(cleanAddress.postalCode)) {
             throw new Error('Invalid postal code. Please make sure its in format of A1A1A1');
         }
         if (!cleanAddress.region) {
@@ -119,15 +130,28 @@ export function validateAddress(address: Address): Address {
     }
     return cleanAddress;
 }
-export function calculateShipping(sourceAddress: Address, destinationAddress: Address, weightInKg: number) {
+export function calculateShipping(sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliverySpeed: string = 'regular'): Promise<number> {
+    if (!weightInKg || weightInKg < 0) {
+        Promise.reject(new Error('Weight must be present and be a non-negative number'));
+    }
+    if (isNaN(weightInKg)) {
+        Promise.reject(new Error('Weight must be a numeric value'));
+    }
+    const validDelivery = ['regular', 'priority', 'express'];
+    if (!validDelivery.includes(deliverySpeed.toLocaleLowerCase())) {
+        Promise.reject(new Error('Delivery type must be one of the following: regular, priority or express'));
+    }
+
     let source = validateAddress(sourceAddress);
     let destnation = validateAddress(destinationAddress);
+    return calculateShippingByPostalCode(source.postalCode, destnation.postalCode, weightInKg, deliverySpeed);
 }
 
 export function calculateTax(sourceProvince: string, destinationProvice: string, shippingCost: number, shippingType: string): number {
     let taxCost = 0.00;
     const hstProvince13 = ['ON']
     const hstProvince15 = ['NB', 'NS', 'NL', 'PEI'];
+    // where does NT/NU/YK fit into all this?
     if (shippingCost < 5.00 && shippingType === 'regular') {
         if (hstProvince13.includes(sourceProvince)) {
             taxCost = shippingCost * 0.13;
@@ -145,18 +169,21 @@ export function calculateTax(sourceProvince: string, destinationProvice: string,
             taxCost = shippingCost * 0.05;
         }
     } else if (shippingCost >= 5.00 && shippingType === 'regular') {
-        const gstOnlyProvinces = ['ON', 'NB', 'PEI', 'NS', 'NL', 'QC', 'MB', 'SK', 'AB', 'BC', 'NWT'];
+        const gstOnlyProvinces = ['ON', 'NB', 'PEI', 'NS', 'NL', 'QC', 'MB', 'SK', 'AB', 'BC', 'NWT', 'NWT,NU', 'YT'];
         if (gstOnlyProvinces.includes(sourceProvince)) {
             taxCost = shippingCost * 0.05;
         }
     }
-    console.log('Tax Calculated ' + taxCost);
     return taxCost;
 }
 
 export function calculateShippingByPostalCode(sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
-    deliverySpeed: string = 'regular'): Promise<any> {
+    deliverySpeed: string = 'regular'): Promise<number> {
     return new Promise<any>(async (resolve, reject) => {
+        if (weightInKg > 30.0) {
+            // TODO handle super sized
+            reject('Weight of package too big');
+        }
         // for package dimensions make sure to convert it into a type
         try {
             // get rate code

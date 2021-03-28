@@ -1,0 +1,11 @@
+Plan:
+    - calculate (1)
+    - sqlite3 (2)
+    - index (ie annual data load) (3)
+
+Unit Tests - calculate
+1. calculateTax - done
+2. calculateShippingByPostalCode - done
+3. validateAddress
+4. calculateShipping
+5. mapProvinceToCode

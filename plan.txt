@@ -1,0 +1,18 @@
+To DO:
+
+- calculate shipping rates, given an address and weight - done
+    - write unit tests for the following:
+        - sqlite3(2)
+            - calculate(1)
+            - index(ie annual data load)(3)
+
+            - write following functions:
+- get provicne of postal code
+    - get all postal codes of a given province
+        - get all postal codes(return streaming)
+- get current fuel surcharge percentage
+    - update fuel surcharge percentage
+        - add custom fuel charge calculator function
+    - given an address object, and a delivery speed type, and an optional customer type, return total cost
+
+    - write documentation for all the functions above
