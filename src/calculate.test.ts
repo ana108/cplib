@@ -1,4 +1,4 @@
-import { calculateShippingByPostalCode, calculateTax } from './calculate';
+import { calculateShippingByPostalCode, calculateTax, validateAddress, Address } from './calculate';
 import * as sinon from 'sinon';
 
 import * as db from './db/sqlite3';
@@ -213,4 +213,55 @@ describe('Calculate Shipping Cost By Postal Code', () => {
   });
 
 })
+describe('Validate the address for calculation', () => {
+  /*
+  Validate Address:
+  - address is undefined
+  - address is missing a country
+  - address country typed as cAnada   .
+  - address is canada but is missing region
+  - address is canada but is missing province
+  - address is NOT canada OR USA but is missing region and province
+  - address is canada but the province is NWT
+  - address is cananda but province is not replace
+  - address is canada province works but postal code fails RegEx
+  - address is USA/us/united states but is missing zip code
+  - canadian address is valid
+  - american address is valid
+  */
+  it('Throws error if address object is null', () => {
+    try {
+      let anyType: Address = {
+        streetAddress: '',
+        city: '',
+        region: '',
+        postalCode: '',
+        country: ''
+      }
+      //@ts-ignore
+      anyType = null;
+      validateAddress(anyType);
+    } catch (e) {
+      expect(e.message).to.equal('Missing value or missing country property of the address')
+    }
+  });
+  it.skip('Throws error if address didn\'t specify a country', () => {
+    let anyType: Address = {
+      streetAddress: '',
+      city: '',
+      region: '',
+      postalCode: '',
+      country: ''
+    };
+    let newAddress: Address = {
+      streetAddress: '',
+      city: '',
+      region: '',
+      postalCode: '',
+      country: 'Canada'
+    };
+    let cleanAddress = validateAddress(anyType);
+    expect(cleanAddress).to.equal(68.21);
+  });
+});
 // clientStub.onCall(1).resolves(temp);

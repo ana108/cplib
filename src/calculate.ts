@@ -1,6 +1,6 @@
 import { getRateCode, getRate, getProvince, getFuelSurcharge } from './db/sqlite3';
 
-interface Address {
+export interface Address {
     streetAddress: string, // full street address, number + apartment
     city: string,
     region: string, // province/state etc
@@ -14,7 +14,7 @@ function mapProvinceToCode(region: string): string {
         'MANITOBA': 'MB',
         'NEWFOUNDLAND': 'NL',
         'LABRADOR': 'NL',
-        'NORTHWEST TERRITORIES': 'NT',
+        'NORTHWEST TERRITORIES': 'NWT', // think about this
         'NOVA SCOTIA': 'NS',
         'NUNAVUT': 'NU',
         'ONTARIO': 'ON',
@@ -93,7 +93,7 @@ function mapProvinceToCode(region: string): string {
 }
 export function validateAddress(address: Address): Address {
     if (!address || !address.country) {
-        throw new Error('Missing country property of the address');
+        throw new Error('Missing value or missing country property of the address');
     }
     const cleanAddress: Address = {
         streetAddress: address.streetAddress,
