@@ -87,8 +87,10 @@ function mapProvinceToCode(region: string): string {
     }
     if (region.length == 2 || region.length === 3) {
         return region;
-    } else {
+    } else if (canadianProvinceMap[region] || americanProvinceMap[region]) {
         return canadianProvinceMap[region] || americanProvinceMap[region];
+    } else {
+        throw new Error('The region provided is not a valid region');
     }
 }
 export function validateAddress(address: Address): Address {
@@ -117,15 +119,9 @@ export function validateAddress(address: Address): Address {
         if (!postalCodeRegExp.test(cleanAddress.postalCode)) {
             throw new Error('Invalid postal code. Please make sure its in format of A1A1A1');
         }
-        if (!cleanAddress.region) {
-            throw new Error('Missing region. Must be specified');
-        }
         cleanAddress.region = mapProvinceToCode(cleanAddress.region);
     } else if (cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITEDSTATES') {
         cleanAddress.country = 'USA';
-        if (!cleanAddress.postalCode) {
-            throw new Error('Missing zip code');
-        }
         cleanAddress.region = mapProvinceToCode(cleanAddress.region);
     }
     return cleanAddress;

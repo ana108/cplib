@@ -214,54 +214,226 @@ describe('Calculate Shipping Cost By Postal Code', () => {
 
 })
 describe('Validate the address for calculation', () => {
-  /*
-  Validate Address:
-  - address is undefined
-  - address is missing a country
-  - address country typed as cAnada   .
-  - address is canada but is missing region
-  - address is canada but is missing province
-  - address is NOT canada OR USA but is missing region and province
-  - address is canada but the province is NWT
-  - address is cananda but province is not replace
-  - address is canada province works but postal code fails RegEx
-  - address is USA/us/united states but is missing zip code
-  - canadian address is valid
-  - american address is valid
-  */
   it('Throws error if address object is null', () => {
     try {
-      let anyType: Address = {
-        streetAddress: '',
-        city: '',
-        region: '',
-        postalCode: '',
-        country: ''
-      }
       //@ts-ignore
-      anyType = null;
-      validateAddress(anyType);
+      validateAddress(null);
     } catch (e) {
       expect(e.message).to.equal('Missing value or missing country property of the address')
     }
   });
-  it.skip('Throws error if address didn\'t specify a country', () => {
-    let anyType: Address = {
+  it('Throws error if address didn\'t specify a country', () => {
+    let address: Address = {
       streetAddress: '',
       city: '',
       region: '',
       postalCode: '',
       country: ''
     };
-    let newAddress: Address = {
+    try {
+      validateAddress(address);
+    } catch (e) {
+      expect(e.message).to.equal('Missing value or missing country property of the address');
+    }
+  });
+
+  it('Updates address country typed as cAnada', () => {
+    let anyType: Address = {
       streetAddress: '',
-      city: '',
-      region: '',
-      postalCode: '',
+      city: 'City',
+      region: 'BC',
+      postalCode: 'A1A1A1',
+      country: 'cAnada'
+    };
+    let expectedAddress: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'BC',
+      postalCode: 'A1A1A1',
       country: 'Canada'
     };
     let cleanAddress = validateAddress(anyType);
-    expect(cleanAddress).to.equal(68.21);
+    expect(cleanAddress).to.deep.equal(expectedAddress);
+  });
+
+  it('Country is canada but is missing province', () => {
+    let anyType: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: '',
+      postalCode: 'A1A1A1',
+      country: 'cAnada'
+    };
+    try {
+      validateAddress(anyType);
+    } catch (e) {
+      expect(e.message).to.deep.equal('For north american shipments, region and zip code must be provided.');
+    }
+  });
+
+  it('Country is united states but is missing region', () => {
+    let anyType: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: '',
+      postalCode: 'A1A1A1',
+      country: 'United States'
+    };
+    try {
+      validateAddress(anyType);
+    } catch (e) {
+      expect(e.message).to.deep.equal('For north american shipments, region and zip code must be provided.');
+    }
+  });
+
+  it('Country is NOT canada OR USA but is missing region and province', () => {
+    let address: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: '',
+      postalCode: '',
+      country: 'Ukraine'
+    };
+
+    let expectedAddress: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: '',
+      postalCode: '',
+      country: 'UKRAINE'
+    };
+    let cleanAddress = validateAddress(address);
+    expect(cleanAddress).to.deep.equal(expectedAddress);
+  });
+
+  it('Country is canada but the province is NWT', () => {
+    let address: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'Northwest Territories',
+      postalCode: 'y1y1y1',
+      country: 'CA'
+    };
+
+    let expectedAddress: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'NWT',
+      postalCode: 'Y1Y1Y1',
+      country: 'Canada'
+    };
+    let cleanAddress = validateAddress(address);
+    expect(cleanAddress).to.deep.equal(expectedAddress);
+  });
+
+  it('Country is canada but the province is NWT', () => {
+    let address: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'Northwest Territories',
+      postalCode: 'y1y1y1',
+      country: 'CA'
+    };
+
+    let expectedAddress: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'NWT',
+      postalCode: 'Y1Y1Y1',
+      country: 'Canada'
+    };
+    let cleanAddress = validateAddress(address);
+    expect(cleanAddress).to.deep.equal(expectedAddress);
+  });
+
+  it('Country is cananda but province is not', () => {
+    let address: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'North Territories',
+      postalCode: 'y1y1y1',
+      country: 'CA'
+    };
+
+    try {
+      validateAddress(address);
+    } catch (e) {
+      expect(e.message).to.deep.equal('The region provided is not a valid region');
+    }
+  });
+
+  it('Country is canada province works but postal code fails RegEx', () => {
+    let address: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'British Columbia',
+      postalCode: 'yy11y1',
+      country: 'CA'
+    };
+
+    try {
+      validateAddress(address);
+    } catch (e) {
+      expect(e.message).to.deep.equal('Invalid postal code. Please make sure its in format of A1A1A1');
+    }
+  });
+
+  it('Country is united states but is missing zip code', () => {
+    let anyType: Address = {
+      streetAddress: '',
+      city: 'City',
+      region: 'Washington',
+      postalCode: '',
+      country: 'United States'
+    };
+    try {
+      validateAddress(anyType);
+    } catch (e) {
+      expect(e.message).to.deep.equal('For north american shipments, region and zip code must be provided.');
+    }
+  });
+
+  it('Validates a canadian address', () => {
+    let address: Address = {
+      streetAddress: '111 Random St.',
+      city: 'Ottawa',
+      region: 'Ontario',
+      postalCode: ' K1V-1r1 ',
+      country: 'CA'
+    };
+
+    let expectedAddress: Address = {
+      streetAddress: '111 Random St.',
+      city: 'Ottawa',
+      region: 'ON',
+      postalCode: 'K1V1R1',
+      country: 'Canada'
+    };
+    let cleanAddress = validateAddress(address);
+    expect(cleanAddress).to.deep.equal(expectedAddress);
+  });
+
+  it('Validates an american address', () => {
+    let address: Address = {
+      streetAddress: '111 Random St.',
+      city: 'New York',
+      region: 'New York',
+      postalCode: '10002 ',
+      country: 'United States'
+    };
+
+    let expectedAddress: Address = {
+      streetAddress: '111 Random St.',
+      city: 'New York',
+      region: 'NY',
+      postalCode: '10002',
+      country: 'USA'
+    };
+    let cleanAddress = validateAddress(address);
+    expect(cleanAddress).to.deep.equal(expectedAddress);
   });
 });
-// clientStub.onCall(1).resolves(temp);
+
+describe('Calculate Shipping Using Addresses', () => {
+
+});

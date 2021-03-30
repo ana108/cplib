@@ -6,6 +6,6 @@ Plan:
 Unit Tests - calculate
 1. calculateTax - done
 2. calculateShippingByPostalCode - done
-3. validateAddress
+3. validateAddress - done
 4. calculateShipping
 5. mapProvinceToCode
