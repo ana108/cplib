@@ -1,12 +1,41 @@
 Plan:
-    - calculate (1)
+    - calculate (1) - done
     - sqlite3 (2)
     - index (ie annual data load) (3)
 
-Unit Tests - calculate
-1. calculateTax - done
-2. calculateShippingByPostalCode - done
-3. validateAddress - done
-4. calculateShipping - done
-5. mapProvinceToCode
+Unit Tests - sqlite3
+1. getRateCode
+2. saveToDb
+3. getRate
+4. getProvince
+5. updateFuelSurcharge
+6. getFuelSurcharge
 
+get rate code:
+- db threw Error
+- db returned row with rate_code of 'A5'
+- db returned no error and no row
+
+save to db:
+- db threw error
+- db did not throw error
+
+getRate:
+- db throws error
+- db doesn't return anything
+- db returns row with price
+
+getProvince:
+- db throws err
+- db returns no error
+- db returns row with province code
+
+updateFuelSurcharge:
+- if percentage is less than 0 expect error
+- if percentage is greater than 99.99 expect error
+- db returns error
+- db doesnt return anything if no issues happened
+
+getFuelSurcharge:
+- db throws error
+- db returns row with percentage
