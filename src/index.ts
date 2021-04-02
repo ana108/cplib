@@ -28,7 +28,7 @@ export const readFile = async function (fileName: string, type: string, year: nu
     await once(rl, 'close');
     return Promise.all(inputsAll.map(async entry => {
         return saveToDb(entry)
-        }
+    }
     ));
 }
 
@@ -50,10 +50,10 @@ export const files = async function (): Promise<any> {
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
             const filePath = regular_rate_base_dir + fileName;
-            return module.exports.readFile(filePath, fileType, YEAR, 'regular');            
+            return module.exports.readFile(filePath, fileType, YEAR, 'regular');
         }));
     }));
-    const small_business_base_dir =  `${__dirname}/../resources/small_business/${YEAR}/`;
+    const small_business_base_dir = `${__dirname}/../resources/small_business/${YEAR}/`;
     dataPrepared = fs.existsSync(small_business_base_dir)
     if (!dataPrepared) {
         return `Failed to find directory ${small_business_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
@@ -62,8 +62,14 @@ export const files = async function (): Promise<any> {
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
             const filePath = small_business_base_dir + fileName;
-            return module.exports.readFile(filePath, fileType, YEAR, 'small_business');            
+            return module.exports.readFile(filePath, fileType, YEAR, 'small_business');
         }));
     }));
     return `Successfully loaded the data for year ${YEAR}`;
 }
+/* Instructions for loading next years data:
+1. Go to CP and download the rates document for regular
+and small business rates
+2. Copy the rate code prices into a text file under the year.
+Follow the existing format thats under the previous year (ie a new file for priority, express, etc)
+Be sure to include the rate code header. Make sure there are no leading spaces*/
