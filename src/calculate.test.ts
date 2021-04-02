@@ -1,9 +1,15 @@
-import { calculateShippingByPostalCode, calculateTax, validateAddress, Address } from './calculate';
+import {
+  validateAddress, Address, calculateTax,
+  calculateShippingByPostalCode, calculateShipping
+  , mapProvinceToCode
+} from './calculate';
+import * as calculate from './calculate';
+// var calculate = require('./calculate');
 import * as sinon from 'sinon';
 
 import * as db from './db/sqlite3';
-import * as mocha from 'mocha';
 import * as chai from 'chai';
+import { fail } from 'assert';
 
 const expect = chai.expect;
 /*
@@ -138,13 +144,13 @@ describe('Calculate Shipping Cost By Postal Code', () => {
   });
 
   it('A5 - Regular - 30+kg - 34.39', async () => {
-    getRateStb.rejects();
+    getRateStb.rejects(new Error('Failed to find price for those parameters'));
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
     try {
       await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 33);
     } catch (err) {
-      expect(err).to.equal('Weight of package too big');
+      expect(err.message).to.equal('Failed to find price for those parameters');
     }
   });
 
@@ -435,5 +441,120 @@ describe('Validate the address for calculation', () => {
 });
 
 describe('Calculate Shipping Using Addresses', () => {
+  const sourceAddress = {
+    streetAddress: '111 Random St',
+    city: 'Ottawa',
+    region: 'Ontario',
+    postalCode: 'K1V1R9',
+    country: 'Ca'
+  };
+  const destinationAddress = {
+    streetAddress: '2224 - B Random Ave',
+    city: 'Gatineau',
+    region: 'Quebec',
+    postalCode: 'j9h 5v8',
+    country: 'Ca'
+  }
 
+  let calculateShippingByPostalCodeStb;
+
+  beforeEach(() => {
+
+    calculateShippingByPostalCodeStb = sinon.stub(calculate, 'calculateShippingByPostalCode');
+  });
+  afterEach(() => {
+    calculateShippingByPostalCodeStb.restore();
+  });
+
+  it('Fails source address validation', () => {
+    // @ts-ignore
+    calculateShipping(null, destinationAddress, 1.0, 'regular').catch(e => {
+      expect(e.message).to.equal('Missing value or missing country property of the address');
+    });
+  })
+
+  it('Fails destination address validation', () => {
+    // @ts-ignore
+    calculateShipping(sourceAddress, null, 1.0, 'regular').catch(e => {
+      expect(e.message).to.equal('Missing value or missing country property of the address');
+    });
+  })
+
+  it('Throws an error if weight is not valid', () => {
+    calculateShipping(sourceAddress, destinationAddress, -1, 'regular').catch(e => {
+      expect(e.message).to.equal('Weight must be present and be a non-negative number');
+    });
+  })
+
+  it('Throws an error if weight is too large', () => {
+    calculateShipping(sourceAddress, destinationAddress, 33, 'regular').then(data => { }).catch(e => {
+      expect(e.message).to.equal('Weight of package too big');
+    });
+  })
+
+  it('Throws an error if the delivery type is invalid', () => {
+    calculateShipping(sourceAddress, destinationAddress, 29, 'somethingorother').then(data => { }).catch(e => {
+      expect(e.message).to.equal('Delivery type must be one of the following: regular, priority or express');
+    });
+  })
+
+  it('Returns a valid shipping cost: 0.7 - regular', async () => {
+    calculateShippingByPostalCodeStb.resolves(12.46);
+    calculateShipping(sourceAddress, destinationAddress, 0.7, 'regular').then(result => {
+      expect(result).to.equal(12.46);
+    });
+  })
+
+  it('Returns a valid shipping cost: 30.0 - blank (which should get converted to regular)', async () => {
+    try {
+      calculateShippingByPostalCodeStb.resolves(68.21);
+      const total = await calculateShipping(sourceAddress, destinationAddress, 30);
+      expect(total).to.equal(68.21);
+    } catch (e) {
+      fail(e);
+    }
+  })
+
+  it('Returns a valid shipping cost: 0.7 - priority', async () => {
+    try {
+      calculateShippingByPostalCodeStb.resolves(27.17);
+      const total = await calculateShipping(sourceAddress, destinationAddress, 0.7, 'priority');
+      expect(total).to.equal(27.17);
+    } catch (e) {
+      fail(e);
+    }
+  })
+
+  it('Returns a valid shipping cost: 1.0 - express', async () => {
+    try {
+      calculateShippingByPostalCodeStb.resolves(15.32);
+      const total = await calculateShipping(sourceAddress, destinationAddress, 1.0, 'express');
+      expect(total).to.equal(15.32);
+    } catch (e) {
+      fail(e);
+    }
+  })
+});
+
+describe('Map province to code and vice versa', () => {
+  it('Expect 2 letter Canadian province to stay the same', () => {
+    expect(mapProvinceToCode('BC')).to.equal('BC');
+  });
+
+  it('Expect 3 letter Canadian province to also stay the same', () => {
+    expect(mapProvinceToCode('PEI')).to.equal('PEI');
+  });
+
+  it('Expect non existent codes to be rejected', () => {
+    try {
+      mapProvinceToCode('ABC');
+      fail('Did not throw an expected error');
+    } catch (e) {
+      expect(e.message).to.equal('The region provided is not a valid region');
+    }
+  });
+
+  it('Expect an american state to get converted accurately', () => {
+    expect(mapProvinceToCode('OREGON')).to.equal('OR');
+  });
 });

@@ -1,3 +1,4 @@
+import { rejects } from 'assert';
 import { getRateCode, getRate, getProvince, getFuelSurcharge } from './db/sqlite3';
 
 export interface Address {
@@ -7,7 +8,7 @@ export interface Address {
     postalCode: string, // postal or zip
     country: string // country code or full country name
 }
-function mapProvinceToCode(region: string): string {
+export const mapProvinceToCode = (region: string): string => {
     const canadianProvinceMap = {
         'ALBERTA': 'AB',
         'BRITISH COLUMBIA': 'BC',
@@ -85,7 +86,8 @@ function mapProvinceToCode(region: string): string {
         'WISCONSIN': 'WI',
         'WYOMING': 'WY'
     }
-    if (region.length == 2 || region.length === 3) {
+    if ((region.length == 2 || region.length === 3)
+        && (Object.values(canadianProvinceMap).includes(region) || Object.values(americanProvinceMap).includes(region))) {
         return region;
     } else if (canadianProvinceMap[region] || americanProvinceMap[region]) {
         return canadianProvinceMap[region] || americanProvinceMap[region];
@@ -93,7 +95,7 @@ function mapProvinceToCode(region: string): string {
         throw new Error('The region provided is not a valid region');
     }
 }
-export function validateAddress(address: Address): Address {
+export const validateAddress = (address: Address): Address => {
     if (!address || !address.country) {
         throw new Error('Missing value or missing country property of the address');
     }
@@ -126,24 +128,40 @@ export function validateAddress(address: Address): Address {
     }
     return cleanAddress;
 }
-export function calculateShipping(sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliverySpeed: string = 'regular'): Promise<number> {
-    if (!weightInKg || weightInKg < 0) {
-        Promise.reject(new Error('Weight must be present and be a non-negative number'));
-    }
-    if (isNaN(weightInKg)) {
-        Promise.reject(new Error('Weight must be a numeric value'));
-    }
-    const validDelivery = ['regular', 'priority', 'express'];
-    if (!validDelivery.includes(deliverySpeed.toLocaleLowerCase())) {
-        Promise.reject(new Error('Delivery type must be one of the following: regular, priority or express'));
-    }
+export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliverySpeed: string = 'regular'): Promise<number> => {
+    return new Promise<number>((resolve, reject) => {
+        try {
+            if (!weightInKg || weightInKg <= 0) {
+                throw new Error('Weight must be present and be a non-negative number');
+            }
 
-    let source = validateAddress(sourceAddress);
-    let destnation = validateAddress(destinationAddress);
-    return calculateShippingByPostalCode(source.postalCode, destnation.postalCode, weightInKg, deliverySpeed);
+            if (isNaN(weightInKg)) {
+                throw new Error('Weight must be a numeric value');
+            }
+
+            if (weightInKg > 30.0) {
+                // TODO handle super sized
+                throw new Error('Weight of package too big');
+            }
+
+            const validDelivery = ['regular', 'priority', 'express'];
+            if (!validDelivery.includes(deliverySpeed.toLocaleLowerCase())) {
+                throw new Error('Delivery type must be one of the following: regular, priority or express');
+            }
+
+            let source = validateAddress(sourceAddress);
+            let destnation = validateAddress(destinationAddress);
+
+            calculateShippingByPostalCode(source.postalCode, destnation.postalCode, weightInKg, deliverySpeed).then(data => {
+                resolve(data);
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
 }
 
-export function calculateTax(sourceProvince: string, destinationProvice: string, shippingCost: number, shippingType: string): number {
+export const calculateTax = (sourceProvince: string, destinationProvice: string, shippingCost: number, shippingType: string): number => {
     let taxCost = 0.00;
     const hstProvince13 = ['ON']
     const hstProvince15 = ['NB', 'NS', 'NL', 'PEI'];
@@ -172,28 +190,28 @@ export function calculateTax(sourceProvince: string, destinationProvice: string,
     }
     return taxCost;
 }
-
-export function calculateShippingByPostalCode(sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
-    deliverySpeed: string = 'regular'): Promise<number> {
-    return new Promise<any>(async (resolve, reject) => {
-        if (weightInKg > 30.0) {
-            // TODO handle super sized
-            reject('Weight of package too big');
-        }
-        // for package dimensions make sure to convert it into a type
+export const calculateShippingByPostalCode = (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
+    deliverySpeed: string = 'regular'): Promise<number> => {
+    return new Promise<number>(async (resolve, reject) => {
         try {
+            // for package dimensions make sure to convert it into a type
+
             // get rate code
             const rateCode = await getRateCode(sourcePostalCode, destinationPostalCode);
 
             // get cost for regular/priority/express
+
             const shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed });
             // get fuel rate
+
             const fuelSurchargePercentage = await getFuelSurcharge();
             // add fuel rate to final cost
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
             // IF this api call gets too slow; these two calls can be replaced with postal code mappings
+
             const sourceProvince = await getProvince(sourcePostalCode);
             const destinationProvice = await getProvince(destinationPostalCode);
+
 
             // calculate tax
             const finalPrice = pretaxCost + calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
@@ -201,6 +219,7 @@ export function calculateShippingByPostalCode(sourcePostalCode: string, destinat
         } catch (e) {
             reject(e);
         }
+
     });
 }
 // math utility function

@@ -58,6 +58,8 @@ export function getRate(rateCode: string, weight: number,
     }, (err, row) => {
       if (err || !row) {
         reject(err);
+      } else if (!row) {
+        reject(new Error('Failed to find price for those parameters'));
       } else {
         resolve(parseFloat(row.price));
       }

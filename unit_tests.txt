@@ -7,5 +7,6 @@ Unit Tests - calculate
 1. calculateTax - done
 2. calculateShippingByPostalCode - done
 3. validateAddress - done
-4. calculateShipping
+4. calculateShipping - done
 5. mapProvinceToCode
+
