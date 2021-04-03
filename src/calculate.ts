@@ -1,5 +1,4 @@
-import { rejects } from 'assert';
-import { getRateCode, getRate, getProvince, getFuelSurcharge } from './db/sqlite3';
+import { getRateCode, getRate, getProvince, getFuelSurcharge, maxRates, getMaxRate } from './db/sqlite3';
 
 export interface Address {
     streetAddress: string, // full street address, number + apartment
@@ -139,11 +138,6 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
                 throw new Error('Weight must be a numeric value');
             }
 
-            if (weightInKg > 30.0) {
-                // TODO handle super sized
-                throw new Error('Weight of package too big');
-            }
-
             const validDelivery = ['regular', 'priority', 'express'];
             if (!validDelivery.includes(deliverySpeed.toLocaleLowerCase())) {
                 throw new Error('Delivery type must be one of the following: regular, priority or express');
@@ -154,6 +148,8 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
 
             calculateShippingByPostalCode(source.postalCode, destnation.postalCode, weightInKg, deliverySpeed).then(data => {
                 resolve(data);
+            }).catch(e => {
+                reject(e);
             });
         } catch (e) {
             reject(e);
@@ -200,8 +196,16 @@ export const calculateShippingByPostalCode = (sourcePostalCode: string, destinat
             const rateCode = await getRateCode(sourcePostalCode, destinationPostalCode);
 
             // get cost for regular/priority/express
+            let shippingCost;
+            if (weightInKg <= 30.0) {
+                shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed });
+            } else {
+                let rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed });
 
-            const shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed });
+                let difference = weightInKg - 30.0;
+                shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
+            }
+
             // get fuel rate
 
             const fuelSurchargePercentage = await getFuelSurcharge();

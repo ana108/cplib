@@ -96,17 +96,20 @@ describe('Calculate Shipping Cost By Postal Code', () => {
   const fuelSurchargePercentage = 0.09;
   let getRateCodeStb;
   let getRateStb;
+  let getMaxRateStb;
   let getFuelSurchargeStb;
   let getProvinceStb;
   beforeEach(() => {
     getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('A5');
     getRateStb = sinon.stub(db, 'getRate');
+    getMaxRateStb = sinon.stub(db, 'getMaxRate');
     getFuelSurchargeStb = sinon.stub(db, 'getFuelSurcharge').resolves(0.09);
     getProvinceStb = sinon.stub(db, 'getProvince');
   });
   afterEach(() => {
     getRateCodeStb.restore();
     getRateStb.restore();
+    getMaxRateStb.restore();
     getFuelSurchargeStb.restore();
     getProvinceStb.restore();
   });
@@ -144,14 +147,12 @@ describe('Calculate Shipping Cost By Postal Code', () => {
   });
 
   it('A5 - Regular - 30+kg - 34.39', async () => {
-    getRateStb.rejects(new Error('Failed to find price for those parameters'));
+    getMaxRateStb.resolves({ incrementalRate: 0.34, maxRate: 10.0 });
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    try {
-      await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 33);
-    } catch (err) {
-      expect(err.message).to.equal('Failed to find price for those parameters');
-    }
+    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 33);
+    expect(cost).to.equal(13.78);
+
   });
 
   it('A5 - Express - 0.7kg - 11.51', async () => {
@@ -486,9 +487,10 @@ describe('Calculate Shipping Using Addresses', () => {
     });
   })
 
-  it('Throws an error if weight is too large', () => {
-    calculateShipping(sourceAddress, destinationAddress, 33, 'regular').then(data => { }).catch(e => {
-      expect(e.message).to.equal('Weight of package too big');
+  it('Returns a valid shipping cost: 33.3 - regular', async () => {
+    calculateShippingByPostalCodeStb.resolves(40.46);
+    calculateShipping(sourceAddress, destinationAddress, 33.3, 'regular').then(result => {
+      expect(result).to.equal(40.46);
     });
   })
 

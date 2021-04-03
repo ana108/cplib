@@ -1,6 +1,5 @@
 To DO:
 
-Supersized parcels
 American Rates
 International
 Documentation

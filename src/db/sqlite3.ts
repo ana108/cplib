@@ -70,6 +70,41 @@ export const getRate = (rateCode: string, weight: number,
 
 }
 
+export interface maxRates {
+  maxRate: number,
+  incrementalRate: number
+};
+export const getMaxRate = (rateCode: string,
+  opts: options = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<maxRates> => {
+  let defaults = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
+  let options = { ...defaults, ...opts };
+  const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and year = $year and type = $deliverySpeed ' +
+    ' and customer_type = $customerType  order by max_weight desc limit 2';
+  return new Promise<maxRates>((resolve, reject) => {
+    const stmt = db.prepare(getPrice);
+    stmt.all({
+      $country: options.country,
+      $rateCode: rateCode,
+      $year: options.year,
+      $deliverySpeed: options.type,
+      $customerType: options.customerType
+    }, (err, rows) => {
+      if (err) {
+        reject(err);
+      } else if (!rows || rows.length < 2) {
+        reject(new Error('Failed to find price for those parameters'));
+      } else {
+        let maxRates: maxRates = {
+          maxRate: parseFloat(rows[1].price),
+          incrementalRate: parseFloat(rows[0].price)
+        };
+        resolve(maxRates);
+      }
+    });
+  });
+
+}
+
 export const getProvince = (postalCode: string): Promise<string> => {
   const getProvince = `select province from postal_codes where postal_code like '${postalCode.substr(0, 3)}%' limit 1`;
   return new Promise<string>((resolve, reject) => {
