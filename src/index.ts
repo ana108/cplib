@@ -31,7 +31,7 @@ export const readFile = async function (fileName: string, type: string, year: nu
     }));
 }
 export const oneTimePopulate = (): any => { // Promise<any>
-    const sqlStmt = `insert into rate_code_mapping values('$source', '$destination', '$rate_code', 'USA')`;
+    /*const sqlStmt = `insert into rate_code_mapping values('$source', '$destination', '$rate_code', 'USA')`;
     const sources = ['AL', 'AK', 'AS', 'AZ', 'AR', 'AE', 'AA', 'AE', 'AE', 'AE', 'AP', 'CA', 'CO', 'CT',
         'DE', 'DC', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'FM',
         'MN', 'UM', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA',
@@ -85,6 +85,36 @@ export const oneTimePopulate = (): any => { // Promise<any>
         inputsAll.push(NU);
         inputsAll.push(NWT);
     }
+    return Promise.all(inputsAll.map(async entry => {
+        return saveToDb(entry)
+    }));*/
+
+    /*
+   Up to 100 g 7.74
+Over 100 g up to 250 g 9.48
+Over 250 g up to 500 g 12.43
+Over 500 g up to 1 kg 18.27
+Over 1 kg up to 1.5 kg 21.35
+Over 1.5 kg up to 2 kg 23.97
+    */
+    let sqlStmt = `insert into rates values(2021, $max_weight, 'kg', '$rate_code', $price, 'small packet', 'USA', 'small_business')`;
+    let inputsAll: string[] = [];
+    for (var i = 1; i <= 7; i++) {
+        let rt = sqlStmt.replace('$rate_code', i.toString());
+        let oneHundredGrms = rt.replace('$max_weight', '0.1').replace('$price', '7.74');
+        let twoHundredFiftyGrms = rt.replace('$max_weight', '0.25').replace('$price', '9.48');
+        let fiveHundredGrms = rt.replace('$max_weight', '0.5').replace('$price', '12.43');
+        let oneKilo = rt.replace('$max_weight', '1.0').replace('$price', '18.27');
+        let oneAndAHalfKilo = rt.replace('$max_weight', '1.5').replace('$price', '21.35');
+        let twoKilo = rt.replace('$max_weight', '2.0').replace('$price', '23.97');
+        inputsAll.push(oneHundredGrms);
+        inputsAll.push(twoHundredFiftyGrms);
+        inputsAll.push(fiveHundredGrms);
+        inputsAll.push(oneKilo);
+        inputsAll.push(oneAndAHalfKilo);
+        inputsAll.push(twoKilo);
+    }
+    console.log(inputsAll);
     return Promise.all(inputsAll.map(async entry => {
         return saveToDb(entry)
     }));
