@@ -21,7 +21,8 @@ export const mapProvinceToCode = (region: string): string => {
         'PRINCE EDWARD ISLAND': 'PEI',
         'QUEBEC': 'QC',
         'SASKATCHEWAN': 'SK',
-        'YUKON': 'YT'
+        'YUKON': 'YT',
+        'NEW BRUNSWICK': 'NB'
     };
 
     const americanProvinceMap = {
