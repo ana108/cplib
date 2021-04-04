@@ -2,6 +2,7 @@ import fs from 'fs';
 import readline from 'readline';
 import { once } from 'events';
 import { saveToDb } from './db/sqlite3';
+var os = require("os");
 
 export const readFile = async function (fileName: string, type: string, year: number, customer_type: string): Promise<any> {
     const stream = fs.createReadStream(fileName, { emitClose: true });
@@ -30,73 +31,36 @@ export const readFile = async function (fileName: string, type: string, year: nu
         return saveToDb(entry)
     }));
 }
+export const automatePriorityFile = async (): Promise<any> => {
+    const stream = fs.createReadStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_usa_prices.txt`, { emitClose: true });
+    const rl = readline.createInterface(stream);
+    let isFirst = true;
+    const rates: string[] = [];
+    const weightClass: string[] = [];
+    rl.on('line', (input: string) => {
+        rates.push(input);
+    });
+    await once(rl, 'close');
+    console.log('Done closing file. Starting with weight class');
+    const streamTwo = fs.createReadStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_usa_weight_class.txt`, { emitClose: true });
+    const r2 = readline.createInterface(streamTwo);
+    r2.on('line', (input: string) => {
+        weightClass.push(input);
+    });
+    await once(r2, 'close');
+    console.log('Done closing weight class. Start processing');
+    
+    var logger = fs.createWriteStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_usa.txt`, {
+        flags: 'a' // 'a' means appending (old data will be preserved)
+    });
+    logger.write(rates[0] + os.EOL);
+    for(var i = 0; i < weightClass.length; i++) {
+        logger.write(weightClass[i] + ' ' + rates[i+1] + os.EOL);
+    };
+    logger.end();
+    return;
+}
 export const oneTimePopulate = (): any => { // Promise<any>
-    /*const sqlStmt = `insert into rate_code_mapping values('$source', '$destination', '$rate_code', 'USA')`;
-    const sources = ['AL', 'AK', 'AS', 'AZ', 'AR', 'AE', 'AA', 'AE', 'AE', 'AE', 'AP', 'CA', 'CO', 'CT',
-        'DE', 'DC', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MH', 'MD', 'MA', 'MI', 'FM',
-        'MN', 'UM', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA',
-        'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'VI', 'WA', 'WV', 'WI', 'WY'];
-    const zoneA = [5, 7, 7, 7, 5, 2, 5, 2, 2, 2, 7, 7, 6, 2, 3, 3, 5, 4, 7, 7, 7, 4, 4, 5, 5, 4, 5, 1, 7, 3, 2, 3, 7, 5, 7, 5, 5, 6, 5, 7, 1, 3, 6,
-        2, 4, 5, 7, 3, 5, 7, 7, 3, 7, 2, 4, 5, 4, 6, 7, 1, 3, 7, 7, 3, 4, 6];
-    const zoneB = [4, 7, 7, 6, 4, 1, 5, 1, 1, 1, 7, 7, 6, 2, 2, 2, 5, 4, 7, 7, 6, 3, 3, 4, 5, 3, 5, 3, 7, 2,
-        2, 3, 7, 2, 7, 6, 5, 1, 3, 3, 7, 7, 4, 7, 7, 1, 7, 6, 5, 2, 7, 6, 7, 7, 7, 2, 6, 5, 3, 7, 7, 7, 1, 6, 3, 6];
-    const zoneC = [6, 7, 7, 4, 5, 7, 7, 7, 7, 7, 4, 4, 3, 7, 7, 7, 7, 6, 7, 7, 2, 5, 5, 3, 4, 6, 6, 7, 7, 7, 7, 5, 7, 2, 7, 6, 5, 1, 3, 3, 7, 7, 4, 7, 7, 1, 7, 6, 5, 2, 7, 6, 7, 7, 7,
-        2, 6, 5, 3, 7, 7, 7, 1, 6, 3, 2];
-    const zoneD = [7, 7, 7, 7, 7, 6, 7, 6, 6, 6, 7, 7, 6, 6, 6, 6, 7, 7, 7, 7, 5, 6, 6, 6, 6, 6, 7, 5, 7, 6, 5, 5, 7, 5, 7, 7, 6, 5, 6, 6, 5, 6, 7, 6, 7, 5, 7, 6, 7, 5, 7, 6, 7, 6, 7, 5, 7, 7, 6, 5, 6, 7, 5, 6, 5, 5];
-    let inputsAll: string[] = [];
-    for (var i = 0; i < 66; i++) {
-        let tempSql = sqlStmt.replace('$source', sources[i]);
-        // zone a
-        let zA = tempSql.replace('$rate_code', zoneA[i].toString());
-        let NL = zA.replace('$destination', 'NL');
-        let NS = zA.replace('$destination', 'NS');
-        let PEI = zA.replace('$destination', 'PEI');
-        let NB = zA.replace('$destination', 'NB');
-
-        inputsAll.push(NL);
-        inputsAll.push(NS);
-        inputsAll.push(PEI);
-        inputsAll.push(NB);
-
-        // zone b
-        let zB = tempSql.replace('$rate_code', zoneB[i].toString());
-        let QC = zB.replace('$destination', 'QC');
-        let ON = zB.replace('$destination', 'ON');
-        inputsAll.push(QC);
-        inputsAll.push(ON);
-
-        // zone c
-        let zC = tempSql.replace('$rate_code', zoneC[i].toString());
-        let MB = zC.replace('$destination', 'MB');
-        let SK = zC.replace('$destination', 'SK');
-        let AB = zC.replace('$destination', 'AB');
-        let BC = zC.replace('$destination', 'BC');
-        inputsAll.push(MB);
-        inputsAll.push(SK);
-        inputsAll.push(AB);
-        inputsAll.push(BC);
-
-        // zone d
-        let zD = tempSql.replace('$rate_code', zoneD[i].toString());
-        let YT = zD.replace('$destination', 'YT');
-        let NU = zD.replace('$destination', 'NU');
-        let NWT = zD.replace('$destination', 'NWT');
-        inputsAll.push(YT);
-        inputsAll.push(NU);
-        inputsAll.push(NWT);
-    }
-    return Promise.all(inputsAll.map(async entry => {
-        return saveToDb(entry)
-    }));*/
-
-    /*
-   Up to 100 g 7.74
-Over 100 g up to 250 g 9.48
-Over 250 g up to 500 g 12.43
-Over 500 g up to 1 kg 18.27
-Over 1 kg up to 1.5 kg 21.35
-Over 1.5 kg up to 2 kg 23.97
-    */
     let sqlStmt = `insert into rates values(2021, $max_weight, 'kg', '$rate_code', $price, 'small packet', 'USA', 'small_business')`;
     let inputsAll: string[] = [];
     for (var i = 1; i <= 7; i++) {
