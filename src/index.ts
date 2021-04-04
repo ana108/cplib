@@ -49,37 +49,42 @@ export const automatePriorityFile = async (): Promise<any> => {
     });
     await once(r2, 'close');
     console.log('Done closing weight class. Start processing');
-    
+
     var logger = fs.createWriteStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_usa.txt`, {
         flags: 'a' // 'a' means appending (old data will be preserved)
     });
     logger.write(rates[0] + os.EOL);
-    for(var i = 0; i < weightClass.length; i++) {
-        logger.write(weightClass[i] + ' ' + rates[i+1] + os.EOL);
+    for (var i = 0; i < weightClass.length; i++) {
+        logger.write(weightClass[i] + ' ' + rates[i + 1] + os.EOL);
     };
     logger.end();
     return;
 }
-export const oneTimePopulate = (): any => { // Promise<any>
-    let sqlStmt = `insert into rates values(2021, $max_weight, 'kg', '$rate_code', $price, 'small packet', 'USA', 'small_business')`;
+export const oneTimePopulate = async (): Promise<any> => { // Promise<any>
+    let sqlStmt = `insert into INTERNATIONAL_CODES values("$country_name", '$country_code', '$rate_code')`;
     let inputsAll: string[] = [];
-    for (var i = 1; i <= 7; i++) {
-        let rt = sqlStmt.replace('$rate_code', i.toString());
-        let oneHundredGrms = rt.replace('$max_weight', '0.1').replace('$price', '7.74');
-        let twoHundredFiftyGrms = rt.replace('$max_weight', '0.25').replace('$price', '9.48');
-        let fiveHundredGrms = rt.replace('$max_weight', '0.5').replace('$price', '12.43');
-        let oneKilo = rt.replace('$max_weight', '1.0').replace('$price', '18.27');
-        let oneAndAHalfKilo = rt.replace('$max_weight', '1.5').replace('$price', '21.35');
-        let twoKilo = rt.replace('$max_weight', '2.0').replace('$price', '23.97');
-        inputsAll.push(oneHundredGrms);
-        inputsAll.push(twoHundredFiftyGrms);
-        inputsAll.push(fiveHundredGrms);
-        inputsAll.push(oneKilo);
-        inputsAll.push(oneAndAHalfKilo);
-        inputsAll.push(twoKilo);
-    }
-    console.log(inputsAll);
+
+    const stream = fs.createReadStream(`${__dirname}/../resources/international_rate_code_mapping.txt`, { emitClose: true });
+    const rl = readline.createInterface(stream);
+    let isFirst = true;
+    const mappingRows: string[] = [];
+    rl.on('line', (input: string) => {
+        if (isFirst) {
+            isFirst = !isFirst
+        } else {
+            mappingRows.push(input);
+        }
+    });
+    await once(rl, 'close');
+    mappingRows.forEach(row => {
+        let tokens = row.split(' ');
+        let numTokens = tokens.length;
+        let endOfCountryName = row.indexOf(tokens[numTokens - 4]);
+        let sql = sqlStmt.replace('$country_name', row.substr(0, endOfCountryName).toUpperCase().trim()).replace('$country_code', tokens[numTokens - 4].toUpperCase().trim()).replace('$rate_code', tokens[numTokens - 3].toUpperCase().trim());
+        inputsAll.push(sql);
+    });
     return Promise.all(inputsAll.map(async entry => {
+        console.log(entry);
         return saveToDb(entry)
     }));
 }
