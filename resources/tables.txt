@@ -29,5 +29,6 @@ CREATE TABLE FUEL_SURCHARGE (
 CREATE TABLE INTERNATIONAL_CODES (
 	country_name text,
 	country_code text,
-	rate_code text
+	rate_code text,
+	delivery_type text
 );

@@ -60,11 +60,11 @@ export const automatePriorityFile = async (): Promise<any> => {
     logger.end();
     return;
 }
-export const oneTimePopulate = async (): Promise<any> => { // Promise<any>
-    let sqlStmt = `insert into INTERNATIONAL_CODES values("$country_name", '$country_code', '$rate_code')`;
+export const oneTimePopulate = async (deliveryType: string): Promise<any> => { // Promise<any>
+    let sqlStmt = `insert into INTERNATIONAL_CODES values("$country_name", '$country_code', '$rate_code', '${deliveryType}')`;
     let inputsAll: string[] = [];
 
-    const stream = fs.createReadStream(`${__dirname}/../resources/international_rate_code_mapping.txt`, { emitClose: true });
+    const stream = fs.createReadStream(`${__dirname}/../resources/international_rate_code_mapping_${deliveryType}.txt`, { emitClose: true });
     const rl = readline.createInterface(stream);
     let isFirst = true;
     const mappingRows: string[] = [];
@@ -84,7 +84,7 @@ export const oneTimePopulate = async (): Promise<any> => { // Promise<any>
         inputsAll.push(sql);
     });
     return Promise.all(inputsAll.map(async entry => {
-        console.log(entry);
+        // console.log(entry);
         return saveToDb(entry)
     }));
 }
