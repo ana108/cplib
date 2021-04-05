@@ -4,7 +4,7 @@ import { once } from 'events';
 import { saveToDb } from './db/sqlite3';
 var os = require("os");
 
-export const readFile = async function (fileName: string, type: string, year: number, customer_type: string): Promise<any> {
+export const readFile = async function (fileName: string, type: string, year: number, customer_type: string, country: string): Promise<any> {
     const stream = fs.createReadStream(fileName, { emitClose: true });
     const rl = readline.createInterface(stream);
     let labels: string[] = [];
@@ -21,7 +21,7 @@ export const readFile = async function (fileName: string, type: string, year: nu
                 const price = tokens[i];
                 const rate_code = labels[i];
                 const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type)
-                 VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', 'Canada', '${customer_type}')`;
+                 VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customer_type}')`;
                 inputsAll.push(insertDataSQL);
             }
         }
@@ -97,16 +97,21 @@ export const files = async function (): Promise<any> {
         return `Failed to find directory ${regular_rate_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
     }
 
-    const FILES = {
+    /*const FILES = {
         'express': ['express_canada_1.txt', 'express_canada_2.txt'],
         'priority': ['priority_canada_1.txt', 'priority_canada_2.txt'],
         'regular': ['regular_canada_1.txt', 'regular_canada_2.txt']
-    };
+    }; */
+    const FILES = {
+        'express': ['express_usa_.txt'],
+        'priority': ['priority_international_.txt']
+    }; 
 
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
             const filePath = regular_rate_base_dir + fileName;
-            return module.exports.readFile(filePath, fileType, YEAR, 'regular');
+            const country = fileName.split('_')[1];
+            return module.exports.readFile(filePath, fileType, YEAR, 'regular', country);
         }));
     }));
     const small_business_base_dir = `${__dirname}/../resources/small_business/${YEAR}/`;
@@ -118,7 +123,8 @@ export const files = async function (): Promise<any> {
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
             const filePath = small_business_base_dir + fileName;
-            return module.exports.readFile(filePath, fileType, YEAR, 'small_business');
+            const country = fileName.split('_')[1];
+            return module.exports.readFile(filePath, fileType, YEAR, 'small_business', country);
         }));
     }));
     return `Successfully loaded the data for year ${YEAR}`;
