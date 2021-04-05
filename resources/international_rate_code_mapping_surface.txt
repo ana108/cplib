@@ -1,0 +1,238 @@
+DESTINATION CODE RATE CODE MAX
+Afghanistan  AF 406 20 100
+Aland Islands  AX 402 30 1000
+Albania AL 403 30 100
+Algeria  DZ 410 30 100
+Andorra  AD 402 30 1000
+Angola  AO 410 20 100
+Anguilla AI 401 20 600
+Antarctica AQ 410 20 1000
+Antigua and Barbuda AG 401 20 100
+Argentina AR 407 20 100
+Armenia AM 410 20 100
+Aruba  AW 401 30 100
+Ascension AC 410 20 300
+Australia AU 405 20 1000
+Austria  AT 402 30 1000
+Azerbaijan  AZ 410 30 100
+Bahamas BS 401 10 1000
+Bahrain  BH 408 20 100
+Bangladesh  BD 406 30 1000
+Barbados  BB 401 20 300
+Belarus BY 403 30 1000
+Belgium  BE 402 30 1000
+Belize  BZ 401 20 1000
+Benin  BJ 410 20 300
+Bermuda BM 401 20 100
+Bhutan  BT 406 30 1000
+Bolivia BO 407 30 100
+Bosnia-Herzegovina  BA 403 20 1000
+Botswana BW 410 30 300
+Bouvet Island BV 405 20 1000
+Brazil BR 407 30 100
+British Indian Ocean Terr  IO 410 30 100
+British Virgin Islands VG 401 20 200
+Brunei Darussalam BN 406 20 1000
+Bulgaria  BG 403 30 1000
+Burkina Faso  BF 410 30 1000
+Burundi  BI 410 30 1000
+Cambodia  KH 406 30 100
+Cameroon  CM 410 30 1000
+Cape Verde CV 410 30 100
+Cayman Islands  KY 401 20 100
+Central Afr Rep  CF 410 30 200
+Chad  TD 410 30 800
+Chile  CL 407 20 100
+China  CN 409 30 1000
+Christmas Island CX 405 20 1000
+Cocos (Keeling) Islands CC 405 20 1000
+Colombia  CO 407 30 100
+Comoros  KM 410 20 1000
+Congo, Democratic Republic  CD 410 30 100
+Congo  CG 410 20 1000
+Cook Islands CK 410 30 800
+Costa Rica  CR 401 30 100
+Côte d'Ivoire  CI 410 30 1000
+Croatia HR 403 30 1000
+Cuba  CU 401 10 100
+Curaçao  CW 401 30 1000
+Cyprus  CY 402 30 1000
+Czech Republic  CZ 402 30 1000
+Denmark  DK 402 30 1000
+Djibouti DJ 410 20 1000
+Dominica  DM 401 20 100
+Dominican Republic DO 401 30 100
+Dutch Caribbean  BQ 401 30 1000
+Ecuador  EC 407 30 100
+Egypt  EG 408 30 1000
+El Salvador  SV 401 20 100
+Equatorial Guinea  GQ 410 30 100
+Eritrea  ER 410 20 100
+Estonia EE 403 30 1000
+Eswatini  SZ 410 30 100
+Ethiopia  ET 410 30 100
+Falkland Islands  FK 407 30 700
+Faroe Islands  FO 402 30 1000
+Fiji FJ 410 20 1000
+Finland  FI 402 30 1000
+France  FR 402 30 1000
+French Guiana  GF 407 30 1000
+French Polynesia  PF 406 30 1000
+French Southern Territories TF 405 20 1000
+Gabon GA 410 30 100
+Gambia GM 410 20 1000
+Georgia  GE 410 20 100
+Germany  DE 402 30 700
+Ghana  GH 410 30 500
+Gibraltar  GI 402 20 100
+Greece  GR 402 20 1000
+Greenland  GL 402 30 1000
+Grenada  GD 401 20 100
+Guadeloupe  GP 401 30 1000
+Guatemala GT 401 20 100
+Guernsey  GG 402 30 1000
+Guinea  GN 410 30 100
+Guinea-Bissau  GW 410 20 100
+Guyana  GY 407 20 100
+Haiti  HT 401 30 100
+Heard & McDonald Islands HM 405 20 1000
+Holy See (Vatican) VA 402 20 1000
+Honduras HN 401 20 100
+Hong Kong  HK 404 30 1000
+Hungary  HU 402 30 1000
+Iceland  IS 402 30 1000
+India  IN 406 20 1000
+Indonesia  ID 406 30 100
+Iran IR 410 20 100
+Ireland  IE 402 30 1000
+Isle of Man  IM 402 30 1000
+Israel  IL 408 20 1000
+Italy  IT 402 20 1000
+Jamaica JM 401 20 300
+Japan  JP 404 30 1000
+Jersey  JE 402 30 1000
+Jordan  JO 408 30 100
+Kazakhstan KZ 410 20 1000
+Kenya  KE 410 30 200
+Kiribati  KI 406 20 100
+Korea, Dem People's Rep KP 410 20 100
+Korea  KR 404 20 1000
+Kosovo XZ 403 30 100
+Kuwait  KW 408 30 1000
+Kyrgyzstan  KG 410 30 100
+Lao, Peo Dem Rep  LA 406 30 100
+Latvia LV 403 30 1000
+Lesotho  LS 410 20 100
+Liberia LR 410 20 100
+Libya LY 410 20 100
+Liechtenstein  LI 402 30 1000
+Lithuania LT 403 30 1000
+Luxembourg  LU 402 30 1000
+Macau  MO 404 20 1000
+Macedonia (ex Yugoslav Rep) MK 403 30 1000
+Madagascar MG 410 20 1000
+Malawi MW 410 20 100
+Malaysia  MY 404 20 1000
+Maldives  MV 406 20 100
+Mali  ML 410 20 1000
+Malta  MT 402 20 100
+Martinique  MQ 401 30 1000
+Mauritania  MR 410 20 900
+Mauritius MU 410 20 300
+Mayotte  YT 410 30 1000
+Mexico  MX 401 20 100
+Moldova, Republic MD 403 30 1000
+Monaco  MC 402 30 1000
+Mongolia  MN 410 20 100
+Montenegro ME 403 30 1000
+Montserrat MS 401 20 1000
+Morocco  MA 410 30 1000
+Mozambique MZ 410 20 100
+Myanmar  MM 404 20 1000
+Namibia NA 410 20 100
+Nauru NR 406 20 300
+Nepal NP 406 20 100
+Netherlands  NL 402 20 1000
+New Caledonia  NC 410 30 1000
+New Zealand  NZ 405 30 1000
+Nicaragua  NI 401 30 100
+Niger NE 410 30 100
+Nigeria NG 410 30 100
+Niue NU 410 20 900
+Norfolk Island NF 405 20 1000
+Norway  NO 402 30 100
+Oman OM 408 20 100
+Pakistan  PK 406 30 1000
+Panama  PA 401 30 100
+Papua New Guinea PG 410 25 200
+Paraguay PY 407 30 100
+Peru  PE 407 30 100
+Philippines PH 406 20 100
+Pitcairn  PN 410 10 100
+Poland  PL 403 20 1000
+Portugal  PT 402 30 1000
+Qatar  QA 408 30 1000
+Réunion  RE 410 30 1000
+Romania RO 403 30 1000
+Russian Federation RU 403 20 1000
+Rwanda  RW 410 30 100
+S Georgia/Sandwich Islands  GS 407 30 700
+Saint Barthelemy  BL 401 30 1000
+Saint Helena SH 410 20 300
+Saint Kitts & Nevis  KN 401 20 300
+Saint Lucia  LC 401 20 200
+Saint Martin  MF 401 30 1000
+Saint Pierre and Miquelon  PM 402 30 1000
+Samoa  WS 410 20 400
+San Marino SM 402 20 1000
+Sao Tome and Principe ST 410 30 100
+Saudi Arabia  SA 408 30 1000
+Senegal  SN 410 30 1000
+Serbia  RS 403 30 1000
+Seychelles  SC 410 30 100
+Sierra Leone  SL 410 30 100
+Singapore  SG 404 30 1000
+Sint Maarten (Dutch)  SX 401 30 1000
+Slovakia  SK 403 30 1000
+Slovenia  SI 403 30 1000
+Solomon Islands SB 410 20 100
+South Africa ZA 410 30 1000
+South Sudan  SS 410 30 100
+Spain  ES 402 20 1000
+Sri Lanka  LK 406 20 100
+St Vincent & Grenadines VC 401 10 200
+Sudan  SD 410 30 100
+Suriname  SR 407 30 800
+Svalbard & Jan Mayen  SJ 402 30 100
+Sweden  SE 402 30 1000
+Switzerland  CH 402 30 1000
+Syria  SY 408 30 1000
+Taiwan  TW 404 20 1000
+Tajikstan TJ 410 30 100
+Tanzania TZ 410 30 100
+Thailand  TH 404 30 1000
+Togo  TG 410 20 100
+Tokelau TK 410 20 1000
+Tonga  TO 410 20 700
+Trinidad and Tobago TT 401 20 1000
+Tristan da Cunha TA 410 10 100
+Tunisia  TN 410 20 1000
+Turkey  TR 408 30 1000
+Turkmenistan  TM 410 20 100
+Turks & Caicos Islands  TC 401 20 100
+Tuvalu TV 410 25 1000
+Uganda  UG 410 20 100
+Ukraine UA 403 30 1000
+United Arab Emirates  AE 408 30 1000
+United Kingdom  GB 402 30 1000
+Uruguay  UY 407 30 100
+Uzbekistan UZ 410 20 100
+Vanuatu VU 410 20 100
+Venezuela  VE 407 30 100
+Vietnam  VN 406 30 100
+Wallis and Futuna WF 410 30 1000
+West Bank and Gaza Strip  PS 408 20 1000
+Western Sahara  EH 410 30 1000
+Yemen  YE 408 30 100
+Zambia  ZM 410 30 800
+Zimbabwe ZW 410 30 1000

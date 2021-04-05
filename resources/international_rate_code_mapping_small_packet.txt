@@ -1,0 +1,241 @@
+DESTINATION CODE RATE_CODE MAX_WGT (kg)
+Afghanistan AF 6 2 0
+Aland Islands AX 2 2 0
+Albania AL 3 2 0
+Algeria DZ 10 2 0
+Andorra AD 2 2 0
+Angola AO 10 2 0
+Anguilla AI 1 2 0
+Antarctica AQ 10 2 0
+Antigua and Barbuda AG 1 2 0
+Argentina AR 7 2 0
+Armenia AM 10 2 0
+Aruba AW 1 2 0
+Ascension AC 10 2 0
+Australia AU 5 2 0
+Austria AT 2 2 0
+Azerbaijan AZ 10 2 0
+Bahamas BS 1 2 0
+Bahrain BH 8 2 0
+Bangladesh BD 6 2 0
+Barbados BB 1 2 0
+Belarus BY 3 2 0
+Belgium BE 2 2 0
+Belize BZ 1 2 0
+Benin BJ 10 2 0
+Bermuda BM 1 2 0
+Bhutan BT 6 2 0
+Bolivia BO 7 2 0
+Bosnia-Herzegovina BA 3 2 0
+Botswana BW 10 2 0
+Bouvet Island BV 5 2 0
+Brazil BR 7 2 0
+British Indian Ocean Terr IO 10 2 0
+British Virgin Islands VG 1 2 0
+Brunei Darussalam BN 6 2 0
+Bulgaria BG 3 2 0
+Burkina Faso BF 10 2 0
+Burundi BI 10 2 0
+Cambodia KH 6 2 0
+Cameroon CM 10 2 0
+Cape Verde CV 10 2 0
+Cayman Islands KY 1 2 0
+Central Afr Rep CF 10 2 0
+Chad TD 10 2 0
+Chile CL 7 2 0
+China CN 9 2 0
+Christmas Island CX 5 2 0
+Cocos (Keeling) Islands CC 5 2 0
+Colombia CO 7 2 0
+Comoros KM 10 2 0
+Congo CG 10 2 0
+Congo, Democratic Republic CD 10 2 0
+Cook Islands CK 10 2 0
+Costa Rica CR 1 2 0
+Côte d'Ivoire CI 10 2 0
+Croatia HR 3 2 0
+Cuba CU 1 2 0
+Curaçao CW 1 2 0
+Cyprus CY 2 2 0
+Czech Republic CZ 2 2 0
+Denmark DK 2 2 0
+Djibouti DJ 10 2 0
+Dominica DM 1 2 0
+Dominican Republic DO 1 2 0
+Dutch Caribbean BQ 1 2 0
+Ecuador EC 7 2 0
+Egypt EG 8 2 0
+El Salvador SV 1 2 0
+Equatorial Guinea GQ 10 2 0
+Eritrea ER 10 2 0
+Estonia EE 3 2 0
+Eswatini SZ 10 2 0
+Ethiopia ET 10 2 0
+Falkland Islands FK 7 2 0
+Faroe Islands FO 2 2 0
+Fiji FJ 10 2 0
+Finland FI 2 2 0
+France FR 2 2 0
+French Guiana GF 7 2 0
+French Polynesia PF 6 2 0
+French Southern Territories TF 5 2 0
+Gabon GA 10 2 0
+Gambia GM 10 2 0
+Georgia GE 10 2 0
+Germany DE 2 2 0
+Ghana GH 10 2 0
+Gibraltar GI 2 2 0
+Greece GR 2 2 0
+Greenland GL 2 2 0
+Grenada GD 1 2 0
+Guadeloupe GP 1 2 0
+Guatemala GT 1 2 0
+Guernsey GG 2 2 0
+Guinea GN 10 2 0
+Guinea-Bissau GW 10 2 0
+Guyana GY 7 2 0
+Haiti HT 1 2 0
+Heard & McDonald Islands HM 5 2 0
+Holy See (Vatican) VA 2 2 0
+Honduras HN 1 2 0
+Hong Kong HK 4 2 0
+Hungary HU 2 2 0
+Iceland IS 2 2 0
+India IN 6 2 0
+Indonesia ID 6 2 0
+Iran IR 10 2 0
+Iraq* IQ 8 2 0
+Ireland IE 2 2 0
+Isle of Man IM 2 2 0
+Israel IL 8 2 0
+Italy IT 2 2 0
+Jamaica JM 1 2 0
+Japan JP 4 2 0
+Jersey JE 2 2 0
+Jordan JO 8 2 0
+Kazakhstan KZ 10 2 0
+Kenya KE 10 2 0
+Kiribati KI 6 2 0
+Korea KR 4 2 0
+Korea, Dem People's Rep KP 10 2 0
+Kosovo XZ 3 2 0
+Kuwait KW 8 2 0
+Kyrgyzstan KG 10 2 0
+Lao, Peo Dem Rep LA 6 2 0
+Latvia LV 3 2 0
+Lebanon* LB 8 2 0
+Lesotho LS 10 2 0
+Liberia LR 10 2 0
+Libya LY 10 2 0
+Liechtenstein LI 2 2 0
+Lithuania LT 3 2 0
+Luxembourg LU 2 2 0
+Macau MO 4 2 0
+Macedonia MK 3 2 0
+Madagascar MG 10 2 0
+Malawi MW 10 2 0
+Malaysia MY 4 2 0
+Maldives MV 6 2 0
+Mali ML 10 2 0
+Malta MT 2 2 0
+Martinique MQ 1 2 0
+Mauritania MR 10 2 0
+Mauritius MU 10 2 0
+Mayotte YT 10 2 0
+Mexico MX 1 2 0
+Moldova, Republic MD 3 2 0
+Monaco MC 2 2 0
+Mongolia MN 10 2 0
+Montenegro ME 3 2 0
+Montserrat MS 1 2 0
+Morocco MA 10 2 0
+Mozambique MZ 10 2 0
+Myanmar MM 4 2 0
+Namibia NA 10 2 0
+Nauru NR 6 2 0
+Nepal NP 6 2 0
+Netherlands NL 2 2 0
+New Caledonia NC 10 2 0
+New Zealand NZ 5 2 0
+Nicaragua NI 1 2 0
+Niger NE 10 2 0
+Nigeria NG 10 2 0
+Niue NU 10 2 0
+Norfolk Island NF 5 2 0
+Norway NO 2 2 0
+Oman OM 8 2 0
+Pakistan PK 6 2 0
+Panama PA 1 2 0
+Papua New Guinea PG 10 2 0
+Paraguay PY 7 2 0
+Peru PE 7 2 0
+Philippines PH 6 2 0
+Pitcairn PN 10 2 0
+Poland PL 3 2 0
+Portugal PT 2 2 0
+Qatar QA 8 2 0
+Réunion RE 10 2 0
+Romania RO 3 2 0
+Russian Federation RU 3 2 0
+Rwanda RW 10 2 0
+S Georgia/Sandwich Islands GS 10 2 0
+Saint Barthelemy BL 1 2 0
+Saint Helena SH 10 2 0
+Saint Kitts & Nevis KN 1 2 0
+Saint Lucia LC 1 2 0
+Saint Martin MF 1 2 0
+Saint Pierre and Miquelon PM 2 2 0
+Samoa WS 10 2 0
+San Marino SM 2 2 0
+Sao Tome and Principe ST 10 2 0
+Saudi Arabia SA 8 2 0
+Senegal SN 10 2 0
+Serbia RS 3 2 0
+Seychelles SC 10 2 0
+Sierra Leone SL 10 2 0
+Singapore SG 4 2 0
+Sint Maarten SX 1 2 0
+Slovakia SK 3 2 0
+Slovenia SI 3 2 0
+Solomon Islands SB 10 2 0
+South Africa ZA 10 2 0
+South Sudan SS 10 2 0
+Spain ES 2 2 0
+Sri Lanka LK 6 2 0
+St Vincent & Grenadines VC 1 2 0
+Sudan SD 10 2 0
+Suriname SR 7 2 0
+Svalbard & Jan Mayen SJ 2 2 0
+Sweden SE 2 2 0
+Switzerland CH 2 2 0
+Syria SY 8 2 0
+Taiwan TW 4 2 0
+Tajikstan TJ 10 2 0
+Tanzania TZ 10 2 0
+Thailand TH 4 2 0
+Timor-Leste TL 6 2 0
+Togo TG 10 2 0
+Tokelau TK 10 2 0
+Tonga TO 10 2 0
+Trinidad and Tobago TT 1 2 0
+Tristan da Cunha TA 10 2 0
+Tunisia TN 10 2 0
+Turkey TR 8 2 0
+Turkmenistan TM 10 2 0
+Turks & Caicos Islands TC 1 2 0
+Tuvalu TV 10 2 0
+Uganda UG 10 2 0
+Ukraine UA 3 2 0
+United Arab Emirates AE 8 2 0
+United Kingdom (Great Britain) GB 2 2 0
+Uruguay UY 7 2 0
+Uzbekistan UZ 10 2 0
+Vanuatu VU 10 2 0
+Venezuela VE 7 2 0
+Vietnam VN 6 2 0
+Wallis and Futuna WF 10 2 0
+West Bank and Gaza Strip PS 8 2 0
+Western Sahara EH 10 2 0
+Yemen YE 8 2 0
+Zambia ZM 10 2 0
+Zimbabwe ZW 10 2 0

@@ -1,0 +1,163 @@
+DESTINATION CODE RATE CODE MAX
+Uganda UG 210 20 100
+Ukraine UA 203 30 1000
+Uruguay UY 207 30 100
+Uzbekistan UZ 210 20 100
+Vanuatu VU 210 20 100
+Venezuela  VE 207 30 100
+Wallis and Futuna WF 210 30 1000
+West Bank and Gaza Strip  PS 208 30 1000
+Western Sahara  EH 210 30 1000
+Yemen  YE 208 30 100
+Zambia  ZM 210 30 800
+Zimbabwe ZW 210 30 1000
+Kazakhstan KZ 210 20 1000
+Kiribati  KI 206 20 100
+Korea, Dem People's Rep KP 210 20 100
+Kosovo XZ 203 30 100
+Kuwait  KW 208 30 1000
+Kyrgyzstan  KG 210 30 100
+Lao, Peo Dem Rep  LA 206 30 100
+Lesotho  LS 210 20 100
+Liberia LR 210 20 100
+Libya LY 210 20 100
+Macedonia (ex Yugoslav Rep) MK 203 30 1000
+Madagascar MG 210 20 1000
+Malawi MW 210 20 100
+Maldives  MV 206 20 100
+Mali  ML 210 20 1000
+Martinique  MQ 201 30 1000
+Mauritania  MR 210 20 900
+Mayotte  YT 210 30 1000
+Moldova, Republic MD 203 30 1000
+Mongolia  MN 210 20 600
+Montenegro ME 203 30 1000
+Montserrat MS 201 20 1000
+Mozambique MZ 210 20 100
+Myanmar  MM 204 20 1000
+Namibia NA 210 20 100
+Nauru NR 206 20 300
+Nepal NP 206 20 100
+New Caledonia  NC 210 30 1000
+Nicaragua  NI 201 30 100
+Niger NE 210 30 100
+Nigeria NG 210 30 100
+Niue NU 210 20 900
+Oman OM 208 20 100
+Pakistan  PK 206 30 1000
+Panama  PA 201 30 100
+Papua New Guinea PG 210 25 200
+Paraguay PY 207 30 100
+Peru  PE 207 30 100
+Pitcairn  PN 210 10 100
+Qatar  QA 208 30 1000
+Réunion  RE 210 30 1000
+Rwanda  RW 210 30 100
+Saba  BQ 201 30 100
+S Georgia/Sandwich Islands  GS 210 30 700
+Saint Barthelemy  BL 201 30 1000
+Saint Helena SH 210 20 300
+Saint Martin  MF 201 30 1000
+Saint Pierre and Miquelon  PM 202 30 1000
+Samoa  WS 210 20 400
+Sao Tome and Principe ST 210 30 100
+Senegal  SN 210 30 1000
+Seychelles  SC 210 30 100
+Sint Eustatius  BQ 201 30 100
+Sierra Leone  SL 210 30 100
+Slovenia  SI 203 30 1000
+Solomon Islands SB 210 20 100
+South Africa ZA 210 30 1000
+Sri Lanka  LK 206 20 100
+St Vincent & Grenadines VC 201 10 200
+Sudan  SD 210 30 100
+South Sudan  SS 210 30 100
+Suriname  SR 207 30 800
+Svalbard & Jan Mayen  SJ 202 30 100
+Tajikstan TJ 210 30 1000
+Tanzania TZ 210 30 100
+Timor-Leste TL 206 10 100
+Togo  TG 210 20 100
+Tokelau TK 210 20 1000
+Tonga  TO 210 20 700
+Tristan da Cunha TA 210 10 100
+Tunisia  TN 210 20 1000
+Turkey  TR 208 30 1000
+Turkmenistan  TM 210 20 100
+Turks & Caicos Islands  TC 201 20 100
+Tuvalu TV 210 25 1000
+Afghanistan  AF 206 20 100
+Aland Islands  AX 202 30 1000
+Algeria  DZ 210 30 100
+Andorra  AD 202 30 1000
+Angola  AO 210 20 100
+Anguilla AI 201 20 600
+Antarctica AQ 210 20 1000
+Antigua and Barbuda AG 201 20 100
+Armenia AM 210 20 1000
+Aruba  AW 201 30 100
+Ascension  AC 210 20 300
+Azerbaijan  AZ 210 30 100
+Bahrain  BH 208 20 100
+Bangladesh  BD 206 30 1000
+Benin  BJ 210 20 300
+Bermuda BM 201 20 100
+Bhutan  BT 206 30 1000
+Bolivia BO 207 30 100
+Bonaire  BQ 201 30 100
+Bosnia-Herzegovina  BA 203 20 1000
+Botswana BW 210 30 300
+Bouvet Island BV 205 20 1000
+British Indian Ocean Terr  IO 210 30 100
+British Virgin Islands VG 201 20 200
+Brunei Darussalam BN 206 20 1000
+Bulgaria  BG 203 30 1000
+Burkina Faso  BF 210 30 1000
+Burundi  BI 210 30 1000
+Cambodia  KH 206 30 100
+Cameroon  CM 210 30 1000
+Cape Verde CV 210 30 100
+Central Afr Rep  CF 210 30 200
+Chad  TD 210 30 800
+Christmas Island CX 205 20 1000
+Cocos (Keeling) Islands CC 205 20 1000
+Comoros  KM 210 20 1000
+Congo, Democratic Republic  CD 210 30 100
+Congo  CG 210 20 1000
+Cook Islands CK 210 30 800
+Côte d'Ivoire  CI 210 30 1000
+Cuba CU 201 10 100
+Djibouti DJ 210 20 1000
+Dominica  DM 201 20 100
+Dominican Republic DO 201 30 100
+Dutch Caribbean BQ 201 30 100
+Egypt  EG 208 30 1000
+Equatorial Guinea  GQ 210 30 100
+Eritrea  ER 210 20 100
+Eswatini  SZ 210 30 100
+Falkland Islands  FK 207 30 700
+Faroe Islands  FO 202 30 1000
+Fiji  FJ 210 20 1000
+French Guiana  GF 207 30 1000
+French Polynesia  PF 206 30 1000
+French Southern Territories TF 205 20 1000
+Gabon  GA 210 30 200
+Gambia  GM 210 20 1000
+Georgia  GE 210 30 1000
+Ghana  GH 210 30 500
+Gibraltar  GI 202 20 100
+Greenland  GL 202 30 1000
+Guadeloupe  GP 201 30 1000
+Guatemala GT 201 20 100
+Guernsey  GG 202 30 1000
+Guinea  GN 210 30 1000
+Guinea-Bissau  GW 210 20 100
+Haiti  HT 201 30 100
+Heard & McDonald Islands HM 205 20 1000
+Holy See (Vatican) VA
+Honduras HN 201 20 100
+Iran IR 210 20 100
+Iraq  IQ 208 20 100
+Isle of Man  IM 202 30 1000
+Jersey  JE 202 30 1000
+Jordan  JO 208 30 100
