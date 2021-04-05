@@ -20,8 +20,7 @@ export const readFile = async function (fileName: string, type: string, year: nu
             for (let i = 2; i < labels.length; i++) {
                 const price = tokens[i];
                 const rate_code = labels[i];
-                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type)
-                 VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customer_type}')`;
+                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customer_type}')`; 
                 inputsAll.push(insertDataSQL);
             }
         }
@@ -97,14 +96,10 @@ export const files = async function (): Promise<any> {
         return `Failed to find directory ${regular_rate_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
     }
 
-    /*const FILES = {
-        'express': ['express_canada_1.txt', 'express_canada_2.txt'],
-        'priority': ['priority_canada_1.txt', 'priority_canada_2.txt'],
-        'regular': ['regular_canada_1.txt', 'regular_canada_2.txt']
-    }; */
     const FILES = {
-        'express': ['express_usa_.txt'],
-        'priority': ['priority_international_.txt']
+        'express': ['express_canada_1.txt', 'express_canada_2.txt', 'express_usa_.txt'],
+        'priority': ['priority_canada_1.txt', 'priority_canada_2.txt', 'priority_international_.txt'],
+        'regular': ['regular_canada_1.txt', 'regular_canada_2.txt']
     }; 
 
     await Promise.all(Object.keys(FILES).map(async fileType => {

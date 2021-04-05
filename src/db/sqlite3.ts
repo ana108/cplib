@@ -25,7 +25,7 @@ export const getRateCode = (sourcePostalCode: string, destinationPostalCode: str
 export const saveToDb = (sqlStmt: string): Promise<any> => {
   return new Promise((resolve, reject) => {
     const stmt = db.prepare(sqlStmt);
-    stmt.run([], (err: Error) => {
+    stmt.run( (err: Error) => {
       if (err) {
         reject(err.message);
       } else {
