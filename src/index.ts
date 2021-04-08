@@ -20,7 +20,7 @@ export const readFile = async function (fileName: string, type: string, year: nu
             for (let i = 2; i < labels.length; i++) {
                 const price = tokens[i];
                 const rate_code = labels[i];
-                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customer_type}')`; 
+                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customer_type}')`;
                 inputsAll.push(insertDataSQL);
             }
         }
@@ -30,10 +30,9 @@ export const readFile = async function (fileName: string, type: string, year: nu
         return saveToDb(entry)
     }));
 }
-export const automatePriorityFile = async (): Promise<any> => {
-    const stream = fs.createReadStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_usa_prices.txt`, { emitClose: true });
+export const automateExpressInternationalFile = async (): Promise<any> => {
+    const stream = fs.createReadStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_international_prices.txt`, { emitClose: true });
     const rl = readline.createInterface(stream);
-    let isFirst = true;
     const rates: string[] = [];
     const weightClass: string[] = [];
     rl.on('line', (input: string) => {
@@ -41,7 +40,7 @@ export const automatePriorityFile = async (): Promise<any> => {
     });
     await once(rl, 'close');
     console.log('Done closing file. Starting with weight class');
-    const streamTwo = fs.createReadStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_usa_weight_class.txt`, { emitClose: true });
+    const streamTwo = fs.createReadStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_international_weightclass.txt`, { emitClose: true });
     const r2 = readline.createInterface(streamTwo);
     r2.on('line', (input: string) => {
         weightClass.push(input);
@@ -49,13 +48,13 @@ export const automatePriorityFile = async (): Promise<any> => {
     await once(r2, 'close');
     console.log('Done closing weight class. Start processing');
 
-    var logger = fs.createWriteStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_usa.txt`, {
+    const logger = fs.createWriteStream(`C:/Users/flute/Documents/GitHub/cplib/resources/small_business/2021/express_international_.txt`, {
         flags: 'a' // 'a' means appending (old data will be preserved)
     });
     logger.write(rates[0] + os.EOL);
-    for (var i = 0; i < weightClass.length; i++) {
-        logger.write(weightClass[i] + ' ' + rates[i + 1] + os.EOL);
-    };
+    for (let i = 1; i < weightClass.length; i++) {
+        logger.write(weightClass[i] + ' ' + rates[i] + os.EOL);
+    }
     logger.end();
     return;
 }
@@ -96,11 +95,20 @@ export const files = async function (): Promise<any> {
         return `Failed to find directory ${regular_rate_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
     }
 
+    // TODO to be loaded for 2021
     const FILES = {
+        'express': ['express_international_.txt'],
+        'air': ['air_international_.txt'],
+        'surface': ['surface_international_.txt'],
+        'tracked_packet': ['tracked_packet_international_.txt'],
+        'small_packet_air': ['small_packet_air_international_.txt'],
+        'small_packet_surface': ['small_packet_surface_international_.txt']
+    };
+    /*const FILES = {
         'express': ['express_canada_1.txt', 'express_canada_2.txt', 'express_usa_.txt'],
         'priority': ['priority_canada_1.txt', 'priority_canada_2.txt', 'priority_international_.txt'],
         'regular': ['regular_canada_1.txt', 'regular_canada_2.txt']
-    }; 
+    };*/
 
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
