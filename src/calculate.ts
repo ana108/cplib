@@ -139,19 +139,29 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
                 throw new Error('Weight must be a numeric value');
             }
 
+            // TODO these dont apply to american or international
             const validDelivery = ['regular', 'priority', 'express'];
             if (!validDelivery.includes(deliverySpeed.toLocaleLowerCase())) {
                 throw new Error('Delivery type must be one of the following: regular, priority or express');
             }
 
             let source = validateAddress(sourceAddress);
-            let destnation = validateAddress(destinationAddress);
+            let destination = validateAddress(destinationAddress);
+            let americanDeliverySpeeds: string[] = ['express', 'priority', 'tracked_packet', 'small_packet'];
+            if (destination.country === 'Canada') {
+                calculateShippingCanada(source.postalCode, destination.postalCode, weightInKg, deliverySpeed).then(data => {
+                    resolve(data);
+                }).catch(e => {
+                    reject(e);
+                });
+            } else if (destination.country === 'USA' && americanDeliverySpeeds.includes(deliverySpeed)) {
+                calculateShippingUSA(source.postalCode, destination.postalCode, weightInKg, deliverySpeed).then(data => {
+                    resolve(data);
+                }).catch(e => {
+                    reject(e);
+                });
+            }
 
-            calculateShippingByPostalCode(source.postalCode, destnation.postalCode, weightInKg, deliverySpeed).then(data => {
-                resolve(data);
-            }).catch(e => {
-                reject(e);
-            });
         } catch (e) {
             reject(e);
         }
@@ -187,7 +197,7 @@ export const calculateTax = (sourceProvince: string, destinationProvice: string,
     }
     return taxCost;
 }
-export const calculateShippingByPostalCode = (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
+export const calculateShippingCanada = (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
     deliverySpeed: string = 'regular'): Promise<number> => {
     return new Promise<number>(async (resolve, reject) => {
         try {
@@ -221,6 +231,38 @@ export const calculateShippingByPostalCode = (sourcePostalCode: string, destinat
             // calculate tax
             const finalPrice = pretaxCost + calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
             resolve(round(finalPrice));
+        } catch (e) {
+            reject(e);
+        }
+
+    });
+}
+export const calculateShippingUSA = (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
+    deliverySpeed: string = 'regular'): Promise<number> => {
+    return new Promise<number>(async (resolve, reject) => {
+        try {
+            // for package dimensions make sure to convert it into a type
+
+            // get rate code
+            const rateCode = await getRateCode(sourcePostalCode, destinationPostalCode);
+
+            // get cost for regular/priority/express
+            let shippingCost;
+            if (weightInKg <= 30.0) {
+                shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed });
+            } else {
+                let rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed });
+
+                let difference = weightInKg - 30.0;
+                shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
+            }
+
+            // get fuel rate
+            const fuelSurchargePercentage = await getFuelSurcharge();
+            // add fuel rate to final cost
+            const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+
+            resolve(round(pretaxCost));
         } catch (e) {
             reject(e);
         }

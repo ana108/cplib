@@ -18,7 +18,6 @@ export const readFile = async function (fileName: string, type: string, year: nu
         } else {
             const tokens = input.split(' ');
             const maxWeight = tokens[0];
-            console.log('MAX Weight ' + maxWeight);
             for (let i = 2; i < labels.length; i++) {
                 const price = tokens[i];
                 const rate_code = labels[i];
