@@ -97,20 +97,16 @@ export const files = async function (): Promise<any> {
         return `Failed to find directory ${regular_rate_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
     }
 
-    // TODO to be loaded for 2021
     const FILES = {
-        'express': ['express_international_.txt'],
+        'express': ['express_canada_1.txt', 'express_canada_2.txt', 'express_usa_.txt', 'express_international_.txt'],
+        'priority': ['priority_canada_1.txt', 'priority_canada_2.txt', 'priority_international_.txt'],
+        'regular': ['regular_canada_1.txt', 'regular_canada_2.txt'],
         'air': ['air_international_.txt'],
         'surface': ['surface_international_.txt'],
         'tracked_packet': ['tracked_packet_international_.txt'],
         'small_packet_air': ['small_packet_air_international_.txt'],
         'small_packet_surface': ['small_packet_surface_international_.txt']
     };
-    /*const FILES = {
-        'express': ['express_canada_1.txt', 'express_canada_2.txt', 'express_usa_.txt'],
-        'priority': ['priority_canada_1.txt', 'priority_canada_2.txt', 'priority_international_.txt'],
-        'regular': ['regular_canada_1.txt', 'regular_canada_2.txt']
-    };*/
 
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
