@@ -2,6 +2,7 @@ import fs from 'fs';
 import readline from 'readline';
 import { once } from 'events';
 import { saveToDb } from './db/sqlite3';
+import { count } from 'console';
 var os = require("os");
 
 export const readFile = async function (fileName: string, type: string, year: number, customer_type: string, country: string): Promise<any> {
@@ -17,6 +18,7 @@ export const readFile = async function (fileName: string, type: string, year: nu
         } else {
             const tokens = input.split(' ');
             const maxWeight = tokens[0];
+            console.log('MAX Weight ' + maxWeight);
             for (let i = 2; i < labels.length; i++) {
                 const price = tokens[i];
                 const rate_code = labels[i];
@@ -113,7 +115,8 @@ export const files = async function (): Promise<any> {
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
             const filePath = regular_rate_base_dir + fileName;
-            const country = fileName.split('_')[1];
+            const totalTokens = fileName.split('_');
+            const country = totalTokens[totalTokens.length - 2];
             return module.exports.readFile(filePath, fileType, YEAR, 'regular', country);
         }));
     }));
@@ -126,7 +129,8 @@ export const files = async function (): Promise<any> {
     await Promise.all(Object.keys(FILES).map(async fileType => {
         return Promise.all(FILES[fileType].map(async fileName => {
             const filePath = small_business_base_dir + fileName;
-            const country = fileName.split('_')[1];
+            const totalTokens = fileName.split('_');
+            const country = totalTokens[totalTokens.length - 2];
             return module.exports.readFile(filePath, fileType, YEAR, 'small_business', country);
         }));
     }));
