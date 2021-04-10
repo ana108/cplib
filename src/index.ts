@@ -95,7 +95,6 @@ export const files = async function (): Promise<any> {
         console.log('Could not find the directory ' + regular_rate_base_dir);
         return `Failed to find directory ${regular_rate_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
     }
-
     const FILES = {
         'express': ['express_canada_1.txt', 'express_canada_2.txt', 'express_usa_.txt', 'express_international_.txt'],
         'priority': ['priority_canada_1.txt', 'priority_canada_2.txt', 'priority_international_.txt'],

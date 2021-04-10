@@ -147,6 +147,7 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
 
             let source = validateAddress(sourceAddress);
             let destination = validateAddress(destinationAddress);
+            // TODO expedited
             let americanDeliverySpeeds: string[] = ['express', 'priority', 'tracked_packet', 'small_packet'];
             if (destination.country === 'Canada') {
                 calculateShippingCanada(source.postalCode, destination.postalCode, weightInKg, deliverySpeed).then(data => {
@@ -155,14 +156,17 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
                     reject(e);
                 });
             } else if (destination.country === 'USA' && americanDeliverySpeeds.includes(deliverySpeed)) {
-                calculateShippingUSA(source.postalCode, destination.postalCode, weightInKg, deliverySpeed).then(data => {
+                calculateShippingUSA(source.region, destination.region, weightInKg, deliverySpeed).then(data => {
                     resolve(data);
                 }).catch(e => {
                     reject(e);
                 });
+            } else {
+                // TODO international stuff
             }
 
         } catch (e) {
+            console.log('Error! ' + e.message);
             reject(e);
         }
     });
@@ -237,12 +241,53 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
 
     });
 }
-export const calculateShippingUSA = (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
+export const calculateShippingUSA = (source: string, dest: string, weightInKg: number,
     deliverySpeed: string = 'regular'): Promise<number> => {
     return new Promise<number>(async (resolve, reject) => {
         try {
+            let rateCode;
+            let shippingCost;
             // for package dimensions make sure to convert it into a type
+            if (deliverySpeed === 'priority') {
+                rateCode = await getRateCode(source, dest);
+                // TODO do international, but if province is alaksa or hawaii, add 8.50
+            } else if (deliverySpeed === 'express') {
+                rateCode = await getRateCode(source, dest);
+            } else if (deliverySpeed === 'tracked_packet' || deliverySpeed === 'small_packet') {
+                if (weightInKg > 2.0) {
+                    reject('The maximum weight of a package for a packet is 2.0 kg');
+                }
+                rateCode = '1';
+                // skip the rate code, and go straight to getting rate
+                // pick any rate between 1 and 7; they all have the same values
+            }
 
+            if (weightInKg <= 30.0) {
+                shippingCost = await getRate(rateCode, weightInKg, { country: 'USA', type: deliverySpeed });
+            } else {
+                let rates: maxRates = await getMaxRate(rateCode, { country: 'USA', type: deliverySpeed });
+
+                let difference = weightInKg - 30.0;
+                shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
+            }
+
+            // get fuel rate
+            const fuelSurchargePercentage = await getFuelSurcharge();
+            // add fuel rate to final cost
+            const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+
+            resolve(round(pretaxCost));
+        } catch (e) {
+            reject(e);
+        }
+
+    });
+}
+/*export const calculateShippingInternational = (destinationCountry: string, weightInKg: number,
+    deliverySpeed: string = 'regular'): Promise<number> => {
+    return new Promise<number>(async (resolve, reject) => {
+        try {
+            
             // get rate code
             const rateCode = await getRateCode(sourcePostalCode, destinationPostalCode);
 
@@ -268,7 +313,7 @@ export const calculateShippingUSA = (sourcePostalCode: string, destinationPostal
         }
 
     });
-}
+}*/
 // math utility function
 function round(num: number): number {
     return Math.round(num * 100 + Number.EPSILON) / 100

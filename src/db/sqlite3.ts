@@ -3,9 +3,9 @@ import sqlite3 from 'sqlite3';
 const dbname = __dirname + "/../../resources/cplib.db";
 export const db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
 
-export const getRateCode = (sourcePostalCode: string, destinationPostalCode: string): Promise<any> => {
-  let source = sourcePostalCode.substr(0, 3);
-  let destination = destinationPostalCode.substr(0, 3);
+export const getRateCode = (src: string, dest: string): Promise<any> => {
+  let source = src.substr(0, 3);
+  let destination = dest.substr(0, 3);
 
   return new Promise(function (resolve, reject) {
     let getRateCodeMapping = `select rate_code from rate_code_mapping where source ='${source}' and destination like '%${destination}%'`;
@@ -25,7 +25,7 @@ export const getRateCode = (sourcePostalCode: string, destinationPostalCode: str
 export const saveToDb = (sqlStmt: string): Promise<any> => {
   return new Promise((resolve, reject) => {
     const stmt = db.prepare(sqlStmt);
-    stmt.run( (err: Error) => {
+    stmt.run((err: Error) => {
       if (err) {
         reject(err.message);
       } else {
@@ -46,7 +46,7 @@ export const getRate = (rateCode: string, weight: number,
   opts: options = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<number> => {
   let defaults = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
   let options = { ...defaults, ...opts };
-  const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and max_weight >= $weight and year = $year ' +
+  const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = $year ' +
     'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
   return new Promise<number>((resolve, reject) => {
     const stmt = db.prepare(getPrice)

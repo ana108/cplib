@@ -1,6 +1,6 @@
 import {
   validateAddress, Address, calculateTax,
-  calculateShippingByPostalCode, calculateShipping
+  calculateShippingCanada, calculateShipping
   , mapProvinceToCode
 } from './calculate';
 import * as calculate from './calculate';
@@ -118,7 +118,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(10.89);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 0.70);
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.70);
     expect(cost).to.equal(12.46);
   });
 
@@ -126,7 +126,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(11.45);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 1.0);
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0);
     expect(cost).to.equal(13.1);
   });
 
@@ -134,7 +134,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(11.99);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 1.3);
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3);
     expect(cost).to.equal(13.72);
   });
 
@@ -142,7 +142,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(34.39);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 30);
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30);
     expect(cost).to.equal(39.36);
   });
 
@@ -150,7 +150,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getMaxRateStb.resolves({ incrementalRate: 0.34, maxRate: 10.0 });
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 33);
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 33);
     expect(cost).to.equal(13.78);
 
   });
@@ -159,7 +159,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(11.51);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 0.7, 'express');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'express');
     expect(cost).to.equal(13.17);
   });
 
@@ -167,7 +167,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(13.39);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 1.0, 'express');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express');
     expect(cost).to.equal(15.32);
   });
 
@@ -175,7 +175,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(15.68);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 1.3, 'express');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3, 'express');
     expect(cost).to.equal(17.95);
   });
 
@@ -183,7 +183,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(40.32);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 30.0, 'express');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'express');
     expect(cost).to.equal(46.15);
   });
 
@@ -191,7 +191,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(23.74);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 0.7, 'priority');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'priority');
     expect(cost).to.equal(27.17);
   });
 
@@ -199,7 +199,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(24.47);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 1.0, 'priority');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
     expect(cost).to.equal(28.01);
   });
 
@@ -207,7 +207,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(24.96);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 1.0, 'priority');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
     expect(cost).to.equal(28.57);
   });
 
@@ -215,7 +215,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(59.60);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingByPostalCode('K1V2R9', 'J9H5V8', 30.0, 'priority');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'priority');
     expect(cost).to.equal(68.21);
   });
 
@@ -457,14 +457,14 @@ describe('Calculate Shipping Using Addresses', () => {
     country: 'Ca'
   }
 
-  let calculateShippingByPostalCodeStb;
+  let calculateShippingCanadaStb;
 
   beforeEach(() => {
 
-    calculateShippingByPostalCodeStb = sinon.stub(calculate, 'calculateShippingByPostalCode');
+    calculateShippingCanadaStb = sinon.stub(calculate, 'calculateShippingCanada');
   });
   afterEach(() => {
-    calculateShippingByPostalCodeStb.restore();
+    calculateShippingCanadaStb.restore();
   });
 
   it('Fails source address validation', () => {
@@ -488,7 +488,7 @@ describe('Calculate Shipping Using Addresses', () => {
   })
 
   it('Returns a valid shipping cost: 33.3 - regular', async () => {
-    calculateShippingByPostalCodeStb.resolves(40.46);
+    calculateShippingCanadaStb.resolves(40.46);
     calculateShipping(sourceAddress, destinationAddress, 33.3, 'regular').then(result => {
       expect(result).to.equal(40.46);
     });
@@ -501,7 +501,7 @@ describe('Calculate Shipping Using Addresses', () => {
   })
 
   it('Returns a valid shipping cost: 0.7 - regular', async () => {
-    calculateShippingByPostalCodeStb.resolves(12.46);
+    calculateShippingCanadaStb.resolves(12.46);
     calculateShipping(sourceAddress, destinationAddress, 0.7, 'regular').then(result => {
       expect(result).to.equal(12.46);
     });
@@ -509,7 +509,7 @@ describe('Calculate Shipping Using Addresses', () => {
 
   it('Returns a valid shipping cost: 30.0 - blank (which should get converted to regular)', async () => {
     try {
-      calculateShippingByPostalCodeStb.resolves(68.21);
+      calculateShippingCanadaStb.resolves(68.21);
       const total = await calculateShipping(sourceAddress, destinationAddress, 30);
       expect(total).to.equal(68.21);
     } catch (e) {
@@ -519,7 +519,7 @@ describe('Calculate Shipping Using Addresses', () => {
 
   it('Returns a valid shipping cost: 0.7 - priority', async () => {
     try {
-      calculateShippingByPostalCodeStb.resolves(27.17);
+      calculateShippingCanadaStb.resolves(27.17);
       const total = await calculateShipping(sourceAddress, destinationAddress, 0.7, 'priority');
       expect(total).to.equal(27.17);
     } catch (e) {
@@ -529,7 +529,7 @@ describe('Calculate Shipping Using Addresses', () => {
 
   it('Returns a valid shipping cost: 1.0 - express', async () => {
     try {
-      calculateShippingByPostalCodeStb.resolves(15.32);
+      calculateShippingCanadaStb.resolves(15.32);
       const total = await calculateShipping(sourceAddress, destinationAddress, 1.0, 'express');
       expect(total).to.equal(15.32);
     } catch (e) {
