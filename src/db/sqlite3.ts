@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import { FuelTable } from '..';
 
 const dbname = __dirname + "/../../resources/cplib.db";
 export const db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
@@ -123,30 +124,105 @@ export const getProvince = (postalCode: string): Promise<string> => {
   });
 }
 
-export const updateFuelSurcharge = (percentage: number): Promise<void> => {
-  const addFuelSurcharge = 'insert into fuel_surcharge values($percentage, strftime(\'%s\', \'now\'));';
-  return new Promise<void>((resolve, reject) => {
-    if (percentage < 0.0 || percentage > 100.0) {
-      reject('Percentage must be specified between 0.00 and 99.99');
-    }
-    const stmt = db.prepare(addFuelSurcharge);
-    stmt.run({
-      $percentage: percentage
-    }, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    })
-  });
+export const updateFuelSurcharge = (fuelSurchargeRates: FuelTable): Promise<void[]> => {
+  const fuelSurcharge = 'insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, strftime(\'%s\', \'now\'), $country, $delivery_type)';
+  const DOMESTIC = fuelSurchargeRates['Domestic Express and Non-Express Services'] / 100;
+  const USA_INTL_EXPRESS = fuelSurchargeRates['U.S. and International Express Services'] / 100;
+  const USA_INTL_NON_EXPRESS = fuelSurchargeRates['U.S. and International Non-Express Services'] / 100;
+  const USA_INTL_PRIORITY = fuelSurchargeRates['Priority Worldwide'] / 100;
+
+  const CANADA = 'Canada';
+  const USA = 'USA';
+  const INTL = 'INTERNATIONAL';
+
+  const PRIORITY = 'priority';
+  const EXPRESS = 'express';
+  const REG = 'regular';
+  const EXPEDITED = 'expedited';
+  const TRACKED_PACKET = 'tracked_packet';
+  const SMALL_PACKET = 'small_packet';
+  const AIR = 'air';
+  const SURFACE = 'surface';
+
+  let values = [{
+    $percentage: DOMESTIC,
+    $country: CANADA,
+    $delivery_type: PRIORITY,
+  }, {
+    $percentage: DOMESTIC,
+    $country: CANADA,
+    $delivery_type: EXPRESS,
+  }, {
+    $percentage: DOMESTIC,
+    $country: CANADA,
+    $delivery_type: REG,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: USA,
+    $delivery_type: EXPEDITED,
+  }, {
+    $percentage: USA_INTL_EXPRESS,
+    $country: USA,
+    $delivery_type: EXPRESS,
+  }, {
+    $percentage: USA_INTL_PRIORITY,
+    $country: USA,
+    $delivery_type: PRIORITY,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: USA,
+    $delivery_type: TRACKED_PACKET,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: USA,
+    $delivery_type: SMALL_PACKET,
+  }, {
+    $percentage: USA_INTL_PRIORITY,
+    $country: INTL,
+    $delivery_type: PRIORITY,
+  }, {
+    $percentage: USA_INTL_EXPRESS,
+    $country: INTL,
+    $delivery_type: EXPRESS,
+  }, {
+    $percentage: USA_INTL_EXPRESS,
+    $country: INTL,
+    $delivery_type: AIR,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: INTL,
+    $delivery_type: SURFACE,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: INTL,
+    $delivery_type: SMALL_PACKET,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: INTL,
+    $delivery_type: TRACKED_PACKET,
+  }];
+  const stmt = db.prepare(fuelSurcharge);
+  return Promise.all(values.map(charge => {
+    return new Promise<void>((resolve, reject) => {
+      stmt.run(charge, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }));
 }
 
-export const getFuelSurcharge = (): Promise<number> => {
-  const getLatestFuelSurcharge = 'select percentage from fuel_surcharge order by date desc limit 1';
+export const getFuelSurcharge = (country: string, deliveryType: string): Promise<number> => {
+  const getLatestFuelSurcharge = 'select percentage from fuel_surcharge where country = $country and delivery_type = $deliveryType order by date desc limit 1';
   return new Promise<number>((resolve, reject) => {
     const stmt = db.prepare(getLatestFuelSurcharge);
-    stmt.get([], (err, row) => {
+    stmt.get({
+      $country: country,
+      $deliveryType: deliveryType
+    }, (err, row) => {
       if (err) {
         reject(err);
       } else {

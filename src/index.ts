@@ -1,8 +1,8 @@
 import fs from 'fs';
 import readline from 'readline';
 import { once } from 'events';
-import { saveToDb } from './db/sqlite3';
-import { count } from 'console';
+import { saveToDb, updateFuelSurcharge } from './db/sqlite3';
+import { rejects } from 'assert';
 var os = require("os");
 
 export const readFile = async function (fileName: string, type: string, year: number, customer_type: string, country: string): Promise<any> {
@@ -129,6 +129,21 @@ export const files = async function (): Promise<any> {
         }));
     }));
     return `Successfully loaded the data for year ${YEAR}`;
+}
+export interface FuelTable {
+    'Domestic Express and Non-Express Services': number,
+    'U.S. and International Express Services': number,
+    'U.S. and International Non-Express Services': number,
+    'Priority Worldwide': number
+}
+export const updateAllFuelSurcharges = async (fuelSurcharge: FuelTable): Promise<any> => {
+    // TODO automate this by GET calling this api:
+    // https://www.canadapost-postescanada.ca/cpc/en/support/kb/sending/rates-dimensions/fuel-surcharges-on-mail-and-parcels
+    fuelSurcharge['Domestic Express and Non-Express Services'] = parseFloat(fuelSurcharge['Domestic Express and Non-Express Services'].toString().replace(/[^\d.-]/g, ''));
+    fuelSurcharge['U.S. and International Express Services'] = parseFloat(fuelSurcharge['U.S. and International Express Services'].toString().replace(/[^\d.-]/g, ''));
+    fuelSurcharge['U.S. and International Non-Express Services'] = parseFloat(fuelSurcharge['U.S. and International Non-Express Services'].toString().replace(/[^\d.-]/g, ''));
+    fuelSurcharge['Priority Worldwide'] = parseFloat(fuelSurcharge['Priority Worldwide'].toString().replace(/[^\d.-]/g, ''));
+    return updateFuelSurcharge(fuelSurcharge);
 }
 /* Instructions for loading next years data:
 1. Go to CP and download the rates document for regular

@@ -24,7 +24,9 @@ CREATE TABLE RATES (
 
 CREATE TABLE FUEL_SURCHARGE (
 	percentage decimal(2, 0),
-	date text
+	date text,
+	country text,
+	delivery_type text
 );
 
 CREATE TABLE INTERNATIONAL_CODES (

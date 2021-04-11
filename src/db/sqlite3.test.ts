@@ -172,6 +172,18 @@ describe('GetProvince from db', () => {
 describe('Update Fuel Surcharge', () => {
     let dbPrepareStb;
     let dbRunStb;
+    const newCharges = {
+        "Domestic Express and Non-Express Services": 11.00,
+        "U.S. and International Express Services": 9.25,
+        "U.S. and International Non-Express Services": 7.25,
+        "Priority Worldwide": 6.00
+    };
+    const newChargesInvalidChar = {
+        "Domestic Express and Non-Express Services": -11.00,
+        "U.S. and International Express Services": 9.25,
+        "U.S. and International Non-Express Services": 7.25,
+        "Priority Worldwide": 6.00
+    };
     const fakeStmt = {
         run: function () { }
     }
@@ -188,36 +200,16 @@ describe('Update Fuel Surcharge', () => {
     it('Successfully updates table', async () => {
         dbRunStb.yields(null, null);
         try {
-            await updateFuelSurcharge(11);
+            await updateFuelSurcharge(newCharges);
         } catch (e) {
             fail('Failed to update row');
-        }
-    });
-
-    it('Fails to update if percentage is a negative number', async () => {
-        try {
-            dbRunStb.yields(null, null);
-            await updateFuelSurcharge(-1);
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e).to.equal('Percentage must be specified between 0.00 and 99.99');
-        }
-    });
-
-    it('Fails to update if percentage is greater than 100', async () => {
-        try {
-            dbRunStb.yields(null, null);
-            await updateFuelSurcharge(101);
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e).to.equal('Percentage must be specified between 0.00 and 99.99');
         }
     });
 
     it('Returns an error from db', async () => {
         try {
             dbRunStb.yields('SQLITE3 Error:');
-            await updateFuelSurcharge(12);
+            await updateFuelSurcharge(newCharges);
             fail('Expected exception to be thrown');
         } catch (e) {
             expect(e).to.equal('SQLITE3 Error:');
@@ -242,10 +234,10 @@ describe('Get Fuel Surcharge', () => {
     });
 
     it('Successfully updates table', async () => {
-        dbGetStb.yields(null, { percentage: '8' });
+        dbGetStb.yields(null, { percentage: '0.08' });
         try {
-            const fuelSurcharge = await getFuelSurcharge();
-            expect(fuelSurcharge).to.equal(8);
+            const fuelSurcharge = await getFuelSurcharge('Canada', 'express');
+            expect(fuelSurcharge).to.equal(0.08);
         } catch (e) {
             fail('Failed to update row');
         }
@@ -254,7 +246,7 @@ describe('Get Fuel Surcharge', () => {
     it('Returns an error from db', async () => {
         try {
             dbGetStb.yields('SQLITE3 Error:');
-            await getFuelSurcharge();
+            await getFuelSurcharge('Canada', 'regular');
             fail('Expected exception to be thrown');
         } catch (e) {
             expect(e).to.equal('SQLITE3 Error:');

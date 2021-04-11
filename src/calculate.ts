@@ -223,7 +223,7 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
 
             // get fuel rate
 
-            const fuelSurchargePercentage = await getFuelSurcharge();
+            const fuelSurchargePercentage = await getFuelSurcharge('Canada', deliverySpeed);
             // add fuel rate to final cost
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
             // IF this api call gets too slow; these two calls can be replaced with postal code mappings
@@ -272,7 +272,7 @@ export const calculateShippingUSA = (source: string, dest: string, weightInKg: n
             }
 
             // get fuel rate
-            const fuelSurchargePercentage = await getFuelSurcharge();
+            const fuelSurchargePercentage = await getFuelSurcharge('USA', deliverySpeed);
             // add fuel rate to final cost
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
 
@@ -303,7 +303,7 @@ export const calculateShippingUSA = (source: string, dest: string, weightInKg: n
             }
 
             // get fuel rate
-            const fuelSurchargePercentage = await getFuelSurcharge();
+            const fuelSurchargePercentage = await getFuelSurcharge('INTERNATIONAL', deliverySpeed);
             // add fuel rate to final cost
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
 
