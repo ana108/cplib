@@ -128,7 +128,8 @@ export const validateAddress = (address: Address): Address => {
     }
     return cleanAddress;
 }
-export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliverySpeed: string = 'regular'): Promise<number> => {
+export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType: string = 'regular'): Promise<number> => {
+    const deliverySpeed = deliveryType.trim().toLowerCase();
     return new Promise<number>((resolve, reject) => {
         try {
             if (!weightInKg || weightInKg <= 0) {
@@ -139,17 +140,12 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
                 throw new Error('Weight must be a numeric value');
             }
 
-            // TODO these dont apply to american or international
-            const validDelivery = ['regular', 'priority', 'express'];
-            if (!validDelivery.includes(deliverySpeed.toLocaleLowerCase())) {
-                throw new Error('Delivery type must be one of the following: regular, priority or express');
-            }
-
+            const canadaDeliverySpeeds = ['regular', 'priority', 'express'];
+            const americanDeliverySpeeds = ['express', 'priority', 'tracked_packet', 'small_packet'];
             let source = validateAddress(sourceAddress);
             let destination = validateAddress(destinationAddress);
             // TODO expedited
-            let americanDeliverySpeeds: string[] = ['express', 'priority', 'tracked_packet', 'small_packet'];
-            if (destination.country === 'Canada') {
+            if (destination.country === 'Canada' && canadaDeliverySpeeds.includes(deliverySpeed)) {
                 calculateShippingCanada(source.postalCode, destination.postalCode, weightInKg, deliverySpeed).then(data => {
                     resolve(data);
                 }).catch(e => {
@@ -163,10 +159,10 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
                 });
             } else {
                 // TODO international stuff
+                reject('Not implemented yet');
             }
 
         } catch (e) {
-            console.log('Error! ' + e.message);
             reject(e);
         }
     });
@@ -283,11 +279,11 @@ export const calculateShippingUSA = (source: string, dest: string, weightInKg: n
 
     });
 }
-/*export const calculateShippingInternational = (destinationCountry: string, weightInKg: number,
+export const calculateShippingInternational = (destinationCountry: string, weightInKg: number,
     deliverySpeed: string = 'regular'): Promise<number> => {
     return new Promise<number>(async (resolve, reject) => {
         try {
-            
+
             // get rate code
             const rateCode = await getRateCode(sourcePostalCode, destinationPostalCode);
 
@@ -313,7 +309,7 @@ export const calculateShippingUSA = (source: string, dest: string, weightInKg: n
         }
 
     });
-}*/
+}
 // math utility function
 function round(num: number): number {
     return Math.round(num * 100 + Number.EPSILON) / 100
