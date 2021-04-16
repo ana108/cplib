@@ -231,3 +231,17 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
     });
   })
 }
+
+export const getExpressInternational = (): Promise<any[]> => {
+  const getLatestFuelSurcharge = `select * from international_codes where delivery_type = 'express'`;
+  return new Promise<any[]>((resolve, reject) => {
+    const stmt = db.prepare(getLatestFuelSurcharge);
+    stmt.all([], (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  })
+}

@@ -1,8 +1,7 @@
 import fs from 'fs';
 import readline from 'readline';
 import { once } from 'events';
-import { saveToDb, updateFuelSurcharge } from './db/sqlite3';
-import { rejects } from 'assert';
+import { saveToDb, updateFuelSurcharge, getExpressInternational } from './db/sqlite3';
 var os = require("os");
 
 export const readFile = async function (fileName: string, type: string, year: number, customer_type: string, country: string): Promise<any> {
@@ -144,6 +143,50 @@ export const updateAllFuelSurcharges = async (fuelSurcharge: FuelTable): Promise
     fuelSurcharge['U.S. and International Non-Express Services'] = parseFloat(fuelSurcharge['U.S. and International Non-Express Services'].toString().replace(/[^\d.-]/g, ''));
     fuelSurcharge['Priority Worldwide'] = parseFloat(fuelSurcharge['Priority Worldwide'].toString().replace(/[^\d.-]/g, ''));
     return updateFuelSurcharge(fuelSurcharge);
+}
+export const cleanData = async (): Promise<any> => {
+    let allExpressRows = await getExpressInternational();
+    const logger = fs.createWriteStream(`${__dirname}/../resources/international_codes.txt`, {
+        flags: 'a' // 'a' means appending (old data will be preserved)
+    });
+    logger.on('open', (fd) => {
+        allExpressRows.forEach(row => {
+            logger.write(row.country_name + '-' + row.country_code + '-' + row.rate_code + '-' + row.delivery_type + os.EOL);
+        });
+        logger.end();
+    });
+
+    /*logger.write(rates[0] + os.EOL);
+    for (let i = 1; i < weightClass.length; i++) {
+        logger.write(weightClass[i] + ' ' + rates[i] + os.EOL);
+    }*/
+
+    return;
+}
+export const reloadData = async (): Promise<any> => {
+    const stream = fs.createReadStream(`${__dirname}/../resources/international_codes.txt`, { emitClose: true });
+    const rl = readline.createInterface(stream);
+    let labels: string[] = [];
+    let isFirst = true;
+    const inputsAll: string[] = [];
+    rl.on('line', (input: string) => {
+        if (isFirst) {
+            labels = input.split(' ');
+            isFirst = false;
+        } else {
+            const tokens = input.split('-');
+            let country_name = tokens[0];
+            let country_code = tokens[1];
+            let rate_code = tokens[2];
+            let delivery_type = tokens[tokens.length - 1];
+            const insertDataSQL = `insert into rate_code_mapping(source, destination, rate_code, country, delivery_type) VALUES('Canada', '${country_code}', '${rate_code}', '${country_name}', '${delivery_type}')`;
+            inputsAll.push(insertDataSQL);
+        }
+    });
+    await once(rl, 'close');
+    return Promise.all(inputsAll.map(async entry => {
+        return saveToDb(entry)
+    }));
 }
 /* Instructions for loading next years data:
 1. Go to CP and download the rates document for regular

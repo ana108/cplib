@@ -95,7 +95,7 @@ export const mapProvinceToCode = (region: string): string => {
         throw new Error('The region provided is not a valid region');
     }
 }
-export const validateAddress = (address: Address): Address => {
+export const validateAddress = async (address: Address): Promise<Address> => {
     if (!address || !address.country) {
         throw new Error('Missing value or missing country property of the address');
     }
@@ -125,12 +125,14 @@ export const validateAddress = (address: Address): Address => {
     } else if (cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITEDSTATES') {
         cleanAddress.country = 'USA';
         cleanAddress.region = mapProvinceToCode(cleanAddress.region);
+    } else {
+        cleanAddress.country = cleanAddress.country.trim().toUpperCase();
     }
     return cleanAddress;
 }
-export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType: string = 'regular'): Promise<number> => {
+export const calculateShipping = async (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType: string = 'regular'): Promise<number> => {
     const deliverySpeed = deliveryType.trim().toLowerCase();
-    return new Promise<number>((resolve, reject) => {
+    return new Promise<number>(async (resolve, reject) => {
         try {
             if (!weightInKg || weightInKg <= 0) {
                 throw new Error('Weight must be present and be a non-negative number');
@@ -142,8 +144,8 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
 
             const canadaDeliverySpeeds = ['regular', 'priority', 'express'];
             const americanDeliverySpeeds = ['express', 'priority', 'tracked_packet', 'small_packet'];
-            let source = validateAddress(sourceAddress);
-            let destination = validateAddress(destinationAddress);
+            let source = await validateAddress(sourceAddress);
+            let destination = await validateAddress(destinationAddress);
             // TODO expedited
             if (destination.country === 'Canada' && canadaDeliverySpeeds.includes(deliverySpeed)) {
                 calculateShippingCanada(source.postalCode, destination.postalCode, weightInKg, deliverySpeed).then(data => {
@@ -285,8 +287,7 @@ export const calculateShippingInternational = (destinationCountry: string, weigh
         try {
 
             // get rate code
-            const rateCode = await getRateCode(sourcePostalCode, destinationPostalCode);
-
+            const rateCode = await getRateCode('Canada', destinationCountry);
             // get cost for regular/priority/express
             let shippingCost;
             if (weightInKg <= 30.0) {
