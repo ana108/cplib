@@ -4,12 +4,12 @@ import {
   , mapProvinceToCode
 } from './calculate';
 import * as calculate from './calculate';
-// var calculate = require('./calculate');
 import * as sinon from 'sinon';
 
 import * as db from './db/sqlite3';
 import * as chai from 'chai';
 import { fail } from 'assert';
+import { assert } from 'console';
 
 const expect = chai.expect;
 /*
@@ -469,22 +469,16 @@ describe('Calculate Shipping Using Addresses', () => {
 
   it('Fails source address validation', () => {
     // @ts-ignore
-    calculateShipping(null, destinationAddress, 1.0, 'regular').catch(e => {
-      expect(e.message).to.equal('Missing value or missing country property of the address');
-    });
+    return calculateShipping(null, destinationAddress, 1.0, 'regular').should.be.rejectedWith('Missing value or missing country property of the address');
   })
 
   it('Fails destination address validation', () => {
     // @ts-ignore
-    calculateShipping(sourceAddress, null, 1.0, 'regular').catch(e => {
-      expect(e.message).to.equal('Missing value or missing country property of the address');
-    });
+    return calculateShipping(sourceAddress, null, 1.0, 'regular').should.be.rejectedWith('Missing value or missing country property of the address');
   })
 
   it('Throws an error if weight is not valid', () => {
-    calculateShipping(sourceAddress, destinationAddress, -1, 'regular').catch(e => {
-      expect(e.message).to.equal('Weight must be present and be a non-negative number');
-    });
+    return calculateShipping(sourceAddress, destinationAddress, -1, 'regular').should.be.rejectedWith('Weight must be present and be a non-negative number');
   })
 
   it('Returns a valid shipping cost: 33.3 - regular', async () => {
@@ -495,9 +489,7 @@ describe('Calculate Shipping Using Addresses', () => {
   })
 
   it('Throws an error if the delivery type is invalid', () => {
-    calculateShipping(sourceAddress, destinationAddress, 29, 'somethingorother').then(data => { }).catch(e => {
-      expect(e.message).to.equal('Delivery type must be one of the following: regular, priority or express');
-    });
+    return calculateShipping(sourceAddress, destinationAddress, 29, 'somethingorother').should.be.rejectedWith('Delivery type must be one of the following: regular, priority, express or expedited');
   })
 
   it('Returns a valid shipping cost: 0.7 - regular', async () => {

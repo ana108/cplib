@@ -2,6 +2,13 @@ import * as sinon from 'sinon';
 
 import { db } from './sqlite3';
 import * as chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+
+// Load chai-as-promised support
+chai.use(chaiAsPromised);
+
+// Initialise should API (attaches as a property on Object)
+chai.should();
 import { getRateCode, saveToDb, getRate, options, getProvince, updateFuelSurcharge, getFuelSurcharge } from './sqlite3'
 import { fail } from 'assert';
 
@@ -18,28 +25,23 @@ describe('GetRateCode from db', () => {
 
     it('Returns rate code from db', async () => {
         dbGetStb.yields(null, { rate_code: 'A5' });
-        let rateCode = await getRateCode('K1V2R9', 'J9H5V8');
-        expect(rateCode).to.equal('A5');
+        try {
+            let rateCode = await getRateCode('K1V2R9', 'J9H5V8');
+            expect(rateCode).to.equal('A5');
+        } catch (e) {
+            fail();
+        }
+
     });
 
     it('Returns an error from db', async () => {
         dbGetStb.yields(new Error('SQLITE3 Error:'));
-        try {
-            await getRateCode('K1V2R9', 'J9H5V8');
-            fail('Broken promise not rejected');
-        } catch (e) {
-            expect(e.message).to.equal('SQLITE3 Error:');
-        }
+        return getRateCode('K1V2R9', 'J9H5V8').should.be.rejectedWith('SQLITE3 Error:');
     });
 
     it('Returns an empty row from db', async () => {
         dbGetStb.yields(null, null);
-        try {
-            await getRateCode('K1V2R9', 'J9H5V8');
-            fail('Broken promise not rejected');
-        } catch (e) {
-            expect(e.message).to.equal('Failed to find rate code for the given postal codes');
-        }
+        return getRateCode('K1V2R9', 'J9H5V8').should.be.rejectedWith('Failed to find rate code for the given postal codes');
     });
 });
 
@@ -66,13 +68,8 @@ describe('Save to db', () => {
     });
 
     it('Returns an error from db', async () => {
-        try {
-            dbRunStb.yields({ message: 'SQLITE3 Error:' });
-            const result = await saveToDb('insert into test values(\'helloworld\')');
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e).to.equal('SQLITE3 Error:');
-        }
+        dbRunStb.yields({ message: 'SQLITE3 Error:' });
+        saveToDb('insert into test values(\'helloworld\')').should.be.rejectedWith('SQLITE3 Error:');
     });
 });
 
@@ -105,24 +102,14 @@ describe('GetRate from db', () => {
         expect(result).to.equal(10.22);
     });
 
-    it('Call to db returns no rows', async () => {
-        try {
-            dbRunStb.yields(null, null);
-            await getRate(rateCode, 1.0, opts);
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e.message).to.equal('Failed to find price for those parameters');
-        }
+    it('Call to db returns no rows', () => {
+        dbRunStb.yields(null, null);
+        return getRate(rateCode, 1.0, opts).should.be.rejectedWith('Failed to find price for those parameters');
     });
 
-    it('Returns an error from db', async () => {
-        try {
-            dbRunStb.yields('SQLITE3 Error:');
-            await getRate(rateCode, 1.0, opts);
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e).to.equal('SQLITE3 Error:');
-        }
+    it('Returns an error from db', () => {
+        dbRunStb.yields('SQLITE3 Error:');
+        return getRate(rateCode, 1.0, opts).should.be.rejectedWith('SQLITE3 Error:');
     });
 });
 
@@ -149,23 +136,13 @@ describe('GetProvince from db', () => {
     });
 
     it('Call to db returns no rows', async () => {
-        try {
-            dbGetStb.yields(null, null);
-            await getProvince('Z1K');
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e.message).to.equal('No province found for the given postal code Z1K');
-        }
+        dbGetStb.yields(null, null);
+        return getProvince('Z1K').should.be.rejectedWith('No province found for the given postal code Z1K');
     });
 
     it('Returns an error from db', async () => {
-        try {
-            dbGetStb.yields('SQLITE3 Error:');
-            await getProvince('111');
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e).to.equal('SQLITE3 Error:');
-        }
+        dbGetStb.yields('SQLITE3 Error:');
+        return getProvince('111').should.be.rejectedWith('SQLITE3 Error:');
     });
 });
 
@@ -207,13 +184,8 @@ describe('Update Fuel Surcharge', () => {
     });
 
     it('Returns an error from db', async () => {
-        try {
-            dbRunStb.yields('SQLITE3 Error:');
-            await updateFuelSurcharge(newCharges);
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e).to.equal('SQLITE3 Error:');
-        }
+        dbRunStb.yields('SQLITE3 Error:');
+        updateFuelSurcharge(newCharges).should.be.rejectedWith('SQLITE3 Error:');
     });
 });
 
@@ -244,12 +216,7 @@ describe('Get Fuel Surcharge', () => {
     });
 
     it('Returns an error from db', async () => {
-        try {
-            dbGetStb.yields('SQLITE3 Error:');
-            await getFuelSurcharge('Canada', 'regular');
-            fail('Expected exception to be thrown');
-        } catch (e) {
-            expect(e).to.equal('SQLITE3 Error:');
-        }
+        dbGetStb.yields('SQLITE3 Error:');
+        return getFuelSurcharge('Canada', 'regular').should.be.rejectedWith('SQLITE3 Error:');
     });
 });

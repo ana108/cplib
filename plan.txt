@@ -1,13 +1,21 @@
 To DO:
 
-American Rates
-International
+Come up with integration test cases
+Set up integration tests
+Automate updating fuel surcharge
+Figure out how to automate updating annual rates
+Figure out how to manually update province sales taxes
+(regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
+(small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
+suggested: https://www.npmjs.com/package/pdf-parse
+
 Documentation
  - get shipping cost
  - get shipping cost by postal code (canada only)
  - update fuel surcharge
  - given a postal code, get province
- - get all postal codes for province (?)
+ - get valid delivery types for country
+ - How to check if your shipping rates are valid, and what to do if they're not
 
 Update package.json and publish package
 Manually configure and test installing package through npm on both ubuntu and windows

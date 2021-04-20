@@ -82,8 +82,8 @@ export const oneTimePopulate = async (deliveryType: string): Promise<any> => { /
         inputsAll.push(sql);
     });
     return Promise.all(inputsAll.map(async entry => {
-        // console.log(entry);
-        return saveToDb(entry)
+        console.log(entry);
+        //return saveToDb(entry)
     }));
 }
 export const files = async function (): Promise<any> {

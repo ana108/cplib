@@ -4,12 +4,12 @@ import { FuelTable } from '..';
 const dbname = __dirname + "/../../resources/cplib.db";
 export const db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
 
-export const getRateCode = (src: string, dest: string): Promise<any> => {
-  let source = src.substr(0, 3);
-  let destination = dest.substr(0, 3);
-
+export const getRateCode = (source: string, destination: string, delivery_type?: string): Promise<any> => {
   return new Promise(function (resolve, reject) {
-    let getRateCodeMapping = `select rate_code from rate_code_mapping where source ='${source}' and destination like '%${destination}%'`;
+    let getRateCodeMapping = `select rate_code from rate_code_mapping where source ='${source}' and (destination like '%${destination}%' OR upper(country) = '${destination}')`;
+    if (delivery_type) {
+      getRateCodeMapping = `${getRateCodeMapping} and delivery_type = '${delivery_type}'`;
+    }
     db.get(getRateCodeMapping, [], (err, row) => {
       if (err) {
         reject(err);
@@ -25,7 +25,11 @@ export const getRateCode = (src: string, dest: string): Promise<any> => {
 
 export const saveToDb = (sqlStmt: string): Promise<any> => {
   return new Promise((resolve, reject) => {
-    const stmt = db.prepare(sqlStmt);
+    const stmt = db.prepare(sqlStmt, err => {
+      if (err) {
+        reject(err);
+      }
+    });
     stmt.run((err: Error) => {
       if (err) {
         reject(err.message);
