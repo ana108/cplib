@@ -147,7 +147,6 @@ export const calculateShipping = async (sourceAddress: Address, destinationAddre
             const internationalDeliverySpeeds = ['priority', 'express', 'air', 'surface', 'tracked_packet', 'small_packet_air', 'small_packet_surface'];
             let source = validateAddress(sourceAddress);
             let destination = validateAddress(destinationAddress);
-            // TODO expedited
             if (destination.country === 'Canada' && canadaDeliverySpeeds.includes(deliverySpeed)) {
                 calculateShippingCanada(source.postalCode, destination.postalCode, weightInKg, deliverySpeed).then(data => {
                     resolve(data);
@@ -260,7 +259,6 @@ export const calculateShippingUSA = (sourceProvince: string, destState: string, 
             // for package dimensions make sure to convert it into a type
             if (deliverySpeed === 'priority') {
                 rateCode = await getRateCode('Canada', 'UNITED STATES', deliverySpeed);
-                console.log('RATE CODE ' + rateCode);
             } else if (deliverySpeed === 'express') {
                 rateCode = await getRateCode(sourceProvince, destState, deliverySpeed);
             } else if (deliverySpeed === 'tracked_packet' || deliverySpeed === 'small_packet') {
@@ -280,16 +278,16 @@ export const calculateShippingUSA = (sourceProvince: string, destState: string, 
                 let difference = weightInKg - 30.0;
                 shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
             }
-            /*if (deliverySpeed === 'priority' && (destState === 'HI' || destState === 'AK')) {
-                shippingCost += 8.50;
-            }*/
 
             // get fuel rate
             const fuelSurchargePercentage = await getFuelSurcharge('USA', deliverySpeed);
             // add fuel rate to final cost
-            const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+            let pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+            if (deliverySpeed === 'priority' && (destState === 'HI' || destState === 'AK')) {
+                pretaxCost += 8.50;
+            }
 
-            resolve(round(shippingCost));
+            resolve(round(pretaxCost));
         } catch (e) {
             reject(e);
         }

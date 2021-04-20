@@ -1,5 +1,6 @@
 To DO:
 
+Insert expedited prices for Canada, USA
 Come up with integration test cases
 Set up integration tests
 Automate updating fuel surcharge
