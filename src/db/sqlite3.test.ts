@@ -9,7 +9,7 @@ chai.use(chaiAsPromised);
 
 // Initialise should API (attaches as a property on Object)
 chai.should();
-import { getRateCode, saveToDb, getRate, options, getProvince, updateFuelSurcharge, getFuelSurcharge } from './sqlite3'
+import { getRateCode, saveToDb, getRate, getMaxRate, options, getProvince, updateFuelSurcharge, getFuelSurcharge } from './sqlite3'
 import { fail } from 'assert';
 
 const expect = chai.expect;
@@ -113,6 +113,56 @@ describe('GetRate from db', () => {
     });
 });
 
+describe('Get Max Rate from db', () => {
+    let dbPrepareStb;
+    let dbAllStb;
+    const fakeStmt = {
+        all: function () { }
+    }
+
+    const rateCode = 'A5';
+    const opts: options = {
+        country: 'Canada',
+        weight_type: 'kg',
+        type: 'regular',
+        customerType: 'regular',
+        year: 2021
+    };
+
+    beforeEach(() => {
+        dbPrepareStb = sinon.stub(db, 'prepare').returns(fakeStmt);
+        dbAllStb = sinon.stub(fakeStmt, 'all');
+    });
+    afterEach(() => {
+        dbPrepareStb.restore();
+        dbAllStb.restore();
+    });
+
+    it('Successfully retrieves two rows', async () => {
+        dbAllStb.yields(null, [{ price: '5.22' }, { price: '10.22' }]);
+        const result = await getMaxRate(rateCode, opts);
+        const expected = {
+            maxRate: 10.22,
+            incrementalRate: 5.22
+        };
+        expect(result).to.deep.equal(expected);
+    });
+
+    it('Fails if only one row is returned', () => {
+        dbAllStb.yields(null, [{ price: '5.22' }]);
+        return getMaxRate(rateCode, opts).should.be.rejectedWith('Failed to find price for those parameters');
+    });
+
+    it('Call to db returns no rows', () => {
+        dbAllStb.yields(null, null);
+        return getMaxRate(rateCode, opts).should.be.rejectedWith('Failed to find price for those parameters');
+    });
+
+    it('Returns an error from db', () => {
+        dbAllStb.yields('SQLITE3 Error:');
+        return getMaxRate(rateCode, opts).should.be.rejectedWith('SQLITE3 Error:');
+    });
+});
 describe('GetProvince from db', () => {
     let dbPrepareStb;
     let dbGetStb;

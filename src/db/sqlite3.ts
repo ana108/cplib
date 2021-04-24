@@ -54,7 +54,7 @@ export const getRate = (rateCode: string, weight: number,
   const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = $year ' +
     'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
   return new Promise<number>((resolve, reject) => {
-    const stmt = db.prepare(getPrice)
+    const stmt = db.prepare(getPrice);
     stmt.get({
       $country: options.country,
       $rateCode: rateCode,
@@ -231,20 +231,6 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
         reject(err);
       } else {
         resolve(parseFloat(row.percentage));
-      }
-    });
-  })
-}
-
-export const getExpressInternational = (): Promise<any[]> => {
-  const getLatestFuelSurcharge = `select * from international_codes where delivery_type = 'express'`;
-  return new Promise<any[]>((resolve, reject) => {
-    const stmt = db.prepare(getLatestFuelSurcharge);
-    stmt.all([], (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
       }
     });
   })

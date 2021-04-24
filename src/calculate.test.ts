@@ -9,7 +9,6 @@ import * as sinon from 'sinon';
 import * as db from './db/sqlite3';
 import * as chai from 'chai';
 import { fail } from 'assert';
-import { assert } from 'console';
 
 const expect = chai.expect;
 /*
@@ -218,8 +217,51 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'priority');
     expect(cost).to.equal(68.21);
   });
+  it('SB - Regular - 30.0kg - 59.60', async () => {
+    getRateStb.resolves(59.60);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'regular', 'small_business');
+    expect(cost).to.equal(68.21);
+  });
+  it('SB - Regular -  1.3kg - 24.96', async () => {
+    getRateStb.resolves(24.96);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'regular', 'small_business');
+    expect(cost).to.equal(28.57);
+  });
 
-})
+  it('SB - Priority -  1.3kg - 24.96', async () => {
+    getRateStb.resolves(24.96);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority', 'small_business');
+    expect(cost).to.equal(28.57);
+  });
+
+  it.skip('SB - Express -  1.3kg - 24.96', async () => {
+    getRateStb.resolves(24.96);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express', 'small_business');
+    expect(cost).to.equal(28.57);
+  });
+
+  it('SB - Expedited -  1.3kg - 24.96', async () => {
+    getRateStb.resolves(24.96);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'expedited', 'small_business');
+    expect(cost).to.equal(27.21);
+  });
+});
+describe.skip('Calculate shipping cost for american addresses', () => {
+
+});
+describe.skip('Calculate shipping cost for international addresses', () => {
+
+});
 describe('Validate the address for calculation', () => {
   it('Throws error if address object is null', () => {
     try {
@@ -527,6 +569,13 @@ describe('Calculate Shipping Using Addresses', () => {
     } catch (e) {
       fail(e);
     }
+  })
+
+  it('Expedited - Error: Delivery Type not supported', async () => {
+    return calculateShipping(sourceAddress, destinationAddress, 1.0, 'expedited').should.be.rejectedWith('Delivery type must be one of the following: regular, priority, express or expedited');
+  });
+  it.skip('Handle new cases - make sure the right sub function gets called', async () => {
+
   })
 });
 

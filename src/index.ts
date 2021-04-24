@@ -1,7 +1,7 @@
 import fs from 'fs';
 import readline from 'readline';
 import { once } from 'events';
-import { saveToDb, updateFuelSurcharge, getExpressInternational } from './db/sqlite3';
+import { saveToDb, updateFuelSurcharge } from './db/sqlite3';
 var os = require("os");
 
 export const readFile = async function (fileName: string, type: string, year: number, customer_type: string, country: string): Promise<any> {
@@ -94,9 +94,10 @@ export const files = async function (): Promise<any> {
         console.log('Could not find the directory ' + regular_rate_base_dir);
         return `Failed to find directory ${regular_rate_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
     }
-    const FILES = {
+    const REGULAR_FILES = {
         'express': ['express_canada_1.txt', 'express_canada_2.txt', 'express_usa_.txt', 'express_international_.txt'],
         'priority': ['priority_canada_1.txt', 'priority_canada_2.txt', 'priority_international_.txt'],
+        'expedited': ['expedited_usa_.txt'],
         'regular': ['regular_canada_1.txt', 'regular_canada_2.txt'],
         'air': ['air_international_.txt'],
         'surface': ['surface_international_.txt'],
@@ -105,8 +106,8 @@ export const files = async function (): Promise<any> {
         'small_packet_surface': ['small_packet_surface_international_.txt']
     };
 
-    await Promise.all(Object.keys(FILES).map(async fileType => {
-        return Promise.all(FILES[fileType].map(async fileName => {
+    await Promise.all(Object.keys(REGULAR_FILES).map(async fileType => {
+        return Promise.all(REGULAR_FILES[fileType].map(async fileName => {
             const filePath = regular_rate_base_dir + fileName;
             const totalTokens = fileName.split('_');
             const country = totalTokens[totalTokens.length - 2];
@@ -118,9 +119,19 @@ export const files = async function (): Promise<any> {
     if (!dataPrepared) {
         return `Failed to find directory ${small_business_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;
     }
-
-    await Promise.all(Object.keys(FILES).map(async fileType => {
-        return Promise.all(FILES[fileType].map(async fileName => {
+    const SB_FILES = {
+        'express': ['express_canada_1.txt', 'express_canada_2.txt', 'express_usa_.txt', 'express_international_.txt'],
+        'priority': ['priority_canada_1.txt', 'priority_canada_2.txt', 'priority_international_.txt'],
+        'expedited': ['expedited_canada_.txt', 'expedited_usa_.txt'],
+        'regular': ['regular_canada_1.txt', 'regular_canada_2.txt'],
+        'air': ['air_international_.txt'],
+        'surface': ['surface_international_.txt'],
+        'tracked_packet': ['tracked_packet_international_.txt'],
+        'small_packet_air': ['small_packet_air_international_.txt'],
+        'small_packet_surface': ['small_packet_surface_international_.txt']
+    };
+    await Promise.all(Object.keys(SB_FILES).map(async fileType => {
+        return Promise.all(SB_FILES[fileType].map(async fileName => {
             const filePath = small_business_base_dir + fileName;
             const totalTokens = fileName.split('_');
             const country = totalTokens[totalTokens.length - 2];
@@ -144,25 +155,7 @@ export const updateAllFuelSurcharges = async (fuelSurcharge: FuelTable): Promise
     fuelSurcharge['Priority Worldwide'] = parseFloat(fuelSurcharge['Priority Worldwide'].toString().replace(/[^\d.-]/g, ''));
     return updateFuelSurcharge(fuelSurcharge);
 }
-export const cleanData = async (): Promise<any> => {
-    let allExpressRows = await getExpressInternational();
-    const logger = fs.createWriteStream(`${__dirname}/../resources/international_codes.txt`, {
-        flags: 'a' // 'a' means appending (old data will be preserved)
-    });
-    logger.on('open', (fd) => {
-        allExpressRows.forEach(row => {
-            logger.write(row.country_name + '-' + row.country_code + '-' + row.rate_code + '-' + row.delivery_type + os.EOL);
-        });
-        logger.end();
-    });
 
-    /*logger.write(rates[0] + os.EOL);
-    for (let i = 1; i < weightClass.length; i++) {
-        logger.write(weightClass[i] + ' ' + rates[i] + os.EOL);
-    }*/
-
-    return;
-}
 export const reloadData = async (): Promise<any> => {
     const stream = fs.createReadStream(`${__dirname}/../resources/international_codes.txt`, { emitClose: true });
     const rl = readline.createInterface(stream);
