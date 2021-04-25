@@ -48,8 +48,8 @@ export interface options {
   year?: number
 }
 export const getRate = (rateCode: string, weight: number,
-  opts: options = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<number> => {
-  let defaults = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
+  opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<number> => {
+  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
   let options = { ...defaults, ...opts };
   const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = $year ' +
     'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
@@ -80,8 +80,8 @@ export interface maxRates {
   incrementalRate: number
 };
 export const getMaxRate = (rateCode: string,
-  opts: options = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<maxRates> => {
-  let defaults = { country: 'Canada', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
+  opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<maxRates> => {
+  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
   let options = { ...defaults, ...opts };
   const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and year = $year and type = $deliverySpeed ' +
     ' and customer_type = $customerType  order by max_weight desc limit 2';

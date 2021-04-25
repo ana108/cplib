@@ -104,9 +104,9 @@ export const validateAddress = (address: Address): Address => {
         city: address.city,
         region: address.region,
         postalCode: address.postalCode,
-        country: address.country.toUpperCase().trim().replace(' ', '')
+        country: address.country.toUpperCase().trim()
     }
-    if (cleanAddress.country === 'CA' || cleanAddress.country === 'CANADA' || cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITEDSTATES') {
+    if (cleanAddress.country === 'CA' || cleanAddress.country === 'CANADA' || cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITED STATES') {
         if (!address.postalCode || !address.region) {
             throw new Error('For north american shipments, region and zip code must be provided.');
         } else {
@@ -122,7 +122,7 @@ export const validateAddress = (address: Address): Address => {
             throw new Error('Invalid postal code. Please make sure its in format of A1A1A1');
         }
         cleanAddress.region = mapProvinceToCode(cleanAddress.region);
-    } else if (cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITEDSTATES') {
+    } else if (cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITED STATES') {
         cleanAddress.country = 'USA';
         cleanAddress.region = mapProvinceToCode(cleanAddress.region);
     } else {
@@ -274,7 +274,7 @@ export const calculateShippingUSA = (sourceProvince: string, destState: string, 
             }
 
             if (weightInKg <= 30.0) {
-                shippingCost = await getRate(rateCode, weightInKg, { country: 'international', type: deliverySpeed, customerType });
+                shippingCost = await getRate(rateCode, weightInKg, { country: 'INTERNATIONAL', type: deliverySpeed, customerType });
             } else {
                 let rates: maxRates = await getMaxRate(rateCode, { country: 'USA', type: deliverySpeed, customerType });
 
@@ -316,9 +316,9 @@ export const calculateShippingInternational = (destinationCountry: string, weigh
             // get cost for regular/priority/express
             let shippingCost;
             if (weightInKg <= 30.0) {
-                shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, country: 'international', customerType });
+                shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
             } else {
-                let rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, country: 'international', customerType });
+                let rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
 
                 let difference = weightInKg - 30.0;
                 shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;

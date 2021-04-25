@@ -256,8 +256,155 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     expect(cost).to.equal(27.21);
   });
 });
-describe.skip('Calculate shipping cost for american addresses', () => {
 
+describe('Calculate Shipping Cost to USA', () => {
+  const fuelSurchargePercentage = 0.09;
+  let getRateCodeStb;
+  let getRateStb;
+  let getMaxRateStb;
+  let getFuelSurchargeStb;
+  let getProvinceStb;
+  beforeEach(() => {
+    getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('A5');
+    getRateStb = sinon.stub(db, 'getRate');
+    getMaxRateStb = sinon.stub(db, 'getMaxRate');
+    getFuelSurchargeStb = sinon.stub(db, 'getFuelSurcharge').resolves(0.09);
+    getProvinceStb = sinon.stub(db, 'getProvince');
+  });
+  afterEach(() => {
+    getRateCodeStb.restore();
+    getRateStb.restore();
+    getMaxRateStb.restore();
+    getFuelSurchargeStb.restore();
+    getProvinceStb.restore();
+  });
+
+  it.skip('A5 - Regular - 0.7kg - 10.89', async () => {
+    getRateStb.resolves(10.89);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.70);
+    expect(cost).to.equal(12.46);
+  });
+
+  it.skip('A5 - Regular - 1.0kg - 11.45', async () => {
+    getRateStb.resolves(11.45);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0);
+    expect(cost).to.equal(13.1);
+  });
+
+  it.skip('A5 - Regular - 1.3kg - 11.99', async () => {
+    getRateStb.resolves(11.99);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3);
+    expect(cost).to.equal(13.72);
+  });
+
+  it.skip('A5 - Regular - 30.0kg - 34.39', async () => {
+    getRateStb.resolves(34.39);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30);
+    expect(cost).to.equal(39.36);
+  });
+
+  it.skip('A5 - Regular - 30+kg - 34.39', async () => {
+    getMaxRateStb.resolves({ incrementalRate: 0.34, maxRate: 10.0 });
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 33);
+    expect(cost).to.equal(13.78);
+
+  });
+
+  it.skip('A5 - Express - 0.7kg - 11.51', async () => {
+    getRateStb.resolves(11.51);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'express');
+    expect(cost).to.equal(13.17);
+  });
+
+  it.skip('A5 - Express - 1.0kg - 13.39', async () => {
+    getRateStb.resolves(13.39);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express');
+    expect(cost).to.equal(15.32);
+  });
+
+  it.skip('A5 - Express - 1.3kg - 15.68', async () => {
+    getRateStb.resolves(15.68);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3, 'express');
+    expect(cost).to.equal(17.95);
+  });
+
+  it.skip('A5 - Express - 30.0kg - 40.32', async () => {
+    getRateStb.resolves(40.32);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'express');
+    expect(cost).to.equal(46.15);
+  });
+
+  it.skip('SB - Express -  1.3kg - 24.96', async () => {
+    getRateStb.resolves(24.96);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express', 'small_business');
+    expect(cost).to.equal(28.57);
+  });
+
+  it.skip('SB - Expedited -  1.3kg - 24.96', async () => {
+    getRateStb.resolves(24.96);
+    getProvinceStb.onCall(0).resolves('ON');
+    getProvinceStb.onCall(1).resolves('QC');
+    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'expedited', 'small_business');
+    expect(cost).to.equal(27.21);
+  });
+});
+
+describe('Calculate shipping cost for american addresses', () => {
+  const sourceAddress = {
+    streetAddress: '111 Random St',
+    city: 'Ottawa',
+    region: 'Ontario',
+    postalCode: 'K1V1R9',
+    country: 'Ca'
+  };
+  const destinationAddress = {
+    streetAddress: '2224 - B Random Ave',
+    city: 'Gatineau',
+    region: 'NY',
+    postalCode: '111001',
+    country: 'United States'
+  }
+
+  let calculateShippingUSAStb;
+
+  beforeEach(() => {
+
+    calculateShippingUSAStb = sinon.stub(calculate, 'calculateShippingUSA');
+  });
+  afterEach(() => {
+    calculateShippingUSAStb.restore();
+  });
+  it('Throws an error for invalid type: 0.7 - regular', () => {
+    calculateShippingUSAStb.resolves(12.46);
+    return calculateShipping(sourceAddress, destinationAddress, 0.7, 'regular', 'small_business').should.be.rejectedWith('Delivery type to USA must be one of the following: regular, priority, express, expedited, small_packet or tracked_packet');
+  })
+
+  it('Returns a valid shipping cost : 0.7 - priority', async () => {
+    calculateShippingUSAStb.resolves(12.46);
+    calculateShipping(sourceAddress, destinationAddress, 0.7, 'priority').then(result => {
+      expect(result).to.equal(12.46);
+    });
+  })
 });
 describe.skip('Calculate shipping cost for international addresses', () => {
 
@@ -483,7 +630,7 @@ describe('Validate the address for calculation', () => {
   });
 });
 
-describe('Calculate Shipping Using Addresses', () => {
+describe('Calculate Shipping Using Addresses (Canada)', () => {
   const sourceAddress = {
     streetAddress: '111 Random St',
     city: 'Ottawa',
@@ -571,13 +718,68 @@ describe('Calculate Shipping Using Addresses', () => {
     }
   })
 
-  it('Expedited - Error: Delivery Type not supported', async () => {
+  it('Returns a valid shipping cost: 1.0 - expedited - small_business', async () => {
+    try {
+      calculateShippingCanadaStb.resolves(15.32);
+      const total = await calculateShipping(sourceAddress, destinationAddress, 1.0, 'expedited', 'small_business');
+      expect(total).to.equal(15.32);
+    } catch (e) {
+      fail(e);
+    }
+  })
+
+  it('Expedited (Canada) - Error: Delivery Type not supported', async () => {
     return calculateShipping(sourceAddress, destinationAddress, 1.0, 'expedited').should.be.rejectedWith('Delivery type must be one of the following: regular, priority, express or expedited');
   });
-  it.skip('Handle new cases - make sure the right sub function gets called', async () => {
 
+  it('Small Packet (Canada) - Error: Delivery Type not supported', async () => {
+    return calculateShipping(sourceAddress, destinationAddress, 1.0, 'small_packet').should.be.rejectedWith('Delivery type must be one of the following: regular, priority, express or expedited');
+  });
+
+  it('Small Packet (International) - Error: Delivery Type not supported', async () => {
+    const destinationAddress = {
+      streetAddress: '2224 - B Random Ave',
+      city: 'Gatineau',
+      region: 'Quebec',
+      postalCode: 'j9h 5v8',
+      country: 'Ukraine'
+    }
+    return calculateShipping(sourceAddress, destinationAddress, 1.0, 'small_packet').should.be.rejectedWith('Delivery type must be one of the following: priority,express,air,surface,tracked_packet,small_packet_air,small_packet_surface');
+  });
+
+  it('Small Packet (USA) - Error: Delivery Type not supported', async () => {
+    const destinationAddress = {
+      streetAddress: '2224 - B Random Ave',
+      city: 'Gatineau',
+      region: 'NY',
+      postalCode: 'j9h 5v8',
+      country: 'USA'
+    }
+    return calculateShipping(sourceAddress, destinationAddress, 1.0, 'small_packet_air').should.be.rejectedWith('Delivery type to USA must be one of the following: regular, priority, express, expedited, small_packet or tracked_packet');
+  });
+
+  it('Small Packet (USA) - Small Business - Error: Delivery Type not supported', async () => {
+    const destinationAddress = {
+      streetAddress: '2224 - B Random Ave',
+      city: 'Gatineau',
+      region: 'NY',
+      postalCode: 'j9h 5v8',
+      country: 'USA'
+    }
+    return calculateShipping(sourceAddress, destinationAddress, 1.0, 'small_packet_air', 'small_business').should.be.rejectedWith('Delivery type to USA must be one of the following: regular, priority, express, expedited, small_packet or tracked_packet');
+  });
+
+  it('Returns a valid shipping cost: 1.0 - expedited (small business)', async () => {
+    try {
+      calculateShippingCanadaStb.resolves(15.33);
+      const total = await calculateShipping(sourceAddress, destinationAddress, 1.0, 'expedited', 'small_business');
+      expect(total).to.equal(15.33);
+    } catch (e) {
+      fail(e);
+    }
   })
 });
+
 
 describe('Map province to code and vice versa', () => {
   it('Expect 2 letter Canadian province to stay the same', () => {
