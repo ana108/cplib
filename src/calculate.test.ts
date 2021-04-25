@@ -1,7 +1,6 @@
 import {
   validateAddress, Address, calculateTax,
-  calculateShippingCanada, calculateShipping
-  , mapProvinceToCode
+  calculateShippingCanada, calculateShipping, calculateShippingUSA, mapProvinceToCode
 } from './calculate';
 import * as calculate from './calculate';
 import * as sinon from 'sinon';
@@ -9,6 +8,7 @@ import * as sinon from 'sinon';
 import * as db from './db/sqlite3';
 import * as chai from 'chai';
 import { fail } from 'assert';
+import { maxRates } from './db/sqlite3';
 
 const expect = chai.expect;
 /*
@@ -264,10 +264,14 @@ describe('Calculate Shipping Cost to USA', () => {
   let getMaxRateStb;
   let getFuelSurchargeStb;
   let getProvinceStb;
+  let maxRates: maxRates = {
+    maxRate: 10.89,
+    incrementalRate: 1.06
+  };
   beforeEach(() => {
-    getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('A5');
+    getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('2');
     getRateStb = sinon.stub(db, 'getRate');
-    getMaxRateStb = sinon.stub(db, 'getMaxRate');
+    getMaxRateStb = sinon.stub(db, 'getMaxRate').resolves(maxRates);
     getFuelSurchargeStb = sinon.stub(db, 'getFuelSurcharge').resolves(0.09);
     getProvinceStb = sinon.stub(db, 'getProvince');
   });
@@ -279,93 +283,185 @@ describe('Calculate Shipping Cost to USA', () => {
     getProvinceStb.restore();
   });
 
-  it.skip('A5 - Regular - 0.7kg - 10.89', async () => {
+  it('2 - Priority - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.70);
-    expect(cost).to.equal(12.46);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'regular');
+    expect(cost).to.equal(11.87);
   });
 
-  it.skip('A5 - Regular - 1.0kg - 11.45', async () => {
-    getRateStb.resolves(11.45);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0);
-    expect(cost).to.equal(13.1);
+  it('2 - Priority - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'small_business');
+    expect(cost).to.equal(11.87);
   });
 
-  it.skip('A5 - Regular - 1.3kg - 11.99', async () => {
-    getRateStb.resolves(11.99);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3);
-    expect(cost).to.equal(13.72);
+  it('2 - Priority - 30.7kg - 10.89 - Regular', async () => {
+    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'regular');
+    expect(cost).to.equal(13.49);
   });
 
-  it.skip('A5 - Regular - 30.0kg - 34.39', async () => {
-    getRateStb.resolves(34.39);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30);
-    expect(cost).to.equal(39.36);
+  it('2 - Priority - 30.7kg - 10.89 - Small Business', async () => {
+    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'small_business');
+    expect(cost).to.equal(13.49);
   });
 
-  it.skip('A5 - Regular - 30+kg - 34.39', async () => {
-    getMaxRateStb.resolves({ incrementalRate: 0.34, maxRate: 10.0 });
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 33);
-    expect(cost).to.equal(13.78);
-
+  it('ALASKA - Priority - 0.7kg - 10.89 - Regular', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'regular');
+    expect(cost).to.equal(20.37);
   });
 
-  it.skip('A5 - Express - 0.7kg - 11.51', async () => {
-    getRateStb.resolves(11.51);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'express');
-    expect(cost).to.equal(13.17);
+  it('ALASKA - Priority - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'small_business');
+    expect(cost).to.equal(20.37);
   });
 
-  it.skip('A5 - Express - 1.0kg - 13.39', async () => {
-    getRateStb.resolves(13.39);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express');
-    expect(cost).to.equal(15.32);
+  it('ALASKA - Priority - 30.7kg - 10.89 - Regular', async () => {
+    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'regular');
+    expect(cost).to.equal(21.99);
   });
 
-  it.skip('A5 - Express - 1.3kg - 15.68', async () => {
-    getRateStb.resolves(15.68);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3, 'express');
-    expect(cost).to.equal(17.95);
+  it('ALASKA - Priority - 30.7kg - 10.89 - Small Business', async () => {
+    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'small_business');
+    expect(cost).to.equal(21.99);
   });
 
-  it.skip('A5 - Express - 30.0kg - 40.32', async () => {
-    getRateStb.resolves(40.32);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'express');
-    expect(cost).to.equal(46.15);
+
+  it('2 - Tracked Packet - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'tracked_packet', 'small_business');
+    expect(cost).to.equal(11.87);
   });
 
-  it.skip('SB - Express -  1.3kg - 24.96', async () => {
-    getRateStb.resolves(24.96);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express', 'small_business');
-    expect(cost).to.equal(28.57);
+  it('2 - Tracked Packet - 2.1kg - Error - Regular', async () => {
+    return calculateShippingUSA('ON', 'NY', 2.10, 'tracked_packet', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
   });
 
-  it.skip('SB - Expedited -  1.3kg - 24.96', async () => {
-    getRateStb.resolves(24.96);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'expedited', 'small_business');
-    expect(cost).to.equal(27.21);
+  it('2 - Small Packet - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'small_packet', 'small_business');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('2 - Small Packet - 2.1kg - Error - Regular', async () => {
+    return calculateShippingUSA('ON', 'NY', 2.10, 'small_packet', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
+  });
+
+  it('2 - Expedited - 30.7kg - 10.89 - Small Business', async () => {
+    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'expedited', 'small_business');
+    expect(cost).to.equal(13.49);
+  });
+
+
+  it('2 - Expedited - 0.7kg - 10.89 - Regular', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'expedited', 'regular');
+    expect(cost).to.equal(11.87);
+  });
+});
+
+describe.skip('Calculate Shipping Cost Internationally', () => {
+  const fuelSurchargePercentage = 0.09;
+  let getRateCodeStb;
+  let getRateStb;
+  let getMaxRateStb;
+  let getFuelSurchargeStb;
+  let getProvinceStb;
+  let maxRates: maxRates = {
+    maxRate: 10.89,
+    incrementalRate: 1.06
+  };
+  beforeEach(() => {
+    getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('2');
+    getRateStb = sinon.stub(db, 'getRate');
+    getMaxRateStb = sinon.stub(db, 'getMaxRate').resolves(maxRates);
+    getFuelSurchargeStb = sinon.stub(db, 'getFuelSurcharge').resolves(0.09);
+    getProvinceStb = sinon.stub(db, 'getProvince');
+  });
+  afterEach(() => {
+    getRateCodeStb.restore();
+    getRateStb.restore();
+    getMaxRateStb.restore();
+    getFuelSurchargeStb.restore();
+    getProvinceStb.restore();
+  });
+
+  it('2 - Priority - 0.7kg - 10.89 - Regular', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'regular');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('2 - Priority - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'small_business');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('2 - Priority - 30.7kg - 10.89 - Regular', async () => {
+    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'regular');
+    expect(cost).to.equal(13.49);
+  });
+
+  it('2 - Priority - 30.7kg - 10.89 - Small Business', async () => {
+    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'small_business');
+    expect(cost).to.equal(13.49);
+  });
+
+  it('ALASKA - Priority - 0.7kg - 10.89 - Regular', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'regular');
+    expect(cost).to.equal(20.37);
+  });
+
+  it('ALASKA - Priority - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'small_business');
+    expect(cost).to.equal(20.37);
+  });
+
+  it('ALASKA - Priority - 30.7kg - 10.89 - Regular', async () => {
+    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'regular');
+    expect(cost).to.equal(21.99);
+  });
+
+  it('ALASKA - Priority - 30.7kg - 10.89 - Small Business', async () => {
+    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'small_business');
+    expect(cost).to.equal(21.99);
+  });
+
+
+  it('2 - Tracked Packet - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'tracked_packet', 'small_business');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('2 - Tracked Packet - 2.1kg - Error - Regular', async () => {
+    return calculateShippingUSA('ON', 'NY', 2.10, 'tracked_packet', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
+  });
+
+  it('2 - Small Packet - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'small_packet', 'small_business');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('2 - Small Packet - 2.1kg - Error - Regular', async () => {
+    return calculateShippingUSA('ON', 'NY', 2.10, 'small_packet', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
+  });
+
+  it('2 - Expedited - 30.7kg - 10.89 - Small Business', async () => {
+    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'expedited', 'small_business');
+    expect(cost).to.equal(13.49);
+  });
+
+
+  it('2 - Expedited - 0.7kg - 10.89 - Regular', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'expedited', 'regular');
+    expect(cost).to.equal(11.87);
   });
 });
 
@@ -407,7 +503,40 @@ describe('Calculate shipping cost for american addresses', () => {
   })
 });
 describe.skip('Calculate shipping cost for international addresses', () => {
+  const sourceAddress = {
+    streetAddress: '111 Random St',
+    city: 'Ottawa',
+    region: 'Ontario',
+    postalCode: 'K1V1R9',
+    country: 'Ca'
+  };
+  const destinationAddress = {
+    streetAddress: '2224 - B Random Ave',
+    city: 'Gatineau',
+    region: 'NY',
+    postalCode: '111001',
+    country: 'United States'
+  }
 
+  let calculateShippingIntlStb;
+
+  beforeEach(() => {
+    calculateShippingIntlStb = sinon.stub(calculate, 'calculateShippingInternational');
+  });
+  afterEach(() => {
+    calculateShippingIntlStb.restore();
+  });
+  it('Throws an error for invalid type: 0.7 - regular', () => {
+    calculateShippingIntlStb.resolves(12.46);
+    return calculateShipping(sourceAddress, destinationAddress, 0.7, 'regular', 'small_business').should.be.rejectedWith('Delivery type to USA must be one of the following: regular, priority, express, expedited, small_packet or tracked_packet');
+  })
+
+  it('Returns a valid shipping cost : 0.7 - priority', async () => {
+    calculateShippingIntlStb.resolves(12.46);
+    calculateShipping(sourceAddress, destinationAddress, 0.7, 'priority').then(result => {
+      expect(result).to.equal(12.46);
+    });
+  })
 });
 describe('Validate the address for calculation', () => {
   it('Throws error if address object is null', () => {

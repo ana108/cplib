@@ -254,15 +254,15 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
     });
 }
 export const calculateShippingUSA = (sourceProvince: string, destState: string, weightInKg: number,
-    deliverySpeed: string = 'regular', customerType: string = 'regular'): Promise<number> => {
+    deliverySpeed: string = 'priority', customerType: string = 'regular'): Promise<number> => {
     return new Promise<number>(async (resolve, reject) => {
         try {
             let rateCode;
             let shippingCost;
             // for package dimensions make sure to convert it into a type
             if (deliverySpeed === 'priority') {
-                rateCode = await getRateCode('Canada', 'UNITED STATES', deliverySpeed);
-            } else if (deliverySpeed === 'express') {
+                rateCode = await getRateCode('Canada', 'USA', deliverySpeed);
+            } else if (deliverySpeed === 'express' || deliverySpeed === 'expedited') {
                 rateCode = await getRateCode(sourceProvince, destState, deliverySpeed);
             } else if (deliverySpeed === 'tracked_packet' || deliverySpeed === 'small_packet') {
                 if (weightInKg > 2.0) {
@@ -276,7 +276,7 @@ export const calculateShippingUSA = (sourceProvince: string, destState: string, 
             if (weightInKg <= 30.0) {
                 shippingCost = await getRate(rateCode, weightInKg, { country: 'INTERNATIONAL', type: deliverySpeed, customerType });
             } else {
-                let rates: maxRates = await getMaxRate(rateCode, { country: 'USA', type: deliverySpeed, customerType });
+                let rates: maxRates = await getMaxRate(rateCode, { country: 'INTERNATIONAL', type: deliverySpeed, customerType });
 
                 let difference = weightInKg - 30.0;
                 shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
