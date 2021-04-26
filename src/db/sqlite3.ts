@@ -1,9 +1,15 @@
 import sqlite3 from 'sqlite3';
 import { FuelTable } from '..';
 
-const dbname = __dirname + "/../../resources/cplib.db";
-export const db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
+let dbname = __dirname + "/../resources/cplib.db";
+export let db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
 
+export const setDB = (dbLocation: string) => {
+  db = new sqlite3.Database(dbLocation, sqlite3.OPEN_READWRITE);
+}
+export const resetDB = () => {
+  db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
+}
 export const getRateCode = (source: string, destination: string, delivery_type?: string): Promise<any> => {
   return new Promise(function (resolve, reject) {
     let getRateCodeMapping = `select rate_code from rate_code_mapping where source ='${source}' and (destination like '%${destination}%' OR upper(country) = '${destination}')`;

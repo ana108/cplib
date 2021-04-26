@@ -5,8 +5,9 @@
   "main": "build/index.js",
   "scripts": {
     "start:dev": "nodemon",
-    "test": "mocha -r ts-node/register src/*.test.ts src/**/*.test.ts",
-    "build": "rimraf ./build && tsc",
+    "test": "mocha -r ts-node/register src/*.test.ts src/db/*.test.ts",
+    "int": "mocha -r ts-node/register src/integration/*.test.ts",
+    "build": "rimraf ./build && tsc && cp -rf resources/ build/",
     "start": "npm run build && node build/index.js",
     "lint": "eslint . --ext .ts"
   },
