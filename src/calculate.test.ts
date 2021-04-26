@@ -1,6 +1,7 @@
 import {
   validateAddress, Address, calculateTax,
-  calculateShippingCanada, calculateShipping, calculateShippingUSA, mapProvinceToCode
+  calculateShippingCanada, calculateShipping, calculateShippingUSA, calculateShippingInternational,
+  mapProvinceToCode
 } from './calculate';
 import * as calculate from './calculate';
 import * as sinon from 'sinon';
@@ -240,7 +241,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     expect(cost).to.equal(28.57);
   });
 
-  it.skip('SB - Express -  1.3kg - 24.96', async () => {
+  it('SB - Express -  1.3kg - 24.96', async () => {
     getRateStb.resolves(24.96);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
@@ -361,7 +362,7 @@ describe('Calculate Shipping Cost to USA', () => {
   });
 });
 
-describe.skip('Calculate Shipping Cost Internationally', () => {
+describe('Calculate Shipping Cost Internationally', () => {
   const fuelSurchargePercentage = 0.09;
   let getRateCodeStb;
   let getRateStb;
@@ -387,81 +388,90 @@ describe.skip('Calculate Shipping Cost Internationally', () => {
     getProvinceStb.restore();
   });
 
-  it('2 - Priority - 0.7kg - 10.89 - Regular', async () => {
+  it('Ukraine - Priority - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'regular');
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'priority', 'regular');
     expect(cost).to.equal(11.87);
   });
 
-  it('2 - Priority - 0.7kg - 10.89 - Small Business', async () => {
+  it('Ukraine - Priority - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'small_business');
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'priority', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
-  it('2 - Priority - 30.7kg - 10.89 - Regular', async () => {
-    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'regular');
+  it('Ukraine - Priority - 30.7kg - 10.89 - Regular', async () => {
+    let cost = await calculateShippingInternational('Ukraine', 30.70, 'priority', 'regular');
     expect(cost).to.equal(13.49);
   });
 
-  it('2 - Priority - 30.7kg - 10.89 - Small Business', async () => {
-    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'small_business');
+  it('Ukraine - Priority - 30.7kg - 10.89 - Small Business', async () => {
+    let cost = await calculateShippingInternational('Ukraine', 30.70, 'priority', 'small_business');
     expect(cost).to.equal(13.49);
   });
 
-  it('ALASKA - Priority - 0.7kg - 10.89 - Regular', async () => {
+  it('Ukraine - Express - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'regular');
-    expect(cost).to.equal(20.37);
-  });
-
-  it('ALASKA - Priority - 0.7kg - 10.89 - Small Business', async () => {
-    getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'small_business');
-    expect(cost).to.equal(20.37);
-  });
-
-  it('ALASKA - Priority - 30.7kg - 10.89 - Regular', async () => {
-    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'regular');
-    expect(cost).to.equal(21.99);
-  });
-
-  it('ALASKA - Priority - 30.7kg - 10.89 - Small Business', async () => {
-    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'small_business');
-    expect(cost).to.equal(21.99);
-  });
-
-
-  it('2 - Tracked Packet - 0.7kg - 10.89 - Small Business', async () => {
-    getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'tracked_packet', 'small_business');
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'express', 'regular');
     expect(cost).to.equal(11.87);
   });
 
-  it('2 - Tracked Packet - 2.1kg - Error - Regular', async () => {
-    return calculateShippingUSA('ON', 'NY', 2.10, 'tracked_packet', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
-  });
-
-  it('2 - Small Packet - 0.7kg - 10.89 - Small Business', async () => {
+  it('Ukraine - Express - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'small_packet', 'small_business');
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'express', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
-  it('2 - Small Packet - 2.1kg - Error - Regular', async () => {
-    return calculateShippingUSA('ON', 'NY', 2.10, 'small_packet', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
+  it('Ukraine - air - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'air', 'small_business');
+    expect(cost).to.equal(11.87);
   });
 
-  it('2 - Expedited - 30.7kg - 10.89 - Small Business', async () => {
-    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'expedited', 'small_business');
+  it('Ukraine - air - 30.7kg - 10.89 - Regular', async () => {
+    let cost = await calculateShippingInternational('Ukraine', 30.70, 'air', 'regular');
     expect(cost).to.equal(13.49);
   });
 
-
-  it('2 - Expedited - 0.7kg - 10.89 - Regular', async () => {
+  it('Ukraine - surface - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'expedited', 'regular');
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'surface', 'small_business');
     expect(cost).to.equal(11.87);
+  });
+
+  it('Ukraine - surface - 30.7kg - 10.89 - Regular', async () => {
+    let cost = await calculateShippingInternational('Ukraine', 30.70, 'surface', 'regular');
+    expect(cost).to.equal(13.49);
+  });
+
+  it('Ukraine - Tracked Packet - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'tracked_packet', 'small_business');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('Ukraine - Tracked Packet- 2.1kg - Error - Regular', async () => {
+    return calculateShippingInternational('Ukraine', 2.10, 'tracked_packet', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
+  });
+
+  it('Ukraine - Small Packet Air - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'small_packet_air', 'small_business');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('Ukraine - Small Packet Air - 2.1kg - Error - Regular', async () => {
+    return calculateShippingInternational('Ukraine', 2.10, 'small_packet_air', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
+  });
+
+  it('Ukraine - Small Packet Surface - 0.7kg - 10.89 - Small Business', async () => {
+    getRateStb.resolves(10.89);
+    let cost = await calculateShippingInternational('Ukraine', 0.70, 'small_packet_surface', 'small_business');
+    expect(cost).to.equal(11.87);
+  });
+
+  it('Ukraine - Small Packet Surface - 2.1kg - Error - Regular', async () => {
+    return calculateShippingInternational('Ukraine', 2.10, 'small_packet_surface', 'regular').should.be.rejectedWith('The maximum weight of a package for a packet is 2.0 kg');
   });
 });
 
@@ -502,7 +512,7 @@ describe('Calculate shipping cost for american addresses', () => {
     });
   })
 });
-describe.skip('Calculate shipping cost for international addresses', () => {
+describe('Calculate shipping cost for international addresses', () => {
   const sourceAddress = {
     streetAddress: '111 Random St',
     city: 'Ottawa',
@@ -515,7 +525,7 @@ describe.skip('Calculate shipping cost for international addresses', () => {
     city: 'Gatineau',
     region: 'NY',
     postalCode: '111001',
-    country: 'United States'
+    country: 'Ukraine'
   }
 
   let calculateShippingIntlStb;
@@ -528,12 +538,12 @@ describe.skip('Calculate shipping cost for international addresses', () => {
   });
   it('Throws an error for invalid type: 0.7 - regular', () => {
     calculateShippingIntlStb.resolves(12.46);
-    return calculateShipping(sourceAddress, destinationAddress, 0.7, 'regular', 'small_business').should.be.rejectedWith('Delivery type to USA must be one of the following: regular, priority, express, expedited, small_packet or tracked_packet');
+    return calculateShipping(sourceAddress, destinationAddress, 0.7, 'regular', 'small_business').should.be.rejectedWith('Delivery type must be one of the following: priority,express,air,surface,tracked_packet,small_packet_air,small_packet_surface');
   })
 
-  it('Returns a valid shipping cost : 0.7 - priority', async () => {
+  it('Returns a valid shipping cost : 0.7 - surface', async () => {
     calculateShippingIntlStb.resolves(12.46);
-    calculateShipping(sourceAddress, destinationAddress, 0.7, 'priority').then(result => {
+    calculateShipping(sourceAddress, destinationAddress, 0.7, 'surface').then(result => {
       expect(result).to.equal(12.46);
     });
   })

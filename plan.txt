@@ -1,6 +1,5 @@
 To DO:
 
-Unit tests - canada, usa, international
 Come up with integration test cases
 Set up integration tests (hack the year)
  - limit the scope: most books weigh less than a kilo; and I will be using small business, regular shipping. 
