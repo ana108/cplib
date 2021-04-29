@@ -7,18 +7,16 @@ export interface RateCodeTestCase {
     postalCodes: PostalCodesTestCase,
     weights: any
 }
-/*
-L0H1A0|L4G0A1|A1
-*/
+
 export const allTestCases = {
     'A1': {
         postalCodes: { src: 'M9N0A1', dest: 'L9T0A1' },
         weights: {
-            '0.75': 10.0,
-            '1.0': 10.0,
-            '1.5': 10.0,
-            '2.0': 10.0,
-            '2.5': 10.0
+            '0.75': 11.27,
+            '1.0': 12.04,
+            '1.5': 12.9,
+            '2.0': 13.05,
+            '2.5': 13.33
         }
     },
     'A2': {

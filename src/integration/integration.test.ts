@@ -16,14 +16,13 @@ const expect = chai.expect;
 
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
 
-    beforeEach(() => {
-        console.log('Setting DB to: ' + __dirname + "/cplib_2021_int.db");
+    before(() => {
         db.setDB(__dirname + "/cplib_2021_int.db");
     });
-    afterEach(() => {
-        //db.resetDB();
+    after(() => {
+        db.resetDB();
     });
-    let numKeys = Object.keys(allTestCases).length;
+    let totalCases = Object.keys(allTestCases).length;
     let sourceAddr = {
         streetAddress: '812 Terravita Pvt',
         city: 'Ottawa',
@@ -39,12 +38,14 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
         country: 'CA'
     };
     for (let i = 0; i < 1; i++) {
-        let rateCode = Object.keys(allTestCases)[0];
-        it(rateCode, async () => {
-            sourceAddr.postalCode = allTestCases[rateCode].postalCodes.src;
-            destinationAddr.postalCode = allTestCases[rateCode].postalCodes.dest;
-            let result = await calculateShipping(sourceAddr, destinationAddr, 0.75, 'regular', 'small_business');
-            expect(result).to.equal(allTestCases[rateCode].weights['0.75']);
+        let rateCode = Object.keys(allTestCases)[i];
+        Object.keys(allTestCases[rateCode].weights).forEach(weight => {
+            it(`Rate Code: ${rateCode} : Weight (kg) ${weight}`, async () => {
+                sourceAddr.postalCode = allTestCases[rateCode].postalCodes.src;
+                destinationAddr.postalCode = allTestCases[rateCode].postalCodes.dest;
+                let result = await calculateShipping(sourceAddr, destinationAddr, parseFloat(weight), 'regular', 'small_business');
+                expect(result).to.equal(allTestCases[rateCode].weights[weight]);
+            });
         });
     }
     it.skip('A5 - Regular - 0.7kg - 10.89', async () => {

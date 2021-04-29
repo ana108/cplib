@@ -2,7 +2,6 @@ import sqlite3 from 'sqlite3';
 import { FuelTable } from '..';
 
 let dbname = __dirname + "/../resources/cplib.db";
-console.log('DB LOC ' + dbname);
 export let db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
 
 export const setDB = (dbLocation: string) => {
