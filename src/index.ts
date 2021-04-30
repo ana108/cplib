@@ -88,7 +88,7 @@ export const oneTimePopulate = async (deliveryType: string): Promise<any> => { /
 }
 export const files = async function (): Promise<any> {
     const YEAR = new Date().getFullYear();
-    const regular_rate_base_dir = `${__dirname}/../resources/regular/${YEAR}/`;
+    const regular_rate_base_dir = `${__dirname}/resources/regular/${YEAR}/`;
     let dataPrepared = fs.existsSync(regular_rate_base_dir)
     if (!dataPrepared) {
         console.log('Could not find the directory ' + regular_rate_base_dir);
@@ -114,7 +114,7 @@ export const files = async function (): Promise<any> {
             return module.exports.readFile(filePath, fileType, YEAR, 'regular', country);
         }));
     }));
-    const small_business_base_dir = `${__dirname}/../resources/small_business/${YEAR}/`;
+    const small_business_base_dir = `${__dirname}/resources/small_business/${YEAR}/`;
     dataPrepared = fs.existsSync(small_business_base_dir)
     if (!dataPrepared) {
         return `Failed to find directory ${small_business_base_dir} Please prepare data for year ${YEAR} or set the year variable to previous year`;

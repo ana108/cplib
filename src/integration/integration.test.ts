@@ -37,7 +37,7 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
         postalCode: 'J9H5V8',
         country: 'CA'
     };
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < totalCases; i++) {
         let rateCode = Object.keys(allTestCases)[i];
         Object.keys(allTestCases[rateCode].weights).forEach(weight => {
             it(`Rate Code: ${rateCode} : Weight (kg) ${weight}`, async () => {
@@ -48,7 +48,6 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
             });
         });
     }
-    it.skip('A5 - Regular - 0.7kg - 10.89', async () => {
+    console.log('Total number of cases is ' + (totalCases * 5));
 
-    });
 });
