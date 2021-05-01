@@ -460,3 +460,65 @@ export const allTestCases = {
         }
     },*/
 };
+
+export const americanTestCases = {
+    'ALL': {
+        region: { src: 'ON', dest: 'NY' },
+        delivery_type: 'small_packet',
+        weights: {
+            '0.1': 8.3,
+            '0.25': 10.17,
+            '1.5': 22.9,
+            '2.0': 25.71
+        }
+    },
+    'RT1': {
+        region: { src: 'ON', dest: 'NY' },
+        delivery_type: 'expedited',
+        weights: {
+            '2.5': 27.94
+        }
+    },
+    'RT2': {
+        region: { src: 'QC', dest: 'MA' },
+        delivery_type: 'expedited',
+        weights: {
+            '2.5': 28.47
+        }
+    },
+    'RT3': {
+        region: { src: 'AB', dest: 'UT' },
+        delivery_type: 'expedited',
+        weights: {
+            '2.5': 28.72
+        }
+    },
+    'RT4': {
+        region: { src: 'MB', dest: 'KS' },
+        delivery_type: 'expedited',
+        weights: {
+            '2.5': 29.19
+        }
+    },
+    'RT5': {
+        region: { src: 'YT', dest: 'ME' },
+        delivery_type: 'expedited',
+        weights: {
+            '2.5': 31.38
+        }
+    },
+    'RT6': {
+        region: { src: 'NU', dest: 'DC' },
+        delivery_type: 'expedited',
+        weights: {
+            '2.5': 31.03
+        }
+    },
+    'RT7': {
+        region: { src: 'BC', dest: 'AK' },
+        delivery_type: 'expedited',
+        weights: {
+            '2.5': 31.38
+        }
+    },
+}

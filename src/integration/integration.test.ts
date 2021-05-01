@@ -1,20 +1,12 @@
-import {
-    validateAddress, Address, calculateTax,
-    calculateShippingCanada, calculateShipping, calculateShippingUSA, calculateShippingInternational,
-    mapProvinceToCode
-} from '../calculate';
-import * as calculate from '../calculate';
-import * as sinon from 'sinon';
+import { calculateShipping } from '../calculate';
 
 import * as db from '../db/sqlite3';
 import * as chai from 'chai';
-import { fail } from 'assert';
-import { maxRates } from '../db/sqlite3';
-import { allTestCases } from './testcases';
+import { allTestCases, americanTestCases } from './testcases';
 
 const expect = chai.expect;
 
-describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
+describe.skip('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
 
     before(() => {
         db.setDB(__dirname + "/cplib_2021_int.db");
@@ -48,6 +40,40 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
             });
         });
     }
-    console.log('Total number of cases is ' + (totalCases * 5));
+});
 
+describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () => {
+
+    before(() => {
+        db.setDB(__dirname + "/cplib_2021_int.db");
+    });
+    after(() => {
+        db.resetDB();
+    });
+    let totalCases = Object.keys(americanTestCases).length;
+    let sourceAddr = {
+        streetAddress: '812 Terravita Pvt',
+        city: 'Ottawa',
+        region: 'ON',
+        postalCode: 'K1V2R9',
+        country: 'CA'
+    };
+    let destinationAddr = {
+        streetAddress: '115 Prentiss Rue',
+        city: 'New York',
+        region: 'NY',
+        postalCode: 'J9H5V8',
+        country: 'USA'
+    };
+    for (let i = 0; i < totalCases; i++) {
+        let rateCode = Object.keys(americanTestCases)[i];
+        Object.keys(americanTestCases[rateCode].weights).forEach(weight => {
+            it(`Rate Code: ${rateCode} : Weight (kg) ${weight}`, async () => {
+                sourceAddr.region = americanTestCases[rateCode].region.src;
+                destinationAddr.region = americanTestCases[rateCode].region.dest;
+                let result = await calculateShipping(sourceAddr, destinationAddr, parseFloat(weight), americanTestCases[rateCode].delivery_type, 'small_business');
+                expect(result).to.equal(americanTestCases[rateCode].weights[weight]);
+            });
+        });
+    }
 });
