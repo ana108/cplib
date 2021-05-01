@@ -1,9 +1,4 @@
 To DO:
-
-Come up with integration test cases
-Set up integration tests (hack the year)
- - limit the scope: most books weigh less than a kilo; and I will be using small business, regular shipping. 
- - Will be shipping to Canada, USA and international, so focus on those cases
 Automate updating fuel surcharge
 Figure out how to automate updating annual rates
 Figure out how to manually update province sales taxes
@@ -21,3 +16,4 @@ Documentation
 
 Update package.json and publish package
 Manually configure and test installing package through npm on both ubuntu and windows
+Add licensing

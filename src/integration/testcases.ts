@@ -522,3 +522,186 @@ export const americanTestCases = {
         }
     },
 }
+
+export const internationalTestCases = {
+    'SPS1': {
+        country: { src: 'Canada', dest: 'Bermuda' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 9.9,
+            '0.5': 13.86,
+            '1.0': 22.93,
+            '1.5': 28.3,
+            '2.0': 33.67
+        }
+    },
+    'SPS2': {
+        country: { src: 'Canada', dest: 'Iceland' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 9.97,
+            '0.5': 13.66,
+            '1.0': 22.94,
+            '1.5': 27.57,
+            '2.0': 32.17
+        }
+    },
+    'SPS3': {
+        country: { src: 'Canada', dest: 'Belarus' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.53,
+            '0.5': 15.92,
+            '1.0': 25.9,
+            '1.5': 32.05,
+            '2.0': 38.16
+        }
+    },
+    'SPA4': {
+        country: { src: 'Canada', dest: 'Malaysia' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.25,
+            '0.5': 14.4,
+            '1.0': 24.03,
+            '1.5': 29.7,
+            '2.0': 35.34
+        }
+    },
+    'SPS5': {
+        country: { src: 'Canada', dest: 'Christmas Island' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.38,
+            '0.5': 14.78,
+            '1.0': 24.45,
+            '1.5': 30.14,
+            '2.0': 35.84
+        }
+    },
+    'SPS6': {
+        country: { src: 'Canada', dest: 'Vietnam' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.39,
+            '0.5': 14.78,
+            '1.0': 24.55,
+            '1.5': 30.35,
+            '2.0': 36.16
+        }
+    },
+    'SPS7': {
+        country: { src: 'Canada', dest: 'Guyana' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.45,
+            '0.5': 15.15,
+            '1.0': 25.38,
+            '1.5': 31.68,
+            '2.0': 37.98
+        }
+    },
+    'SPS8': {
+        country: { src: 'Canada', dest: 'Egypt' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.56,
+            '0.5': 15.44,
+            '1.0': 25.83,
+            '1.5': 32.16,
+            '2.0': 38.53
+        }
+    },
+    'SPS9': {
+        country: { src: 'Canada', dest: 'China' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.5,
+            '0.5': 15.24,
+            '1.0': 25.14,
+            '1.5': 31.03,
+            '2.0': 36.87
+        }
+    },
+    'SPS10': {
+        country: { src: 'Canada', dest: 'Armenia' },
+        delivery_type: 'small_packet_surface',
+        weights: {
+            '0.25': 10.77,
+            '0.5': 15.53,
+            '1.0': 26.39,
+            '1.5': 33.85,
+            '2.0': 41.3
+        }
+    },
+    '401': {
+        country: { src: 'Canada', dest: 'Aruba' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 56.33
+        }
+    },
+    '402': {
+        country: { src: 'Canada', dest: 'IE' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 62.44
+        }
+    },
+    '403': {
+        country: { src: 'Canada', dest: 'Montenegro' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 72.72
+        }
+    },
+    '404': {
+        country: { src: 'Canada', dest: 'Japan' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 67.72
+        }
+    },
+    '405': {
+        country: { src: 'Canada', dest: 'NZ' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 69.55
+        }
+    },
+    '406': {
+        country: { src: 'Canada', dest: 'Cambodia' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 76.98
+        }
+    },
+    '407': {
+        country: { src: 'Canada', dest: 'Brazil' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 72.82
+        }
+    },
+    '408': {
+        country: { src: 'Canada', dest: 'Bahrain' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 79.46
+        }
+    },
+    '409': {
+        country: { src: 'Canada', dest: 'China' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 74.05
+        }
+    },
+    '410': {
+        country: { src: 'Canada', dest: 'MG' },
+        delivery_type: 'surface',
+        weights: {
+            '2.5': 75.13
+        }
+    },
+}

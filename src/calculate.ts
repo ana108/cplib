@@ -313,8 +313,12 @@ export const calculateShippingInternational = (destinationCountry: string, weigh
                     reject('The maximum weight of a package for a packet is 2.0 kg');
                 }
             }
+            let deliveryTypeRateCode = deliverySpeed;
+            if (deliverySpeed === 'small_packet_air' || deliverySpeed === 'small_packet_surface') {
+                deliveryTypeRateCode = 'small_packet';
+            }
             // get rate code
-            const rateCode = await getRateCode('Canada', destinationCountry, deliverySpeed);
+            const rateCode = await getRateCode('Canada', destinationCountry, deliveryTypeRateCode);
             // handle no rate code returned
             if (!rateCode) {
                 throw new Error(`No shipping is available to ${destinationCountry} using ${deliverySpeed}  Try using a different shipping type`);
@@ -331,7 +335,7 @@ export const calculateShippingInternational = (destinationCountry: string, weigh
             }
 
             // get fuel rate
-            const fuelSurchargePercentage = await getFuelSurcharge('INTERNATIONAL', deliverySpeed);
+            const fuelSurchargePercentage = await getFuelSurcharge('INTERNATIONAL', deliveryTypeRateCode);
             // add fuel rate to final cost
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
 
