@@ -1,6 +1,6 @@
 import { join } from 'path';
 import sqlite3 from 'sqlite3';
-import { FuelTable } from '..';
+import { FuelTable } from '../autoload';
 
 let dbname = __dirname + "/../resources/cplib.db";
 export let db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
