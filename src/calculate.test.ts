@@ -103,7 +103,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('A5');
     getRateStb = sinon.stub(db, 'getRate');
     getMaxRateStb = sinon.stub(db, 'getMaxRate');
-    getFuelSurchargeStb = sinon.stub(db, 'getFuelSurcharge').resolves(0.09);
+    getFuelSurchargeStb = sinon.stub(calculate, 'getLatestFuelSurcharge').resolves(0.09);
     getProvinceStb = sinon.stub(db, 'getProvince');
   });
   afterEach(() => {
@@ -273,7 +273,7 @@ describe('Calculate Shipping Cost to USA', () => {
     getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('2');
     getRateStb = sinon.stub(db, 'getRate');
     getMaxRateStb = sinon.stub(db, 'getMaxRate').resolves(maxRates);
-    getFuelSurchargeStb = sinon.stub(db, 'getFuelSurcharge').resolves(0.09);
+    getFuelSurchargeStb = sinon.stub(calculate, 'getLatestFuelSurcharge').resolves(0.09);
     getProvinceStb = sinon.stub(db, 'getProvince');
   });
   afterEach(() => {
@@ -377,7 +377,7 @@ describe('Calculate Shipping Cost Internationally', () => {
     getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('2');
     getRateStb = sinon.stub(db, 'getRate');
     getMaxRateStb = sinon.stub(db, 'getMaxRate').resolves(maxRates);
-    getFuelSurchargeStb = sinon.stub(db, 'getFuelSurcharge').resolves(0.09);
+    getFuelSurchargeStb = sinon.stub(calculate, 'getLatestFuelSurcharge').resolves(0.09);
     getProvinceStb = sinon.stub(db, 'getProvince');
   });
   afterEach(() => {

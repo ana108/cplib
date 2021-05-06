@@ -1,4 +1,4 @@
-import { getRateCode, getRate, getProvince, getFuelSurcharge, maxRates, getMaxRate } from './db/sqlite3';
+import { getRateCode, getRate, getProvince, getFuelSurcharge, maxRates, getMaxRate, FuelSurcharge } from './db/sqlite3';
 
 export interface Address {
     streetAddress: string, // full street address, number + apartment
@@ -235,7 +235,7 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
 
             // get fuel rate
 
-            const fuelSurchargePercentage = await getFuelSurcharge('Canada', deliverySpeed);
+            const fuelSurchargePercentage = await getLatestFuelSurcharge('Canada', deliverySpeed);
             // add fuel rate to final cost
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
             // IF this api call gets too slow; these two calls can be replaced with postal code mappings
@@ -289,7 +289,7 @@ export const calculateShippingUSA = (sourceProvince: string, destState: string, 
             }
 
             // get fuel rate
-            const fuelSurchargePercentage = await getFuelSurcharge('USA', deliverySpeed);
+            const fuelSurchargePercentage = await getLatestFuelSurcharge('USA', deliverySpeed);
             // add fuel rate to final cost
             let pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
             if (deliverySpeed === 'priority' && (destState === 'HI' || destState === 'AK')) {
@@ -335,7 +335,7 @@ export const calculateShippingInternational = (destinationCountry: string, weigh
             }
 
             // get fuel rate
-            const fuelSurchargePercentage = await getFuelSurcharge('INTERNATIONAL', deliveryTypeRateCode);
+            const fuelSurchargePercentage = await getLatestFuelSurcharge('INTERNATIONAL', deliveryTypeRateCode);
             // add fuel rate to final cost
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
 
@@ -344,6 +344,17 @@ export const calculateShippingInternational = (destinationCountry: string, weigh
             reject(e);
         }
 
+    });
+}
+export const getLatestFuelSurcharge = (country: string, deliverySpeed): Promise<number> => {
+    return new Promise((resolve, reject) => {
+        getFuelSurcharge(country, deliverySpeed).then((data: FuelSurcharge) => {
+            // calculate if the expiry date is less than 24 hours from now
+            // if so, call autoload
+            resolve(data.percentage);
+        }).catch(err => {
+            reject(err);
+        });
     });
 }
 // math utility function

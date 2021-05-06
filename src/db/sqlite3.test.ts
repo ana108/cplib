@@ -241,7 +241,7 @@ describe('Update Fuel Surcharge', () => {
     });
 });
 
-describe('Get Fuel Surcharge', () => {
+describe.skip('Get Fuel Surcharge', () => {
     let dbPrepareStb;
     let dbGetStb;
     const fakeStmt = {
@@ -257,7 +257,7 @@ describe('Get Fuel Surcharge', () => {
         dbGetStb.restore();
     });
 
-    it('Successfully updates table', async () => {
+    it('Successfully retrieves percentage from db table', async () => {
         dbGetStb.yields(null, { percentage: '0.08' });
         try {
             const fuelSurcharge = await getFuelSurcharge('Canada', 'express');

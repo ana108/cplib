@@ -227,9 +227,13 @@ export const updateFuelSurcharge = (fuelSurchargeRates: FuelTable): Promise<void
   }));
 }
 
-export const getFuelSurcharge = (country: string, deliveryType: string): Promise<number> => {
-  const getLatestFuelSurcharge = 'select percentage from fuel_surcharge where country = $country and delivery_type = $deliveryType order by date desc limit 1';
-  return new Promise<number>((resolve, reject) => {
+export interface FuelSurcharge {
+  percentage: number,
+  expiryUnixTimestamp: number
+}
+export const getFuelSurcharge = (country: string, deliveryType: string): Promise<FuelSurcharge> => {
+  const getLatestFuelSurcharge = 'select percentage, date from fuel_surcharge where country = $country and delivery_type = $deliveryType order by date desc limit 1';
+  return new Promise<FuelSurcharge>((resolve, reject) => {
     const stmt = db.prepare(getLatestFuelSurcharge);
     stmt.get({
       $country: country,
@@ -238,7 +242,11 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
       if (err) {
         reject(err);
       } else {
-        resolve(parseFloat(row.percentage));
+        resolve(<FuelSurcharge>{
+          percentage: parseFloat(row.percentage),
+          expiryUnixTimestamp: parseFloat(row.date)
+        });
+        // resolve(parseFloat(row.percentage));
       }
     });
   })
