@@ -203,13 +203,15 @@ describe('Update Fuel Surcharge', () => {
         "Domestic Express and Non-Express Services": 11.00,
         "U.S. and International Express Services": 9.25,
         "U.S. and International Non-Express Services": 7.25,
-        "Priority Worldwide": 6.00
+        "Priority Worldwide": 6.00,
+        "Expiry_Date": new Date()
     };
     const newChargesInvalidChar = {
         "Domestic Express and Non-Express Services": -11.00,
         "U.S. and International Express Services": 9.25,
         "U.S. and International Non-Express Services": 7.25,
-        "Priority Worldwide": 6.00
+        "Priority Worldwide": 6.00,
+        "Expiry_Date": new Date()
     };
     const fakeStmt = {
         run: function () { }

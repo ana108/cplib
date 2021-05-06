@@ -5,7 +5,8 @@ export interface FuelTable {
     'Domestic Express and Non-Express Services': number,
     'U.S. and International Express Services': number,
     'U.S. and International Non-Express Services': number,
-    'Priority Worldwide': number
+    'Priority Worldwide': number,
+    'Expiry_Date': Date
 }
 export const updateAllFuelSurcharges = async (fuelSurcharge: FuelTable): Promise<any> => {
     // TODO automate this by GET calling this api:
@@ -16,11 +17,12 @@ export const updateAllFuelSurcharges = async (fuelSurcharge: FuelTable): Promise
     fuelSurcharge['Priority Worldwide'] = parseFloat(fuelSurcharge['Priority Worldwide'].toString().replace(/[^\d.-]/g, ''));
     return updateFuelSurcharge(fuelSurcharge);
 }
-export const getFuelSurchargeTable = async (): Promise<any> => {
+export const getFuelSurchargeTable = async (): Promise<FuelTable> => {
     return new Promise<any>((resolve, reject) => {
         axios.get('https://www.canadapost-postescanada.ca/cpc/en/support/kb/sending/rates-dimensions/fuel-surcharges-on-mail-and-parcels').
             then(data => {
-                resolve(data.data);
+                let fuelTable: FuelTable = extractFuelTable(data.data);
+                resolve(fuelTable);
             }).catch(error => {
                 reject(error);
             });
@@ -47,8 +49,7 @@ export const extractFuelTable = (data: string): FuelTable => {
     // first line: extract the end date
     let endDateRaw = lines[start + 1];
     let endDate = endDateRaw.replace(/&nbsp;/g, ' ').split('through')[1].replace('</h4>', '').replace(':', '');
-    let myDate = new Date(endDate);
-    // console.log('End Date:' + myDate.toDateString());
+    const validUntilDate = new Date(endDate);
     let serviceCharges: FuelTable = <FuelTable>{};
     for (let i = start + 2; i < end; i++) {
         lines[i] = lines[i].replace(/&nbsp;/g, '');
@@ -58,5 +59,6 @@ export const extractFuelTable = (data: string): FuelTable => {
             serviceCharges[header] = value;
         }
     }
+    serviceCharges['Expiry_Date'] = validUntilDate;
     return serviceCharges;
 }

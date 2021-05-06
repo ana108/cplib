@@ -136,7 +136,8 @@ export const getProvince = (postalCode: string): Promise<string> => {
 }
 
 export const updateFuelSurcharge = (fuelSurchargeRates: FuelTable): Promise<void[]> => {
-  const fuelSurcharge = 'insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, strftime(\'%s\', \'now\'), $country, $delivery_type)';
+  let expiryDate = fuelSurchargeRates['Expiry_Date'].valueOf();
+  const fuelSurcharge = `insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, ${expiryDate}, $country, $delivery_type)`;
   const DOMESTIC = fuelSurchargeRates['Domestic Express and Non-Express Services'] / 100;
   const USA_INTL_EXPRESS = fuelSurchargeRates['U.S. and International Express Services'] / 100;
   const USA_INTL_NON_EXPRESS = fuelSurchargeRates['U.S. and International Non-Express Services'] / 100;
