@@ -9,7 +9,7 @@ chai.use(chaiAsPromised);
 
 // Initialise should API (attaches as a property on Object)
 chai.should();
-import { getRateCode, saveToDb, getRate, getMaxRate, options, getProvince, updateFuelSurcharge, getFuelSurcharge } from './sqlite3'
+import { getRateCode, saveToDb, getRate, getMaxRate, options, getProvince, updateFuelSurcharge, getFuelSurcharge, FuelSurcharge } from './sqlite3'
 import { fail } from 'assert';
 
 const expect = chai.expect;
@@ -241,7 +241,7 @@ describe('Update Fuel Surcharge', () => {
     });
 });
 
-describe.skip('Get Fuel Surcharge', () => {
+describe('Get Fuel Surcharge', () => {
     let dbPrepareStb;
     let dbGetStb;
     const fakeStmt = {
@@ -258,10 +258,10 @@ describe.skip('Get Fuel Surcharge', () => {
     });
 
     it('Successfully retrieves percentage from db table', async () => {
-        dbGetStb.yields(null, { percentage: '0.08' });
+        dbGetStb.yields(null, { percentage: '0.08', expiryUnixTimestamp: 1011111 });
         try {
             const fuelSurcharge = await getFuelSurcharge('Canada', 'express');
-            expect(fuelSurcharge).to.equal(0.08);
+            expect(fuelSurcharge.percentage).to.equal(0.08);
         } catch (e) {
             fail('Failed to update row');
         }

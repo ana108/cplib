@@ -1,5 +1,5 @@
 import { getRateCode, getRate, getProvince, getFuelSurcharge, maxRates, getMaxRate, FuelSurcharge } from './db/sqlite3';
-
+import { updateAllFuelSurcharges } from './autoload';
 export interface Address {
     streetAddress: string, // full street address, number + apartment
     city: string,
@@ -351,7 +351,19 @@ export const getLatestFuelSurcharge = (country: string, deliverySpeed): Promise<
         getFuelSurcharge(country, deliverySpeed).then((data: FuelSurcharge) => {
             // calculate if the expiry date is less than 24 hours from now
             // if so, call autoload
-            resolve(data.percentage);
+            let tomorrowsTimestamp = new Date().valueOf() + 24 * 60 * 60 * 1000;
+            if (data.expiryUnixTimestamp <= tomorrowsTimestamp) {
+                updateAllFuelSurcharges().then(() => {
+                    getFuelSurcharge(country, deliverySpeed).then((updatedData: FuelSurcharge) => {
+                        resolve(updatedData.percentage);
+                    })
+                }).catch(err => {
+                    console.log('Error on updating table, returning old values', err);
+                    resolve(data.percentage);
+                })
+            } else {
+                resolve(data.percentage);
+            }
         }).catch(err => {
             reject(err);
         });

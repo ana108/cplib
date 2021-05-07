@@ -8,14 +8,9 @@ export interface FuelTable {
     'Priority Worldwide': number,
     'Expiry_Date': Date
 }
-export const updateAllFuelSurcharges = async (fuelSurcharge: FuelTable): Promise<any> => {
-    // TODO automate this by GET calling this api:
-    // https://www.canadapost-postescanada.ca/cpc/en/support/kb/sending/rates-dimensions/fuel-surcharges-on-mail-and-parcels
-    fuelSurcharge['Domestic Express and Non-Express Services'] = parseFloat(fuelSurcharge['Domestic Express and Non-Express Services'].toString().replace(/[^\d.-]/g, ''));
-    fuelSurcharge['U.S. and International Express Services'] = parseFloat(fuelSurcharge['U.S. and International Express Services'].toString().replace(/[^\d.-]/g, ''));
-    fuelSurcharge['U.S. and International Non-Express Services'] = parseFloat(fuelSurcharge['U.S. and International Non-Express Services'].toString().replace(/[^\d.-]/g, ''));
-    fuelSurcharge['Priority Worldwide'] = parseFloat(fuelSurcharge['Priority Worldwide'].toString().replace(/[^\d.-]/g, ''));
-    return updateFuelSurcharge(fuelSurcharge);
+export const updateAllFuelSurcharges = async (): Promise<any> => {
+    const newFuelTable = await getFuelSurchargeTable();
+    return updateFuelSurcharge(newFuelTable);
 }
 export const getFuelSurchargeTable = async (): Promise<FuelTable> => {
     return new Promise<any>((resolve, reject) => {
