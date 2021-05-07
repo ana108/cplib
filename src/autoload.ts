@@ -48,7 +48,7 @@ export const extractFuelTable = (data: string): FuelTable => {
     let serviceCharges: FuelTable = <FuelTable>{};
     for (let i = start + 2; i < end; i++) {
         lines[i] = lines[i].replace(/&nbsp;/g, '');
-        if (lines[i].indexOf('<tr>') >= 0) {
+        if (lines[i].indexOf('<tr>') >= 0 && !serviceCharges['Priority Worldwide']) {
             let header = lines[i + 1].replace('</td>', '').replace('<td>', '').replace('<em>', '').replace('</em>', '').replace('<sup>TM</sup>', '');
             let value = parseFloat(lines[i + 2].replace(/&nbsp;/g, '').replace('</td>', '').replace('<td>', '').trimLeft().replace('%', ''));
             serviceCharges[header] = value;
