@@ -1,5 +1,4 @@
 To DO:
-Automate updating fuel surcharge
 Figure out how to automate updating annual rates
 Figure out how to manually update province sales taxes
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
