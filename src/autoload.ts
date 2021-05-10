@@ -1,6 +1,7 @@
 const axios = require('axios').default;
 import { updateFuelSurcharge } from './db/sqlite3';
-
+import fs from 'fs';
+const PDFParser = require("pdf2json");
 export interface FuelTable {
     'Domestic Express and Non-Express Services': number,
     'U.S. and International Express Services': number,
@@ -56,4 +57,76 @@ export const extractFuelTable = (data: string): FuelTable => {
     }
     serviceCharges['Expiry_Date'] = validUntilDate;
     return serviceCharges;
+}
+
+export interface RatesPages {
+    'PriorityCanada': number,
+    'ExpressCanada': number,
+    'RegularCanada': number,
+    'PriorityWorldwide': number,
+    'ExpressUSA': number,
+    'ExpeditedUSA': number,
+    'TrackedPacketUSA': number,
+    'SmallPacketUSA': number,
+    'ExpressInternational': number,
+    'AirInternational': number,
+    'SurfaceInternational': number,
+    'TrackedPacketInternational': number,
+    'SmallPacketInternational': number
+}
+
+// this will iterate over the two docs; one for small business and one for regular rates
+export const e2eProcess = async (): Promise<void> => {
+    let pdfData = await loadPDF();
+    let pageTables: RatesPages = extractPages(pdfData);
+}
+export const loadPDF = async (): Promise<any> => {
+    let pdfParser = new PDFParser();
+    return new Promise<any>((resolve, reject) => {
+        pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError));
+        pdfParser.on("pdfParser_dataReady", pdfData => {
+            let pdfPages = pdfData['formImage']['Pages'];
+            resolve(pdfPages); // an array of texts
+        });
+        pdfParser.loadPDF(__dirname + "/resources/regular/2021/Rates_2021.pdf");
+    });
+}
+
+export const extractPages = (pdfData: any): RatesPages => {
+    let pages: RatesPages = {
+        'PriorityCanada': 0,
+        'ExpressCanada': 0,
+        'RegularCanada': 0,
+        'PriorityWorldwide': 0,
+        'ExpressUSA': 0,
+        'ExpeditedUSA': 0,
+        'TrackedPacketUSA': 0,
+        'SmallPacketUSA': 0,
+        'ExpressInternational': 0,
+        'AirInternational': 0,
+        'SurfaceInternational': 0,
+        'TrackedPacketInternational': 0,
+        'SmallPacketInternational': 0
+    };
+    for (let i = 0; i < pdfData.length; i++) {
+        let pageText = pdfData[i]['Texts'];
+    }
+    /*let wholeText = pdfPages[9]['Texts'];
+            let wholeTextLength = wholeText.length;
+            let prevLineY = 0;
+            let line = '';
+            for (let i = 0; i < wholeTextLength; i++) {
+                line = line + ' ' + wholeText[i]['R'][0]['T'].replace(/&nbsp;/g, ' ').replace(/%20/g, ' ');
+                if (Math.floor(prevLineY) !== Math.floor(wholeText[i].y)) {
+                    // console.log('Prev Line ' + prevLineY + ' Current Line ' + wholeText[i].y);
+                    // new line
+                    console.log(line);
+                    line = '';
+                }
+                prevLineY = wholeText[i].y;
+            }*/
+    return pages;
+}
+export const extractRateTable = (page: any) => {
+
 }

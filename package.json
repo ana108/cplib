@@ -8,6 +8,7 @@
     "test": "mocha -r ts-node/register src/*.test.ts src/db/*.test.ts",
     "int": "mocha -r ts-node/register src/integration/integration.test.ts",
     "recalibrate": "mocha -r ts-node/register src/integration/recalibrate.test.ts",
+    "auto": "mocha -r ts-node/register src/autoload.test.ts",
     "build": "rimraf ./build && tsc && cp -rf src/resources/ build/",
     "start": "npm run build && node build/index.js",
     "lint": "eslint . --ext .ts"
@@ -36,6 +37,7 @@
     "axios": "^0.21.1",
     "chai-as-promised": "^7.1.1",
     "events": "^3.2.0",
+    "pdf2json": "^1.2.1",
     "sinon": "^9.2.0",
     "sqlite3": "^5.0.0"
   }
