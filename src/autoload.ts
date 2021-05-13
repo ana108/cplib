@@ -79,6 +79,7 @@ export interface RatesPages {
 export const e2eProcess = async (): Promise<void> => {
     let pdfData = await loadPDF();
     let pageTables: RatesPages = extractPages(pdfData);
+    extractRateTable(pdfData, pageTables['PriorityCanada']);
 }
 export const loadPDF = async (): Promise<any> => {
     let pdfParser = new PDFParser();
@@ -108,25 +109,67 @@ export const extractPages = (pdfData: any): RatesPages => {
         'TrackedPacketInternational': 0,
         'SmallPacketInternational': 0
     };
-    for (let i = 0; i < pdfData.length; i++) {
-        let pageText = pdfData[i]['Texts'];
+    let pageTitleMapping = {
+        'Priority Prices': 'PriorityCanada',
+        'Xpresspost Prices': 'ExpressCanada',
+        'Regular Parcel Prices': 'RegularCanada',
+        // 'Priority Worldwide USA Prices': 'PriorityWorldwide',
+        'Xpresspost USA Prices': 'ExpressUSA',
+        'Expedited Parcel USA Prices': 'ExpeditedUSA',
+        'Tracked Packet USA Prices': 'TrackedPacketUSA',
+        'Small Packet USA Prices': 'SmallPacketUSA',
+        'Priority Worldwide International Prices': 'PriorityWorldwide',
+        'Xpresspost International Prices': 'ExpressInternational',
+        'International Parcel Air Prices': 'AirInternational',
+        'International Parcel Surface Prices': 'SurfaceInternational',
+        'Tracked Packet International Prices': 'TrackedPacketInternational',
+        'Small Packet International Prices': 'SmallPacketInternational'
     }
-    /*let wholeText = pdfPages[9]['Texts'];
-            let wholeTextLength = wholeText.length;
-            let prevLineY = 0;
-            let line = '';
-            for (let i = 0; i < wholeTextLength; i++) {
-                line = line + ' ' + wholeText[i]['R'][0]['T'].replace(/&nbsp;/g, ' ').replace(/%20/g, ' ');
-                if (Math.floor(prevLineY) !== Math.floor(wholeText[i].y)) {
-                    // console.log('Prev Line ' + prevLineY + ' Current Line ' + wholeText[i].y);
-                    // new line
-                    console.log(line);
-                    line = '';
+    let pageTextLength = pdfData[1]['Texts'].length;
+    let title = '';
+    // Reading the table of contents page:
+    // Explanation: the ... gets broken up into random number of units, however, those units are always between the name of the page and the page number
+    // Since we dont know how many units of .. there are, the first time we see ... we assume the previous token was the page name
+    // and if its not the first time we've seen it (which we deduce based on title not being empty) then we ignore it
+    // once we see a token that is not ... and the title is not empty, then we know its the page number, so we grab the page number
+    // and set the title back to blank for the next line
+    for (let j = 1; j < pageTextLength; j++) {
+        let searchText = pdfData[1]['Texts'][j]['R'][0]['T'];
+        if (searchText.indexOf('..') >= 0 && title.length == 0) {
+            title = pdfData[1]['Texts'][j - 1]['R'][0]['T'];
+        } else if (searchText.indexOf('..') >= 0 && title.length > 0) {
+
+        } else if (title.length > 0) {
+            let massagedTitle = title.replace(/%20/g, ' ').replace(/%E2%84%A2/g, '').replace(/%E2%80%93/g, '').replace(/%2C/g, '').replace(/  /g, ' ').trim();
+            const pageNumber = pdfData[1]['Texts'][j]['R'][0]['T'];
+            // console.log('Title ' + massagedTitle + ' Page ', pageNumber);
+            if (pageTitleMapping[massagedTitle] && pages[pageTitleMapping[massagedTitle]] === 0) {
+                pages[pageTitleMapping[massagedTitle]] = parseInt(pageNumber) + 3 - 1; // introduction pages, ie i,ii, etc Indexing - 1 for all pages
+                // for everything that isn't canada, add one to exclude the rate code mapping
+                if (pageTitleMapping[massagedTitle].toUpperCase().indexOf('CANADA') < 0) {
+                    pages[pageTitleMapping[massagedTitle]] = pages[pageTitleMapping[massagedTitle]] + 1;
                 }
-                prevLineY = wholeText[i].y;
-            }*/
+            }
+            title = '';
+        } else {
+            title = '';
+        }
+    }
     return pages;
 }
-export const extractRateTable = (page: any) => {
-
+export const extractRateTable = (pdfPages: any, page: number) => {
+    let wholeText = pdfPages[page]['Texts'];
+    let wholeTextLength = wholeText.length;
+    let prevLineY = 0;
+    let line = '';
+    for (let i = 0; i < wholeTextLength; i++) {
+        line = line + ' ' + wholeText[i]['R'][0]['T'].replace(/&nbsp;/g, ' ').replace(/%20/g, ' ');
+        if (Math.floor(prevLineY) !== Math.floor(wholeText[i].y)) {
+            // console.log('Prev Line ' + prevLineY + ' Current Line ' + wholeText[i].y);
+            // new line
+            console.log(':' + line + ':');
+            line = '';
+        }
+        prevLineY = wholeText[i].y;
+    }
 }
