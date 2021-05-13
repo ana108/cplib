@@ -79,7 +79,7 @@ export interface RatesPages {
 export const e2eProcess = async (): Promise<void> => {
     let pdfData = await loadPDF();
     let pageTables: RatesPages = extractPages(pdfData);
-    extractRateTable(pdfData, pageTables['PriorityCanada']);
+    extractCanadianRateTables(pdfData, pageTables[Object.keys(pageTables)[0]]);
 }
 export const loadPDF = async (): Promise<any> => {
     let pdfParser = new PDFParser();
@@ -157,19 +157,16 @@ export const extractPages = (pdfData: any): RatesPages => {
     }
     return pages;
 }
-export const extractRateTable = (pdfPages: any, page: number) => {
+
+// expectation of return: rate code header
+// each row of weight/cost
+// final row of overweight
+export const extractCanadianRateTables = (pdfPages: any, page: number) => {
     let wholeText = pdfPages[page]['Texts'];
     let wholeTextLength = wholeText.length;
-    let prevLineY = 0;
     let line = '';
     for (let i = 0; i < wholeTextLength; i++) {
         line = line + ' ' + wholeText[i]['R'][0]['T'].replace(/&nbsp;/g, ' ').replace(/%20/g, ' ');
-        if (Math.floor(prevLineY) !== Math.floor(wholeText[i].y)) {
-            // console.log('Prev Line ' + prevLineY + ' Current Line ' + wholeText[i].y);
-            // new line
-            console.log(':' + line + ':');
-            line = '';
-        }
-        prevLineY = wholeText[i].y;
     }
+    console.log(line);
 }
