@@ -79,7 +79,23 @@ export interface RatesPages {
 export const e2eProcess = async (): Promise<void> => {
     let pdfData = await loadPDF();
     let pageTables: RatesPages = extractPages(pdfData);
-    extractCanadianRateTables(pdfData, pageTables[Object.keys(pageTables)[0]]);
+    // canadian: 20
+    // priority worldwide/USA: 7
+    let canadianPriority1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]], 20);
+    let canadianPriority2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]] + 1, 20);
+    let canadianExpress1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]], 20);
+    let canadianExpress2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]] + 1, 20);
+    let canadianRegular1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]], 20);
+    let canadianRegular2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]] + 1, 20);
+
+    let worldwidePriority = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[3]], 8, 9);
+    let expressUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[4]], 7);
+
+
+    expressUSA.forEach(line => {
+        console.log(line);
+    })
+
 }
 export const loadPDF = async (): Promise<any> => {
     let pdfParser = new PDFParser();
@@ -142,7 +158,6 @@ export const extractPages = (pdfData: any): RatesPages => {
         } else if (title.length > 0) {
             let massagedTitle = title.replace(/%20/g, ' ').replace(/%E2%84%A2/g, '').replace(/%E2%80%93/g, '').replace(/%2C/g, '').replace(/  /g, ' ').trim();
             const pageNumber = pdfData[1]['Texts'][j]['R'][0]['T'];
-            // console.log('Title ' + massagedTitle + ' Page ', pageNumber);
             if (pageTitleMapping[massagedTitle] && pages[pageTitleMapping[massagedTitle]] === 0) {
                 pages[pageTitleMapping[massagedTitle]] = parseInt(pageNumber) + 3 - 1; // introduction pages, ie i,ii, etc Indexing - 1 for all pages
                 // for everything that isn't canada, add one to exclude the rate code mapping
@@ -161,12 +176,39 @@ export const extractPages = (pdfData: any): RatesPages => {
 // expectation of return: rate code header
 // each row of weight/cost
 // final row of overweight
-export const extractCanadianRateTables = (pdfPages: any, page: number) => {
+export const extractRateTables = (pdfPages: any, page: number, numRateCodes: number, maxTokens?: number) => {
     let wholeText = pdfPages[page]['Texts'];
     let wholeTextLength = wholeText.length;
     let line = '';
+    /* suggestion: if a new "y" is found append it to an existing y in a map, then list over all the ys*/
+    let allText = {};
     for (let i = 0; i < wholeTextLength; i++) {
-        line = line + ' ' + wholeText[i]['R'][0]['T'].replace(/&nbsp;/g, ' ').replace(/%20/g, ' ');
+        line = wholeText[i]['R'][0]['T'].replace(/  /g, '').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+        if (allText[wholeText[i].y]) {
+            allText[wholeText[i].y] = allText[wholeText[i].y].trim() + ' ' + line;
+        } else {
+            //console.log('Y: ', wholeText[i].y);
+            //console.log('Line: ', line);
+            allText[wholeText[i].y] = line;
+        }
+
     }
-    console.log(line);
+    let keys = Object.keys(allText).sort(function (a, b) {
+        return parseFloat(a) - parseFloat(b);
+    });
+    let cleanArray: string[] = [];
+    for (let i = 0; i < keys.length; i++) {
+        let totalTokens = allText[keys[i]].trim().split(' ').length;
+        //console.log('Keys ' + keys[i]);
+        if (totalTokens >= numRateCodes) {
+            if (maxTokens && totalTokens <= maxTokens) {
+                //console.log('Line ', allText[keys[i]].trim());
+                cleanArray.push(allText[keys[i]].trim());
+            } else if (!maxTokens) {
+                //console.log('Line ', allText[keys[i]].trim());
+                cleanArray.push(allText[keys[i]].trim());
+            }
+        }
+    }
+    return cleanArray;
 }
