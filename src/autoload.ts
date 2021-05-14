@@ -79,22 +79,30 @@ export interface RatesPages {
 export const e2eProcess = async (): Promise<void> => {
     let pdfData = await loadPDF();
     let pageTables: RatesPages = extractPages(pdfData);
-    // canadian: 20
-    // priority worldwide/USA: 7
-    let canadianPriority1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]], 20);
-    let canadianPriority2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]] + 1, 20);
-    let canadianExpress1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]], 20);
-    let canadianExpress2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]] + 1, 20);
-    let canadianRegular1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]], 20);
-    let canadianRegular2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]] + 1, 20);
 
-    let worldwidePriority = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[3]], 8, 9);
-    let expressUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[4]], 7);
+    let canadianPriority1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]], 20); // check
+    let canadianPriority2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]] + 1, 20); // check
+    let canadianExpress1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]], 20); // check
+    let canadianExpress2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]] + 1, 20); // check
+    let canadianRegular1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]], 20); // check
+    let canadianRegular2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]] + 1, 20); // check
 
+    let worldwidePriority = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[3]], 8, 9); // check - ish, trailing line
+    let expressUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[4]], 7); // check - ish, trailing line
+    let expeditedUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[5]], 7); // check - ish, trailing line
 
-    expressUSA.forEach(line => {
+    let trackedPacketUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[6]], 2); // not working yet
+    let smallPacketUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[7]], 2); // wrong page
+
+    let worldwideExpress = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[8]], 10); // check
+    let worldwideAir = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[9]], 10); // check
+    let worldwideSurface = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[10]], 10); // check
+    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[11]], 10); // not working yet
+    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[11]], 2); // not working yet
+
+    smallPacketUSA.forEach(line => {
         console.log(line);
-    })
+    });
 
 }
 export const loadPDF = async (): Promise<any> => {
@@ -173,6 +181,15 @@ export const extractPages = (pdfData: any): RatesPages => {
     return pages;
 }
 
+export const isAllNum = (values: any[]): boolean => {
+    let allNumbers = true;
+    values.forEach(value => {
+        if (isNaN(value.trim())) {
+            allNumbers = false;
+        }
+    })
+    return allNumbers;
+}
 // expectation of return: rate code header
 // each row of weight/cost
 // final row of overweight
@@ -183,29 +200,38 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
     /* suggestion: if a new "y" is found append it to an existing y in a map, then list over all the ys*/
     let allText = {};
     for (let i = 0; i < wholeTextLength; i++) {
-        line = wholeText[i]['R'][0]['T'].replace(/  /g, '').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
         if (allText[wholeText[i].y]) {
             allText[wholeText[i].y] = allText[wholeText[i].y].trim() + ' ' + line;
         } else {
-            //console.log('Y: ', wholeText[i].y);
-            //console.log('Line: ', line);
             allText[wholeText[i].y] = line;
         }
-
     }
+    // sort all values by row
     let keys = Object.keys(allText).sort(function (a, b) {
+        return parseFloat(a) - parseFloat(b);
+    });
+    let prevKey = '';
+    keys.forEach(key => {
+        let tokens = allText[key].split(' ');
+        // if allText[key] tokens is 2 and both those tokens are number; attach the previous key's values to this one and delete previous key
+        if (isAllNum(tokens) && tokens.length === 2 && isAllNum(allText[prevKey].split(' '))) {
+            allText[key] = allText[key] + ' ' + allText[prevKey];
+            delete allText[prevKey];
+        }
+        prevKey = key;
+    });
+    // sort again to clean up deleted keys
+    keys = Object.keys(allText).sort(function (a, b) {
         return parseFloat(a) - parseFloat(b);
     });
     let cleanArray: string[] = [];
     for (let i = 0; i < keys.length; i++) {
         let totalTokens = allText[keys[i]].trim().split(' ').length;
-        //console.log('Keys ' + keys[i]);
         if (totalTokens >= numRateCodes) {
             if (maxTokens && totalTokens <= maxTokens) {
-                //console.log('Line ', allText[keys[i]].trim());
                 cleanArray.push(allText[keys[i]].trim());
             } else if (!maxTokens) {
-                //console.log('Line ', allText[keys[i]].trim());
                 cleanArray.push(allText[keys[i]].trim());
             }
         }
