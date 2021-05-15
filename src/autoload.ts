@@ -74,36 +74,88 @@ export interface RatesPages {
     'TrackedPacketInternational': number,
     'SmallPacketInternational': number
 }
-
+export interface RateTables {
+    'PriorityCanada1': string[],
+    'PriorityCanada2': string[],
+    'ExpressCanada1': string[],
+    'ExpressCanada2': string[],
+    'RegularCanada1': string[],
+    'RegularCanada2': string[],
+    'PriorityWorldwide': string[],
+    'ExpressUSA': string[],
+    'ExpeditedUSA': string[],
+    'TrackedPacketUSA': string[],
+    'SmallPacketUSA': string[],
+    'ExpressInternational': string[],
+    'AirInternational': string[],
+    'SurfaceInternational': string[],
+    'TrackedPacketInternational': string[],
+    'SmallPacketInternational': string[]
+}
 // this will iterate over the two docs; one for small business and one for regular rates
-export const e2eProcess = async (): Promise<void> => {
+export const e2eProcess = async (): Promise<RateTables> => {
     let pdfData = await loadPDF();
     let pageTables: RatesPages = extractPages(pdfData);
+    let rateTables = <RateTables>{};
 
-    let canadianPriority1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]], 20); // check
-    let canadianPriority2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[0]] + 1, 20); // check
-    let canadianExpress1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]], 20); // check
-    let canadianExpress2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[1]] + 1, 20); // check
-    let canadianRegular1 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]], 20); // check
-    let canadianRegular2 = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[2]] + 1, 20); // check
+    const canadianPriority = Object.keys(pageTables)[0];
+    let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority], 20); // check
+    let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority] + 1, 20); // check
+    rateTables['PriorityCanada1'] = canadianPriority1;
+    rateTables['PriorityCanada2'] = canadianPriority2;
 
-    let worldwidePriority = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[3]], 8, 9); // check - ish, trailing line
-    let expressUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[4]], 7); // check - ish, trailing line
-    let expeditedUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[5]], 7); // check - ish, trailing line
+    const canadianExpress = Object.keys(pageTables)[1];
+    let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress], 20); // check
+    let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress] + 1, 20); // check
+    rateTables['ExpressCanada1'] = canadianExpress1;
+    rateTables['ExpressCanada2'] = canadianExpress2;
 
-    let trackedPacketUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[6]], 2); // not working yet
-    let smallPacketUSA = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[7]], 2); // wrong page
+    const canadianRegularParcel = Object.keys(pageTables)[2];
+    let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20); // check
+    let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel] + 1, 20); // check
+    rateTables['RegularCanada1'] = canadianRegular1;
+    rateTables['RegularCanada2'] = canadianRegular2;
 
-    let worldwideExpress = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[8]], 10); // check
-    let worldwideAir = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[9]], 10); // check
-    let worldwideSurface = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[10]], 10); // check
-    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[11]], 10); // not working yet
-    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[Object.keys(pageTables)[11]], 2); // not working yet
+    const internationalPriority = Object.keys(pageTables)[3];
+    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 8, 9); // check - ish, trailing line
+    rateTables[internationalPriority] = worldwidePriority;
 
-    smallPacketUSA.forEach(line => {
-        console.log(line);
-    });
+    const expressUSALabel = Object.keys(pageTables)[4];
+    let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7); // check - ish, trailing line
+    rateTables[expressUSALabel] = expressUSA;
 
+    const expeditedUSALabel = Object.keys(pageTables)[5];
+    let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7); // check - ish, trailing line
+    rateTables[expeditedUSALabel] = expeditedUSA;
+
+    const trackedPacketUSALabel = Object.keys(pageTables)[6];
+    let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2); // working but with two leading lines
+    rateTables[trackedPacketUSALabel] = trackedPacketUSA;
+
+    const smallPacketUSALabel = Object.keys(pageTables)[7];
+    let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2); // working but with two leading lines
+    rateTables[smallPacketUSALabel] = smallPacketUSA;
+
+    const worldwideExpressLabel = Object.keys(pageTables)[8];
+    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10); // check
+    rateTables[worldwideExpressLabel] = worldwideExpress;
+
+    const worldwideAirLabel = Object.keys(pageTables)[9];
+    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10); // check
+    rateTables[worldwideAirLabel] = worldwideAir;
+
+    const worldwideSurfaceLabel = Object.keys(pageTables)[10];
+    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10); // check
+    rateTables[worldwideSurfaceLabel] = worldwideSurface;
+
+    const worldwideTrackedPacketLabel = Object.keys(pageTables)[11];
+    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11); // check
+    rateTables[worldwideTrackedPacketLabel] = worldwideTrackedPacket;
+
+    const worldwideSmallPacketLabel = Object.keys(pageTables)[12];
+    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
+    rateTables[worldwideSmallPacketLabel] = worldwideSmallPacket;
+    return rateTables;
 }
 export const loadPDF = async (): Promise<any> => {
     let pdfParser = new PDFParser();
@@ -169,7 +221,7 @@ export const extractPages = (pdfData: any): RatesPages => {
             if (pageTitleMapping[massagedTitle] && pages[pageTitleMapping[massagedTitle]] === 0) {
                 pages[pageTitleMapping[massagedTitle]] = parseInt(pageNumber) + 3 - 1; // introduction pages, ie i,ii, etc Indexing - 1 for all pages
                 // for everything that isn't canada, add one to exclude the rate code mapping
-                if (pageTitleMapping[massagedTitle].toUpperCase().indexOf('CANADA') < 0) {
+                if (pageTitleMapping[massagedTitle].toUpperCase().indexOf('CANADA') < 0 && pageTitleMapping[massagedTitle].toUpperCase().indexOf('SMALLPACKETUSA') < 0) {
                     pages[pageTitleMapping[massagedTitle]] = pages[pageTitleMapping[massagedTitle]] + 1;
                 }
             }
@@ -216,6 +268,9 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
         let tokens = allText[key].split(' ');
         // if allText[key] tokens is 2 and both those tokens are number; attach the previous key's values to this one and delete previous key
         if (isAllNum(tokens) && tokens.length === 2 && isAllNum(allText[prevKey].split(' '))) {
+            allText[key] = allText[key] + ' ' + allText[prevKey];
+            delete allText[prevKey];
+        } else if (allText[key].trim().toLowerCase().indexOf('upto') >= 0 && tokens.length === 1) {
             allText[key] = allText[key] + ' ' + allText[prevKey];
             delete allText[prevKey];
         }
