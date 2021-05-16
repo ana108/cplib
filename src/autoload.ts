@@ -117,7 +117,7 @@ export const e2eProcess = async (): Promise<RateTables> => {
     rateTables['RegularCanada2'] = canadianRegular2;
 
     const internationalPriority = Object.keys(pageTables)[3];
-    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 8, 9); // check - ish, trailing line
+    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 7, 9); // check - ish, trailing line
     rateTables[internationalPriority] = worldwidePriority;
 
     const expressUSALabel = Object.keys(pageTables)[4];

@@ -1,14 +1,15 @@
 To DO:
-Figure out how to automate updating annual rates
+Extract table rates for small business pdf
+Load extracted table rates into db
+Automatically download the rates pdf file from cp; and verify if its the correct year\
+Remove unnecessary calls to database to extract provinces from postal codes
 Figure out how to manually update province sales taxes
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
 (small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
-suggested: https://www.npmjs.com/package/pdf-parse
 
 Documentation
  - get shipping cost
  - get shipping cost by postal code (canada only)
- - update fuel surcharge
  - given a postal code, get province
  - get valid delivery types for country
  - How to check if your shipping rates are valid, and what to do if they're not
