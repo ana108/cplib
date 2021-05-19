@@ -19,7 +19,6 @@ describe('Extract rate tables', () => {
         expect(rateTables['PriorityCanada1'].length).to.equal(62);
         expect(rateTables['PriorityCanada1'][rateTables['PriorityCanada1'].length - 1].split(' ').length).to.equal(23);
 
-        // console.log(rateTables['PriorityCanada1'][rateTables['PriorityCanada1'].length - 1].split(' '));
         expect(rateTables['PriorityCanada2'][0].split(' ').length).to.equal(20);
         expect(rateTables['PriorityCanada2'].length).to.equal(62);
         expect(rateTables['PriorityCanada2'][rateTables['PriorityCanada2'].length - 1].split(' ').length).to.equal(20);

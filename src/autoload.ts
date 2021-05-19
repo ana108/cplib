@@ -94,31 +94,31 @@ export interface RateTables {
 }
 // this will iterate over the two docs; one for small business and one for regular rates
 export const e2eProcess = async (): Promise<RateTables> => {
-    let pdfData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
-    let pageTables: RatesPages = extractPages(pdfData);
+    let pdfData = await loadPDF(__dirname + "/resources/regular/2021/Rates_2021.pdf");
+    let pageTables: RatesPages = pageHeaders(pdfData);
     let rateTables = <RateTables>{};
 
     const canadianPriority = Object.keys(pageTables)[0];
-    let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority], 20); // check
-    let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority] + 1, 20); // check
+    let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20); // check
+    let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20); // check
     rateTables['PriorityCanada1'] = canadianPriority1;
     rateTables['PriorityCanada2'] = canadianPriority2;
 
     const canadianExpress = Object.keys(pageTables)[1];
-    let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress], 20); // check
-    let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress] + 1, 20); // check
+    let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20); // check
+    let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20); // check
     rateTables['ExpressCanada1'] = canadianExpress1;
     rateTables['ExpressCanada2'] = canadianExpress2;
 
     const canadianRegularParcel = Object.keys(pageTables)[2];
-    let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20); // check
-    let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel] + 1, 20); // check
+    let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20); // check
+    let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20); // check
     rateTables['RegularCanada1'] = canadianRegular1;
     rateTables['RegularCanada2'] = canadianRegular2;
 
     const internationalPriority = Object.keys(pageTables)[3];
     // TODO
-    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority] + 1, 7, 9); // check - ish, trailing line
+    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 7, 9); // check - ish, trailing line
     rateTables[internationalPriority] = worldwidePriority;
 
     const expressUSALabel = Object.keys(pageTables)[4];
@@ -138,35 +138,31 @@ export const e2eProcess = async (): Promise<RateTables> => {
     rateTables[smallPacketUSALabel] = smallPacketUSA;
 
     const worldwideExpressLabel = Object.keys(pageTables)[8];
-    // TODO
-    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel] + 1, 10); // check
+    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10); // check
     rateTables[worldwideExpressLabel] = worldwideExpress;
 
     const worldwideAirLabel = Object.keys(pageTables)[9];
-    // TODO
-    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel] + 1, 10); // check
+    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10); // check
     rateTables[worldwideAirLabel] = worldwideAir;
 
     const worldwideSurfaceLabel = Object.keys(pageTables)[10];
-    // TODO
-    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel] + 1, 10); // check
+    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10); // check
     rateTables[worldwideSurfaceLabel] = worldwideSurface;
 
     const worldwideTrackedPacketLabel = Object.keys(pageTables)[11];
-    // TODO 
-    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel] + 1, 10, 11); // check
+    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11); // check
     rateTables[worldwideTrackedPacketLabel] = worldwideTrackedPacket;
 
     const worldwideSmallPacketLabel = Object.keys(pageTables)[12];
     // TODO
-    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel] + 1, 10); // working, beware that it can be split up into two air and surface, air comes first
+    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
     rateTables[worldwideSmallPacketLabel] = worldwideSmallPacket;
     return rateTables;
 }
 export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
     let pdfParser = new PDFParser();
     return new Promise<any>((resolve, reject) => {
-        pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError));
+        pdfParser.on("pdfParser_dataError", errData => reject(errData.parserError));
         pdfParser.on("pdfParser_dataReady", pdfData => {
             let pdfPages = pdfData['formImage']['Pages'];
             resolve(pdfPages); // an array of texts
@@ -282,7 +278,7 @@ export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, 
         'PriorityPrices': 'PriorityCanada',
         'XpresspostPrices': 'ExpressCanada',
         'RegularParcelPrices': 'RegularCanada',
-        'Xpresspost-USAPrices': 'ExpressUSA',
+        'XpresspostUSAPrices': 'ExpressUSA',
         'ExpeditedParcelUSAPrices': 'ExpeditedUSA',
         'TrackedPacketUSAPrices': 'TrackedPacketUSA',
         'SmallPacketU.S.A.Prices': 'SmallPacketUSA',
@@ -298,7 +294,7 @@ export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, 
     let pageFound = -1;
     let matchingTitle = '';
     Object.keys(pageTitleMapping).forEach(expectedHeader => {
-        if (rawText.trim().indexOf(expectedHeader) >= 0) {
+        if (rawText.trim().replace(/-/g, '').indexOf(expectedHeader) >= 0) {
             pageFound = pageNum;
             matchingTitle = pageTitleMapping[expectedHeader];
         }
@@ -331,7 +327,7 @@ export const isAllNum = (values: any[]): boolean => {
 // each row of weight/cost
 // final row of overweight
 export const extractRateTables = (pdfPages: any, page: number, numRateCodes: number, maxTokens?: number) => {
-    let wholeText = pdfPages[page]['Texts'];
+    let wholeText = pdfPages[page - 1]['Texts'];
     let wholeTextLength = wholeText.length;
     let line = '';
     /* suggestion: if a new "y" is found append it to an existing y in a map, then list over all the ys*/
