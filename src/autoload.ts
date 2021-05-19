@@ -94,7 +94,7 @@ export interface RateTables {
 }
 // this will iterate over the two docs; one for small business and one for regular rates
 export const e2eProcess = async (): Promise<RateTables> => {
-    let pdfData = await loadPDF();
+    let pdfData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
     let pageTables: RatesPages = extractPages(pdfData);
     let rateTables = <RateTables>{};
 
@@ -117,7 +117,8 @@ export const e2eProcess = async (): Promise<RateTables> => {
     rateTables['RegularCanada2'] = canadianRegular2;
 
     const internationalPriority = Object.keys(pageTables)[3];
-    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 7, 9); // check - ish, trailing line
+    // TODO
+    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority] + 1, 7, 9); // check - ish, trailing line
     rateTables[internationalPriority] = worldwidePriority;
 
     const expressUSALabel = Object.keys(pageTables)[4];
@@ -137,27 +138,32 @@ export const e2eProcess = async (): Promise<RateTables> => {
     rateTables[smallPacketUSALabel] = smallPacketUSA;
 
     const worldwideExpressLabel = Object.keys(pageTables)[8];
-    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10); // check
+    // TODO
+    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel] + 1, 10); // check
     rateTables[worldwideExpressLabel] = worldwideExpress;
 
     const worldwideAirLabel = Object.keys(pageTables)[9];
-    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10); // check
+    // TODO
+    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel] + 1, 10); // check
     rateTables[worldwideAirLabel] = worldwideAir;
 
     const worldwideSurfaceLabel = Object.keys(pageTables)[10];
-    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10); // check
+    // TODO
+    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel] + 1, 10); // check
     rateTables[worldwideSurfaceLabel] = worldwideSurface;
 
     const worldwideTrackedPacketLabel = Object.keys(pageTables)[11];
-    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11); // check
+    // TODO 
+    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel] + 1, 10, 11); // check
     rateTables[worldwideTrackedPacketLabel] = worldwideTrackedPacket;
 
     const worldwideSmallPacketLabel = Object.keys(pageTables)[12];
-    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
+    // TODO
+    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel] + 1, 10); // working, beware that it can be split up into two air and surface, air comes first
     rateTables[worldwideSmallPacketLabel] = worldwideSmallPacket;
     return rateTables;
 }
-export const loadPDF = async (): Promise<any> => {
+export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
     let pdfParser = new PDFParser();
     return new Promise<any>((resolve, reject) => {
         pdfParser.on("pdfParser_dataError", errData => console.error(errData.parserError));
@@ -165,7 +171,7 @@ export const loadPDF = async (): Promise<any> => {
             let pdfPages = pdfData['formImage']['Pages'];
             resolve(pdfPages); // an array of texts
         });
-        pdfParser.loadPDF(__dirname + "/resources/regular/2021/Rates_2021.pdf");
+        pdfParser.loadPDF(pdfFileLoc);
     });
 }
 
@@ -232,7 +238,86 @@ export const extractPages = (pdfData: any): RatesPages => {
     }
     return pages;
 }
-
+export const pageHeaders = (pdfData: any): RatesPages => {
+    let pages: RatesPages = {
+        'PriorityCanada': 0,
+        'ExpressCanada': 0,
+        'RegularCanada': 0,
+        'PriorityWorldwide': 0,
+        'ExpressUSA': 0,
+        'ExpeditedUSA': 0,
+        'TrackedPacketUSA': 0,
+        'SmallPacketUSA': 0,
+        'ExpressInternational': 0,
+        'AirInternational': 0,
+        'SurfaceInternational': 0,
+        'TrackedPacketInternational': 0,
+        'SmallPacketInternational': 0
+    };
+    let pageNum = 0;
+    pdfData.forEach(page => {
+        let dataByLine = {};
+        page['Texts'].forEach(entry => {
+            if (dataByLine[entry.y]) {
+                dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, '').replace(/TM/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+            } else {
+                dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/TM/g, '').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();;
+            }
+        });
+        let keys = Object.keys(dataByLine).sort(function (a, b) {
+            return parseFloat(a) - parseFloat(b);
+        });
+        if (keys.length >= 3) {
+            handlePageTitleEntry(dataByLine[keys[0]] + '' + dataByLine[keys[1]] + dataByLine[keys[2]] + dataByLine[keys[3]], pages, ++pageNum);
+        } else if (keys.length >= 2) {
+            handlePageTitleEntry(dataByLine[keys[0]] + '' + dataByLine[keys[1]], pages, ++pageNum);
+        } else {
+            handlePageTitleEntry(dataByLine[keys[0]], pages, ++pageNum);
+        }
+    });
+    return pages;
+}
+export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, pageNum: number): void => {
+    let pageTitleMapping = {
+        'PriorityPrices': 'PriorityCanada',
+        'XpresspostPrices': 'ExpressCanada',
+        'RegularParcelPrices': 'RegularCanada',
+        'Xpresspost-USAPrices': 'ExpressUSA',
+        'ExpeditedParcelUSAPrices': 'ExpeditedUSA',
+        'TrackedPacketUSAPrices': 'TrackedPacketUSA',
+        'SmallPacketU.S.A.Prices': 'SmallPacketUSA',
+        'PriorityWorldwideInternationalPrices': 'PriorityWorldwide',
+        'XpresspostInternationalPrices': 'ExpressInternational',
+        'InternationalParcelAirPrices': 'AirInternational',
+        'InternationalParcelSurfacePrices': 'SurfaceInternational',
+        'TrackedPacketInternationalPrices': 'TrackedPacketInternational',
+        'SmallPacketInternationalPrices': 'SmallPacketInternational'
+    };
+    let overwriteEligible = ['ExpressUSA', 'ExpeditedUSA', 'PriorityWorldwide', 'ExpressInternational',
+        'AirInternational', 'SurfaceInternational', 'SmallPacketInternational'];
+    let pageFound = -1;
+    let matchingTitle = '';
+    Object.keys(pageTitleMapping).forEach(expectedHeader => {
+        if (rawText.trim().indexOf(expectedHeader) >= 0) {
+            pageFound = pageNum;
+            matchingTitle = pageTitleMapping[expectedHeader];
+        }
+    });
+    let previouslySet = false;
+    if (pageFound !== -1) {
+        if (ptrRateTable[matchingTitle] != 0) {
+            previouslySet = true;
+        }
+        ptrRateTable[matchingTitle] = pageFound;
+    }
+    // previouslySet is for tables that are led by rate code mapping, which has the same title as the table we want.
+    // so we want to skip those
+    // canada post however, sometimes forgets to include a header for the table we want, so if we know a rate table has a rate code mapping page
+    // and we've seen only one occurance of the title, then it means we want to skip to the next page
+    if (!previouslySet && overwriteEligible.includes(matchingTitle)) {
+        ptrRateTable[matchingTitle] = pageFound + 1;
+    }
+}
 export const isAllNum = (values: any[]): boolean => {
     let allNumbers = true;
     values.forEach(value => {

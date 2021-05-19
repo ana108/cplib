@@ -1,18 +1,19 @@
 import * as sinon from 'sinon';
-import { e2eProcess } from './autoload';
+import { e2eProcess, loadPDF, pageHeaders } from './autoload';
 import 'mocha';
-import { RateTables } from './autoload';
+import { RateTables, RatesPages, extractPages } from './autoload';
 import * as chai from 'chai';
 const expect = chai.expect;
 const YEAR = new Date().getFullYear();
 
 describe('Extract rate tables', () => {
-    beforeEach(() => {
+    let rateTables: RateTables;
+    before(async () => {
+        rateTables = await e2eProcess();
     });
     afterEach(() => {
     });
-    it('Execute autoload', async () => {
-        let rateTables: RateTables = await e2eProcess();
+    it('Execute autoload - regular - canada', async () => {
         // also check the length of first and last row
         expect(rateTables['PriorityCanada1'][0].split(' ').length).to.equal(23);
         expect(rateTables['PriorityCanada1'].length).to.equal(62);
@@ -39,6 +40,12 @@ describe('Extract rate tables', () => {
         expect(rateTables['RegularCanada2'].length).to.equal(62);
         expect(rateTables['RegularCanada2'][rateTables['RegularCanada2'].length - 1].split(' ').length).to.equal(22);
 
+        expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
+        expect(rateTables['PriorityWorldwide'].length).to.equal(63);
+        expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
+    });
+
+    it('Execute autoload - regular - non-canada', async () => {
         expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
         expect(rateTables['PriorityWorldwide'].length).to.equal(63);
         expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
@@ -81,5 +88,36 @@ describe('Extract rate tables', () => {
         expect(rateTables['SmallPacketInternational'][7].split(' ').length).to.equal(10);
         expect(rateTables['SmallPacketInternational'][rateTables['SmallPacketInternational'].length - 1].split(' ').length).to.equal(11);
     });
-
 });
+
+describe('Extract rate tables - 2020 - int', () => {
+    let pageData: any;
+    before(async () => {
+        pageData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
+    });
+    afterEach(() => {
+    });
+    it('Test Page number extraction - 2020 - Canada', async () => {
+        let ratesPages: RatesPages = pageHeaders(pageData);
+        expect(ratesPages['PriorityCanada']).to.equal(10);
+        expect(ratesPages['ExpressCanada']).to.equal(12);
+        expect(ratesPages['RegularCanada']).to.equal(14);
+    });
+
+    it('Test Page number extraction - 2020 - USA', () => {
+        let ratesPages: RatesPages = pageHeaders(pageData);
+        expect(ratesPages['ExpressUSA']).to.equal(20);
+        expect(ratesPages['ExpeditedUSA']).to.equal(22);
+        expect(ratesPages['TrackedPacketUSA']).to.equal(24);
+        expect(ratesPages['SmallPacketUSA']).to.equal(25);
+    });
+
+    it('Test Page number extraction - 2020 - International', async () => {
+        let ratesPages: RatesPages = pageHeaders(pageData);
+        expect(ratesPages['ExpressInternational']).to.equal(31);
+        expect(ratesPages['AirInternational']).to.equal(33);
+        expect(ratesPages['SurfaceInternational']).to.equal(35);
+        expect(ratesPages['TrackedPacketInternational']).to.equal(37);
+        expect(ratesPages['SmallPacketInternational']).to.equal(39);
+    });
+})
