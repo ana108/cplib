@@ -1,5 +1,4 @@
 To DO:
-Extract table rates for small business pdf
 Load extracted table rates into db
 Automatically download the rates pdf file from cp; and verify if its the correct year\
 Remove unnecessary calls to database to extract provinces from postal codes

@@ -62,6 +62,7 @@ export const extractFuelTable = (data: string): FuelTable => {
 export interface RatesPages {
     'PriorityCanada': number,
     'ExpressCanada': number,
+    'ExpeditedCanada': number,
     'RegularCanada': number,
     'PriorityWorldwide': number,
     'ExpressUSA': number,
@@ -79,6 +80,8 @@ export interface RateTables {
     'PriorityCanada2': string[],
     'ExpressCanada1': string[],
     'ExpressCanada2': string[],
+    'ExpeditedCanada1': string[],
+    'ExpeditedCanada2': string[],
     'RegularCanada1': string[],
     'RegularCanada2': string[],
     'PriorityWorldwide': string[],
@@ -93,71 +96,83 @@ export interface RateTables {
     'SmallPacketInternational': string[]
 }
 // this will iterate over the two docs; one for small business and one for regular rates
-export const e2eProcess = async (): Promise<RateTables> => {
-    let pdfData = await loadPDF(__dirname + "/resources/regular/2021/Rates_2021.pdf");
-    let pageTables: RatesPages = pageHeaders(pdfData);
-    let rateTables = <RateTables>{};
+export const e2eProcess = async (year: string): Promise<RateTables[]> => {
+    const dataSources = {
+        'Regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
+        'SmallBusiness': __dirname + `/resources/small_business/${year}/SBprices-e-${year}.pdf`
+    };
+    let allRateTables: RateTables[] = [];
+    await Promise.all(Object.keys(dataSources).map(async (key) => {
+        let pdfData = await loadPDF(dataSources[key]);
+        let pageTables: RatesPages = pageHeaders(pdfData);
+        let rateTables = <RateTables>{};
+        const canadianPriority = 'PriorityCanada';
+        let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20);
+        let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20);
+        rateTables['PriorityCanada1'] = canadianPriority1;
+        rateTables['PriorityCanada2'] = canadianPriority2;
 
-    const canadianPriority = Object.keys(pageTables)[0];
-    let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20); // check
-    let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20); // check
-    rateTables['PriorityCanada1'] = canadianPriority1;
-    rateTables['PriorityCanada2'] = canadianPriority2;
+        const canadianExpress = 'ExpressCanada';
+        let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20);
+        let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20);
+        rateTables['ExpressCanada1'] = canadianExpress1;
+        rateTables['ExpressCanada2'] = canadianExpress2;
 
-    const canadianExpress = Object.keys(pageTables)[1];
-    let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20); // check
-    let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20); // check
-    rateTables['ExpressCanada1'] = canadianExpress1;
-    rateTables['ExpressCanada2'] = canadianExpress2;
+        const canadianRegularParcel = 'RegularCanada';
+        let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20);
+        let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20);
+        rateTables['RegularCanada1'] = canadianRegular1;
+        rateTables['RegularCanada2'] = canadianRegular2;
 
-    const canadianRegularParcel = Object.keys(pageTables)[2];
-    let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20); // check
-    let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20); // check
-    rateTables['RegularCanada1'] = canadianRegular1;
-    rateTables['RegularCanada2'] = canadianRegular2;
+        const internationalPriority = 'PriorityWorldwide';
+        let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 7, 9);
+        rateTables[internationalPriority] = worldwidePriority;
 
-    const internationalPriority = Object.keys(pageTables)[3];
-    // TODO
-    let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 7, 9); // check - ish, trailing line
-    rateTables[internationalPriority] = worldwidePriority;
+        const expressUSALabel = 'ExpressUSA';
+        let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7);
+        rateTables[expressUSALabel] = expressUSA;
 
-    const expressUSALabel = Object.keys(pageTables)[4];
-    let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7); // check - ish, trailing line
-    rateTables[expressUSALabel] = expressUSA;
+        const expeditedUSALabel = 'ExpeditedUSA';
+        let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7);
+        rateTables[expeditedUSALabel] = expeditedUSA;
 
-    const expeditedUSALabel = Object.keys(pageTables)[5];
-    let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7); // check - ish, trailing line
-    rateTables[expeditedUSALabel] = expeditedUSA;
+        const trackedPacketUSALabel = 'TrackedPacketUSA';
+        let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2);
+        rateTables[trackedPacketUSALabel] = trackedPacketUSA;
 
-    const trackedPacketUSALabel = Object.keys(pageTables)[6];
-    let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2); // working but with two leading lines
-    rateTables[trackedPacketUSALabel] = trackedPacketUSA;
+        const smallPacketUSALabel = 'SmallPacketUSA';
+        let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2);
+        rateTables[smallPacketUSALabel] = smallPacketUSA;
 
-    const smallPacketUSALabel = Object.keys(pageTables)[7];
-    let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2); // working but with two leading lines
-    rateTables[smallPacketUSALabel] = smallPacketUSA;
+        const worldwideExpressLabel = 'ExpressInternational';
+        let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10);
+        rateTables[worldwideExpressLabel] = worldwideExpress;
 
-    const worldwideExpressLabel = Object.keys(pageTables)[8];
-    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10); // check
-    rateTables[worldwideExpressLabel] = worldwideExpress;
+        const worldwideAirLabel = 'AirInternational';
+        let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10);
+        rateTables[worldwideAirLabel] = worldwideAir;
 
-    const worldwideAirLabel = Object.keys(pageTables)[9];
-    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10); // check
-    rateTables[worldwideAirLabel] = worldwideAir;
+        const worldwideSurfaceLabel = 'SurfaceInternational';
+        let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10);
+        rateTables[worldwideSurfaceLabel] = worldwideSurface;
 
-    const worldwideSurfaceLabel = Object.keys(pageTables)[10];
-    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10); // check
-    rateTables[worldwideSurfaceLabel] = worldwideSurface;
+        const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
+        let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
+        rateTables[worldwideTrackedPacketLabel] = worldwideTrackedPacket;
 
-    const worldwideTrackedPacketLabel = Object.keys(pageTables)[11];
-    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11); // check
-    rateTables[worldwideTrackedPacketLabel] = worldwideTrackedPacket;
-
-    const worldwideSmallPacketLabel = Object.keys(pageTables)[12];
-    // TODO
-    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
-    rateTables[worldwideSmallPacketLabel] = worldwideSmallPacket;
-    return rateTables;
+        const worldwideSmallPacketLabel = 'SmallPacketInternational';
+        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
+        rateTables[worldwideSmallPacketLabel] = worldwideSmallPacket;
+        if (key === 'SmallBusiness') {
+            const canadianExpeditedParcel = 'ExpeditedCanada';
+            let canadianExpedited1 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23);
+            let canadianExpedited2 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22);
+            rateTables['ExpeditedCanada1'] = canadianExpedited1;
+            rateTables['ExpeditedCanada2'] = canadianExpedited2;
+        }
+        allRateTables.push(rateTables);
+    }));
+    return allRateTables;
 }
 export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
     let pdfParser = new PDFParser();
@@ -175,6 +190,7 @@ export const extractPages = (pdfData: any): RatesPages => {
     let pages: RatesPages = {
         'PriorityCanada': 0,
         'ExpressCanada': 0,
+        'ExpeditedCanada': 0,
         'RegularCanada': 0,
         'PriorityWorldwide': 0,
         'ExpressUSA': 0,
@@ -191,7 +207,7 @@ export const extractPages = (pdfData: any): RatesPages => {
         'Priority Prices': 'PriorityCanada',
         'Xpresspost Prices': 'ExpressCanada',
         'Regular Parcel Prices': 'RegularCanada',
-        // 'Priority Worldwide USA Prices': 'PriorityWorldwide',
+        'ExpeditedParcelPrices': 'ExpeditedCanada',
         'Xpresspost USA Prices': 'ExpressUSA',
         'Expedited Parcel USA Prices': 'ExpeditedUSA',
         'Tracked Packet USA Prices': 'TrackedPacketUSA',
@@ -238,6 +254,7 @@ export const pageHeaders = (pdfData: any): RatesPages => {
     let pages: RatesPages = {
         'PriorityCanada': 0,
         'ExpressCanada': 0,
+        'ExpeditedCanada': 0,
         'RegularCanada': 0,
         'PriorityWorldwide': 0,
         'ExpressUSA': 0,
@@ -277,6 +294,7 @@ export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, 
     let pageTitleMapping = {
         'PriorityPrices': 'PriorityCanada',
         'XpresspostPrices': 'ExpressCanada',
+        'ExpeditedParcelPrices': 'ExpeditedCanada',
         'RegularParcelPrices': 'RegularCanada',
         'XpresspostUSAPrices': 'ExpressUSA',
         'ExpeditedParcelUSAPrices': 'ExpeditedUSA',

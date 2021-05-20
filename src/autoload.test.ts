@@ -7,9 +7,11 @@ const expect = chai.expect;
 const YEAR = new Date().getFullYear();
 
 describe('Extract rate tables', () => {
+    let allRateTables: RateTables[];
     let rateTables: RateTables;
     before(async () => {
-        rateTables = await e2eProcess();
+        allRateTables = await e2eProcess('2021');
+        rateTables = allRateTables[0];
     });
     afterEach(() => {
     });
@@ -87,12 +89,54 @@ describe('Extract rate tables', () => {
         expect(rateTables['SmallPacketInternational'][7].split(' ').length).to.equal(10);
         expect(rateTables['SmallPacketInternational'][rateTables['SmallPacketInternational'].length - 1].split(' ').length).to.equal(11);
     });
+
+    it('Execute autoload - small business - canada', async () => {
+        const rateTables = allRateTables[1];
+        // also check the length of first and last row
+        expect(rateTables['PriorityCanada1'][0].split(' ').length).to.equal(23);
+        expect(rateTables['PriorityCanada1'].length).to.equal(62);
+        expect(rateTables['PriorityCanada1'][rateTables['PriorityCanada1'].length - 1].split(' ').length).to.equal(23);
+
+        expect(rateTables['PriorityCanada2'][0].split(' ').length).to.equal(20);
+        expect(rateTables['PriorityCanada2'].length).to.equal(62);
+        expect(rateTables['PriorityCanada2'][rateTables['PriorityCanada2'].length - 1].split(' ').length).to.equal(20);
+
+        expect(rateTables['ExpressCanada1'][0].split(' ').length).to.equal(23);
+        expect(rateTables['ExpressCanada1'].length).to.equal(62);
+        expect(rateTables['ExpressCanada1'][rateTables['ExpressCanada1'].length - 1].split(' ').length).to.equal(23);
+
+        expect(rateTables['ExpressCanada2'][0].split(' ').length).to.equal(22);
+        expect(rateTables['ExpressCanada2'].length).to.equal(62);
+        expect(rateTables['ExpressCanada2'][rateTables['ExpressCanada2'].length - 1].split(' ').length).to.equal(22);
+
+        expect(rateTables['ExpeditedCanada1'][0].split(' ').length).to.equal(23);
+        expect(rateTables['ExpeditedCanada1'].length).to.equal(62);
+        expect(rateTables['ExpeditedCanada1'][rateTables['ExpressCanada2'].length - 1].split(' ').length).to.equal(23);
+
+        expect(rateTables['ExpeditedCanada2'][0].split(' ').length).to.equal(22);
+        expect(rateTables['ExpeditedCanada2'].length).to.equal(62);
+        expect(rateTables['ExpeditedCanada2'][rateTables['ExpressCanada2'].length - 1].split(' ').length).to.equal(22);
+
+        expect(rateTables['RegularCanada1'][0].split(' ').length).to.equal(23);
+        expect(rateTables['RegularCanada1'].length).to.equal(62);
+        expect(rateTables['RegularCanada1'][rateTables['RegularCanada1'].length - 1].split(' ').length).to.equal(23);
+
+        expect(rateTables['RegularCanada2'][0].split(' ').length).to.equal(22);
+        expect(rateTables['RegularCanada2'].length).to.equal(62);
+        expect(rateTables['RegularCanada2'][rateTables['RegularCanada2'].length - 1].split(' ').length).to.equal(22);
+
+        expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
+        expect(rateTables['PriorityWorldwide'].length).to.equal(63);
+        expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
+    });
 });
 
 describe('Extract rate tables - 2020 - int', () => {
     let pageData: any;
+    let pageDataSmallBusiness: any;
     before(async () => {
         pageData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
+        pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/SBprices-e-2020.pdf");
     });
     afterEach(() => {
     });
@@ -101,6 +145,14 @@ describe('Extract rate tables - 2020 - int', () => {
         expect(ratesPages['PriorityCanada']).to.equal(10);
         expect(ratesPages['ExpressCanada']).to.equal(12);
         expect(ratesPages['RegularCanada']).to.equal(14);
+    });
+
+    it('Test Page number extraction - 2020 -Small Business -  Canada', async () => {
+        let ratesPages: RatesPages = pageHeaders(pageDataSmallBusiness);
+        expect(ratesPages['PriorityCanada']).to.equal(12);
+        expect(ratesPages['ExpressCanada']).to.equal(14);
+        expect(ratesPages['RegularCanada']).to.equal(18);
+        expect(ratesPages['ExpeditedCanada']).to.equal(16);
     });
 
     it('Test Page number extraction - 2020 - USA', () => {
