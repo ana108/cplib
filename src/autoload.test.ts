@@ -1,4 +1,5 @@
 import * as sinon from 'sinon';
+import * as db from './db/sqlite3';
 import { e2eProcess, loadPDF, pageHeaders } from './autoload';
 import 'mocha';
 import { RateTables, RatesPages, extractPages } from './autoload';
@@ -172,3 +173,17 @@ describe('Extract rate tables - 2020 - int', () => {
         expect(ratesPages['SmallPacketInternational']).to.equal(39);
     });
 })
+
+describe('Load data into rates table for the year', () => {
+    before(() => {
+        db.setDB(__dirname + "/resources/cplib_autoload.db");
+    });
+    after(() => {
+        db.resetDB();
+    });
+});
+/**
+ * TODO: write a query to get the count of all rows for a given year
+ * write a query to delete all rows for a given year (i.e. clean up after each run)
+ * get stats per delivery/country type and use for tests
+ */
