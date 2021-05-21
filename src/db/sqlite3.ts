@@ -251,3 +251,32 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
     });
   })
 }
+// For integration tests
+export const deleteRatesByYear = (year: number): Promise<number> => {
+  const deleteSql = `delete from rates where year = ${year}`;
+  return new Promise<number>((resolve, reject) => {
+    db.run(deleteSql, [], function (err) {
+      if (err) {
+
+        reject(err);
+      } else {
+        const self: any = this!;
+        resolve(self.changes);
+      }
+    });
+  });
+}
+
+export const executeCustomSQL = (sqlStmt: string): Promise<any> => {
+  return new Promise<any>((resolve, reject) => {
+    db.all(sqlStmt, [], (err, rows) => {
+      if (err) {
+        console.log('ERROR FOUND ', err);
+        console.log('ERROR SQL ' + sqlStmt);
+        reject(sqlStmt);
+      } else {
+        resolve(rows);
+      }
+    })
+  });
+}

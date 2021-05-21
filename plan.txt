@@ -2,11 +2,12 @@ To DO:
 Load extracted table rates into db
 Automatically download the rates pdf file from cp; and verify if its the correct year\
 Remove unnecessary calls to database to extract provinces from postal codes
-Figure out how to manually update province sales taxes
+Figure out how to manually update province sales taxes (https://www.retailcouncil.org/resources/quick-facts/sales-tax-rates-by-province/)
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
 (small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
 
 Documentation
+ - explain what all the scripts do
  - get shipping cost
  - get shipping cost by postal code (canada only)
  - given a postal code, get province

@@ -2,16 +2,16 @@ import * as sinon from 'sinon';
 import * as db from './db/sqlite3';
 import { e2eProcess, loadPDF, pageHeaders } from './autoload';
 import 'mocha';
-import { RateTables, RatesPages, extractPages } from './autoload';
+import { RateTables, RatesPages, saveTableEntries } from './autoload';
 import * as chai from 'chai';
 const expect = chai.expect;
 const YEAR = new Date().getFullYear();
 
-describe('Extract rate tables', () => {
+describe.skip('Extract rate tables', () => {
     let allRateTables: RateTables[];
     let rateTables: RateTables;
     before(async () => {
-        allRateTables = await e2eProcess('2021');
+        allRateTables = await e2eProcess(2021);
         rateTables = allRateTables[0];
     });
     afterEach(() => {
@@ -132,7 +132,7 @@ describe('Extract rate tables', () => {
     });
 });
 
-describe('Extract rate tables - 2020 - int', () => {
+describe.skip('Extract rate tables - 2020 - int', () => {
     let pageData: any;
     let pageDataSmallBusiness: any;
     before(async () => {
@@ -174,16 +174,88 @@ describe('Extract rate tables - 2020 - int', () => {
     });
 })
 
-describe('Load data into rates table for the year', () => {
-    before(() => {
+describe('Load data into rates table for the year', async () => {
+    let allRateTables: RateTables[];
+    before(async () => {
         db.setDB(__dirname + "/resources/cplib_autoload.db");
+        allRateTables = await e2eProcess(YEAR);
     });
-    after(() => {
+    after(async () => {
+        let numDeleted = await db.deleteRatesByYear(2021);
+        console.log('Deleted ', numDeleted);
         db.resetDB();
     });
+
+    it.skip('Verify that the right number of rows was loaded for canada', async () => {
+        let canadaSmallBusinessRegular = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'small_business' and type = 'regular'`;
+        let result: any;
+        result = await db.executeCustomSQL(canadaSmallBusinessRegular);
+        expect(result[0].count).to.equal(2745);
+
+        let canadaSmallBusinessExpress = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'small_business' and type = 'express'`;
+        result = await db.executeCustomSQL(canadaSmallBusinessExpress);
+        expect(result[0].count).to.equal(2745);
+
+        let canadaSmallBusinessPriority = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'small_business' and type = 'priority'`;
+        result = await db.executeCustomSQL(canadaSmallBusinessPriority);
+        expect(result[0].count).to.equal(2623);
+
+        let canadaSmallBusinessExpedited = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'small_business' and type = 'expedited'`;
+        result = await db.executeCustomSQL(canadaSmallBusinessExpedited);
+        expect(result[0].count).to.equal(1403);
+
+        let canadaRegularRegular = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'regular' and type = 'regular'`;
+        result = await db.executeCustomSQL(canadaRegularRegular);
+        expect(result[0].count).to.equal(2745);
+
+        let canadaRegularExpress = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'regular' and type = 'express'`;
+        result = await db.executeCustomSQL(canadaRegularExpress);
+        expect(result[0].count).to.equal(2745);
+
+        let canadaRegularPriority = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'regular' and type = 'priority'`;
+        result = await db.executeCustomSQL(canadaRegularPriority);
+        expect(result[0].count).to.equal(2623);
+    });
+    it.skip('Verify that the right number of rows was loaded for USA', async () => {
+        let result: any;
+
+        let regularExpress = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'regular' and type = 'express'`;
+        result = await db.executeCustomSQL(regularExpress);
+        expect(result[0].count).to.equal(427);
+
+        let regularExpedited = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'regular' and type = 'expedited'`;
+        result = await db.executeCustomSQL(regularExpedited);
+        expect(result[0].count).to.equal(427);
+
+        /* let smallBusinessExpress = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'small_business' and type = 'express'`;
+        result = await db.executeCustomSQL(smallBusinessExpress);
+        expect(result[0].count).to.equal(427);
+
+        let smallBusinessExpedited = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'small_business' and type = 'expedited'`;
+        result = await db.executeCustomSQL(smallBusinessExpedited);
+        expect(result[0].count).to.equal(427); */
+    });
+
+    it('Verify that the right number of rows was loaded for International', async () => {
+        let result: any;
+
+        let regularPriority = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'priority'`;
+        result = await db.executeCustomSQL(regularPriority);
+        expect(result[0].count).to.equal(427);
+
+        /* let regularExpress = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'express'`;
+        result = await db.executeCustomSQL(regularExpress);
+        expect(result[0].count).to.equal(610);
+
+        let regularSurface = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'surface'`;
+        result = await db.executeCustomSQL(regularSurface);
+        expect(result[0].count).to.equal(610);
+
+        let regularAir = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'air'`;
+        result = await db.executeCustomSQL(regularAir);
+        expect(result[0].count).to.equal(610); */
+
+        // TODO small business
+    });
+
 });
-/**
- * TODO: write a query to get the count of all rows for a given year
- * write a query to delete all rows for a given year (i.e. clean up after each run)
- * get stats per delivery/country type and use for tests
- */

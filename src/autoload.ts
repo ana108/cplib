@@ -1,6 +1,6 @@
 const axios = require('axios').default;
 import { updateFuelSurcharge } from './db/sqlite3';
-import fs from 'fs';
+import { saveToDb } from './db/sqlite3';
 const PDFParser = require("pdf2json");
 export interface FuelTable {
     'Domestic Express and Non-Express Services': number,
@@ -96,7 +96,7 @@ export interface RateTables {
     'SmallPacketInternational': string[]
 }
 // this will iterate over the two docs; one for small business and one for regular rates
-export const e2eProcess = async (year: string): Promise<RateTables[]> => {
+export const e2eProcess = async (year: number): Promise<RateTables[]> => {
     const dataSources = {
         'Regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
         'SmallBusiness': __dirname + `/resources/small_business/${year}/SBprices-e-${year}.pdf`
@@ -391,4 +391,122 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
         }
     }
     return cleanArray;
+}
+export const cleanExtraLines = (pageArray: string[]): string[] => {
+    // clean the end of the array
+    for (let i = pageArray.length - 1; i > 0; i--) {
+        let firstTokenNumeric: any = pageArray[i].split(' ')[0].trim();
+        if (isNaN(firstTokenNumeric)) {
+            pageArray.splice(i, 1);
+        } else {
+            break; // break out once we get into real numbers
+        }
+    }
+    // clean the beginning of the array, by identifying the first functioning row
+    // if you have 3 rows in a row that all have identical number of tokens, then the one
+    // before it is the header row, signifying the beginning of the table
+    let realBeginning = 0;
+    for (let i = 1; i < pageArray.length - 2; i++) {
+        const threeRows = [pageArray[i].split(' ').length, pageArray[i + 1].split(' ').length, pageArray[i + 2].split(' ').length];
+        const allEqual = threeRows.every(rowLength => rowLength === threeRows[0]);
+        if (allEqual) {
+            realBeginning = i - 1;
+            break;
+        }
+    }
+    if (realBeginning > 1) {
+        pageArray.splice(0, realBeginning);
+    }
+    return pageArray;
+}
+// remember, this gets called twice; once for regular and once for small business
+export const saveTableEntries = (ratesPage: RateTables, year: number, customerType: string): Promise<any> => {
+    return new Promise<any>((resolve, reject) => {
+        ratesPage['ExpressUSA'] = cleanExtraLines(ratesPage['ExpressUSA']);
+        ratesPage['ExpeditedUSA'] = cleanExtraLines(ratesPage['ExpeditedUSA']);
+        ratesPage['PriorityWorldwide'] = cleanExtraLines(ratesPage['PriorityWorldwide']);
+        ratesPage['ExpressInternational'] = cleanExtraLines(ratesPage['ExpressInternational']);
+        ratesPage['AirInternational'] = cleanExtraLines(ratesPage['AirInternational']);
+        ratesPage['SurfaceInternational'] = cleanExtraLines(ratesPage['SurfaceInternational']);
+        const inputsAll: string[] = [];
+        let mapToDeliveryType = {
+            /*'PriorityCanada1': {
+                type: 'priority',
+                country: 'Canada'
+            },
+            'PriorityCanada2': {
+                type: 'priority',
+                country: 'Canada'
+            },
+            'ExpressCanada1': {
+                type: 'express',
+                country: 'Canada'
+            },
+            'ExpressCanada2': {
+                type: 'express',
+                country: 'Canada'
+            },
+            'RegularCanada1': {
+                type: 'regular',
+                country: 'Canada'
+            },
+            'RegularCanada2': {
+                type: 'regular',
+                country: 'Canada'
+            },
+            'ExpressUSA': {
+                type: 'express',
+                country: 'USA'
+            },
+            'ExpeditedUSA': {
+                type: 'expedited',
+                country: 'USA'
+            }, */
+            'PriorityWorldwide': {
+                type: 'priority',
+                country: 'INTERNATIONAL'
+            },
+            /*'ExpressInternational': {
+                type: 'express',
+                country: 'INTERNATIONAL'
+            },
+            'AirInternational': {
+                type: 'air',
+                country: 'INTERNATIONAL'
+            },
+            'SurfaceInternational': {
+                type: 'surface',
+                country: 'INTERNATIONAL'
+            }*/
+        };
+        Object.keys(mapToDeliveryType).forEach(deliveryType => {
+            let labels: string[] = ratesPage[deliveryType][0].split(' ');
+            const type = mapToDeliveryType[deliveryType].type;
+            const country = mapToDeliveryType[deliveryType].country;
+            for (let i = 1; i < ratesPage[deliveryType].length - 1; i++) {
+                let input = ratesPage[deliveryType][i];
+                const tokens = input.split(' ');
+                const maxWeight = tokens[0];
+                for (let i = 0; i < labels.length; i++) {
+                    const price = tokens[i];
+                    const rate_code = labels[i];
+                    const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
+                    inputsAll.push(insertDataSQL);
+                }
+            }
+            for (let i = 0; i < labels.length; i++) {
+                const tokens = ratesPage[deliveryType][ratesPage[deliveryType].length - 1].split(' ');
+                const price = tokens[i];
+                const rate_code = labels[i];
+                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, 30.1, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
+                inputsAll.push(insertDataSQL);
+            }
+        });
+        console.log(inputsAll);
+        return Promise.all(inputsAll.map(async entry => {
+            return saveToDb(entry)
+        })).catch(e => {
+            console.log('ERROR! ', e);
+        });
+    });
 }
