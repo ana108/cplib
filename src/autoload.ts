@@ -392,6 +392,47 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
     }
     return cleanArray;
 }
+
+export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number) => {
+    let fullPage = extractRateTables(pdfPages, pageNumber, 7, 9);
+    // find the two tables at the bottom
+    // convert text of the page to be in a line by line format
+    let wholeText = pdfPages[pageNumber - 1]['Texts'];
+    let wholeTextLength = wholeText.length;
+    let line = '';
+    let allText = {};
+    for (let i = 0; i < wholeTextLength; i++) {
+        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+        if (allText[wholeText[i].y]) {
+            allText[wholeText[i].y] = allText[wholeText[i].y].trim() + ' ' + line;
+        } else {
+            allText[wholeText[i].y] = line;
+        }
+    }
+    // sort all values by row
+    let keys = Object.keys(allText).sort(function (a, b) {
+        return parseFloat(a) - parseFloat(b);
+    });
+    let prevKey = '';
+    keys.forEach(key => {
+        let tokens = allText[key].split(' ');
+        // if allText[key] tokens is 2 and both those tokens are number; attach the previous key's values to this one and delete previous key
+        if (isAllNum(tokens) && tokens.length === 2 && isAllNum(allText[prevKey].split(' '))) {
+            allText[key] = allText[key] + ' ' + allText[prevKey];
+            delete allText[prevKey];
+        } else if (allText[key].trim().toLowerCase().indexOf('upto') >= 0 && tokens.length === 1) {
+            allText[key] = allText[key] + ' ' + allText[prevKey];
+            delete allText[prevKey];
+        }
+        prevKey = key;
+    });
+    // sort again to clean up deleted keys
+    keys = Object.keys(allText).sort(function (a, b) {
+        return parseFloat(a) - parseFloat(b);
+    });
+    console.log(allText);
+}
+
 export const cleanExtraLines = (pageArray: string[]): string[] => {
     // clean the end of the array
     for (let i = pageArray.length - 1; i > 0; i--) {
@@ -417,8 +458,11 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
     if (realBeginning > 1) {
         pageArray.splice(0, realBeginning);
     }
+    // first line shouldn't have anything other than rate codes
+    pageArray[0] = pageArray[0].replace('(USA)', '').replace(/  /g, ' ');
     return pageArray;
 }
+
 // remember, this gets called twice; once for regular and once for small business
 export const saveTableEntries = (ratesPage: RateTables, year: number, customerType: string): Promise<any> => {
     return new Promise<any>((resolve, reject) => {
@@ -430,7 +474,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
         ratesPage['SurfaceInternational'] = cleanExtraLines(ratesPage['SurfaceInternational']);
         const inputsAll: string[] = [];
         let mapToDeliveryType = {
-            /*'PriorityCanada1': {
+            'PriorityCanada1': {
                 type: 'priority',
                 country: 'Canada'
             },
@@ -461,7 +505,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
             'ExpeditedUSA': {
                 type: 'expedited',
                 country: 'USA'
-            }, */
+            },
             'PriorityWorldwide': {
                 type: 'priority',
                 country: 'INTERNATIONAL'
@@ -488,7 +532,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 const tokens = input.split(' ');
                 const maxWeight = tokens[0];
                 for (let i = 0; i < labels.length; i++) {
-                    const price = tokens[i];
+                    const price = tokens[i + 1];
                     const rate_code = labels[i];
                     const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
                     inputsAll.push(insertDataSQL);
@@ -502,7 +546,6 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 inputsAll.push(insertDataSQL);
             }
         });
-        console.log(inputsAll);
         return Promise.all(inputsAll.map(async entry => {
             return saveToDb(entry)
         })).catch(e => {

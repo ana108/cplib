@@ -34,11 +34,13 @@ export const saveToDb = (sqlStmt: string): Promise<any> => {
   return new Promise((resolve, reject) => {
     const stmt = db.prepare(sqlStmt, err => {
       if (err) {
+        console.log('ERROR SQL ' + sqlStmt);
         reject(err);
       }
     });
     stmt.run((err: Error) => {
       if (err) {
+        console.log('ERROR SQL ' + sqlStmt);
         reject(err.message);
       } else {
         resolve('Success');
@@ -271,8 +273,6 @@ export const executeCustomSQL = (sqlStmt: string): Promise<any> => {
   return new Promise<any>((resolve, reject) => {
     db.all(sqlStmt, [], (err, rows) => {
       if (err) {
-        console.log('ERROR FOUND ', err);
-        console.log('ERROR SQL ' + sqlStmt);
         reject(sqlStmt);
       } else {
         resolve(rows);
