@@ -8,7 +8,8 @@
     "test": "mocha -r ts-node/register src/*.test.ts src/db/*.test.ts",
     "int": "mocha -r ts-node/register src/integration/integration.test.ts",
     "recalibrate": "mocha -r ts-node/register src/integration/recalibrate.test.ts",
-    "auto": "mocha --timeout 0 -r ts-node/register src/preload.test.ts && mocha --timeout 0 -r ts-node/register src/autoload.test.ts",
+    "load": "mocha --timeout 0 -r ts-node/register src/preload.test.ts",
+    "auto": "mocha --timeout 0 -r ts-node/register src/autoload.test.ts",
     "build": "rimraf ./build && tsc && cp -rf src/resources/ build/",
     "start": "npm run build && node build/index.js",
     "lint": "eslint . --ext .ts"

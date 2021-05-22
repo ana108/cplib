@@ -125,7 +125,7 @@ export const e2eProcess = async (year: number): Promise<RateTables[]> => {
         rateTables['RegularCanada2'] = canadianRegular2;
 
         const internationalPriority = 'PriorityWorldwide';
-        let worldwidePriority = extractRateTables(pdfData, pageTables[internationalPriority], 7, 9);
+        let worldwidePriority = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
         rateTables[internationalPriority] = worldwidePriority;
 
         const expressUSALabel = 'ExpressUSA';
@@ -344,7 +344,7 @@ export const isAllNum = (values: any[]): boolean => {
 // expectation of return: rate code header
 // each row of weight/cost
 // final row of overweight
-export const extractRateTables = (pdfPages: any, page: number, numRateCodes: number, maxTokens?: number) => {
+export const extractRateTables = (pdfPages: any, page: number, numRateCodes: number, maxTokens?: number): string[] => {
     let wholeText = pdfPages[page - 1]['Texts'];
     let wholeTextLength = wholeText.length;
     let line = '';
@@ -393,7 +393,7 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
     return cleanArray;
 }
 
-export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number) => {
+export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): string[] => {
     let fullPage = extractRateTables(pdfPages, pageNumber, 7, 9);
     // find the two tables at the bottom
     // convert text of the page to be in a line by line format
@@ -430,7 +430,38 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number) => {
     keys = Object.keys(allText).sort(function (a, b) {
         return parseFloat(a) - parseFloat(b);
     });
-    console.log(allText);
+    let header = '';
+    let rates = '';
+    for (let i = 0; i < keys.length - 2; i++) {
+        if (allText[keys[i]].indexOf('ENVELOPE(MAXIMUM500G) PAK(MAXIMUM1.5KG)') >= 0) {
+            const headerTokens = allText[keys[i + 1]].replace(/\(USA\)/g, '').replace(/  /g, ' ').split(' ');
+            const headerHalfPoint = headerTokens.length / 2;
+            header = headerTokens.splice(headerHalfPoint, headerHalfPoint).join(' ');
+            const ratesTokens = allText[keys[i + 2]].split(' ');
+            const ratesHalfPoint = ratesTokens.length / 2;
+            rates = '1.5 3.3 ' + ratesTokens.splice(0, ratesHalfPoint).join(' ');
+        }
+    }
+
+    for (let i = fullPage.length - 1; i >= 1; i--) {
+        const maxWeightInKG: any = fullPage[i].split(' ')[0].trim();
+        if (!isNaN(maxWeightInKG) && fullPage[i].split(' ').length >= header.split(' ').length) {
+            if (parseFloat(maxWeightInKG) <= 1.5) {
+                fullPage.splice(i, 1);
+            }
+        }
+    }
+
+    // just in case there's garbage leading lines, lets search for header line instead of assuming its the first in array
+    let indexOfFirstLineAfterHeader = 0;
+    for (let i = 1; i < fullPage.length; i++) {
+        indexOfFirstLineAfterHeader = i;
+        if (fullPage[i].split(' ')[0].trim() === '2.0') {
+            break;
+        }
+    }
+    fullPage.splice(indexOfFirstLineAfterHeader, 0, rates);
+    return fullPage;
 }
 
 export const cleanExtraLines = (pageArray: string[]): string[] => {
@@ -463,8 +494,21 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
     return pageArray;
 }
 
+export const loadBoth = (rates: RateTables[], year: number): Promise<any> => {
+    return new Promise<any>((resolve, reject) => {
+        saveTableEntries(rates[0], year, 'regular').then(data => {
+            console.log('Data success');
+            saveTableEntries(rates[1], year, 'small_business').then(data => {
+                resolve(data);
+            }).catch(err => {
+                reject(err);
+            });
+        }).catch(error => reject(error));
+    });
+}
 // remember, this gets called twice; once for regular and once for small business
 export const saveTableEntries = (ratesPage: RateTables, year: number, customerType: string): Promise<any> => {
+    console.log('customer type ', customerType);
     return new Promise<any>((resolve, reject) => {
         ratesPage['ExpressUSA'] = cleanExtraLines(ratesPage['ExpressUSA']);
         ratesPage['ExpeditedUSA'] = cleanExtraLines(ratesPage['ExpeditedUSA']);
@@ -490,6 +534,14 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 type: 'express',
                 country: 'Canada'
             },
+            'ExpeditedCanada1': {
+                type: 'expedited',
+                country: 'Canada'
+            },
+            'ExpeditedCanada2': {
+                type: 'expedited',
+                country: 'Canada'
+            },
             'RegularCanada1': {
                 type: 'regular',
                 country: 'Canada'
@@ -510,7 +562,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 type: 'priority',
                 country: 'INTERNATIONAL'
             },
-            /*'ExpressInternational': {
+            'ExpressInternational': {
                 type: 'express',
                 country: 'INTERNATIONAL'
             },
@@ -521,9 +573,12 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
             'SurfaceInternational': {
                 type: 'surface',
                 country: 'INTERNATIONAL'
-            }*/
+            }
         };
         Object.keys(mapToDeliveryType).forEach(deliveryType => {
+            if (!ratesPage[deliveryType]) {
+                return;
+            }
             let labels: string[] = ratesPage[deliveryType][0].split(' ');
             const type = mapToDeliveryType[deliveryType].type;
             const country = mapToDeliveryType[deliveryType].country;
@@ -546,10 +601,13 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 inputsAll.push(insertDataSQL);
             }
         });
-        return Promise.all(inputsAll.map(async entry => {
+        Promise.all(inputsAll.map(async entry => {
             return saveToDb(entry)
-        })).catch(e => {
+        })).then(data => {
+            resolve(data);
+        }).catch(e => {
             console.log('ERROR! ', e);
+            reject(e);
         });
     });
 }

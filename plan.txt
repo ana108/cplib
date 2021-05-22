@@ -1,5 +1,4 @@
 To DO:
-Load extracted table rates into db
 Automatically download the rates pdf file from cp; and verify if its the correct year\
 Remove unnecessary calls to database to extract provinces from postal codes
 Figure out how to manually update province sales taxes (https://www.retailcouncil.org/resources/quick-facts/sales-tax-rates-by-province/)

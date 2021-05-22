@@ -1,13 +1,13 @@
 import * as sinon from 'sinon';
 import * as db from './db/sqlite3';
-import { e2eProcess, loadPDF, pageHeaders } from './autoload';
+import { e2eProcess, loadPDF, pageHeaders, extractRateTables } from './autoload';
 import 'mocha';
 import { RateTables, RatesPages, saveTableEntries, extractPriorityWorldwide } from './autoload';
 import * as chai from 'chai';
 const expect = chai.expect;
 const YEAR = new Date().getFullYear();
 
-describe.skip('Extract rate tables', () => {
+describe('Extract rate tables', () => {
     let allRateTables: RateTables[];
     let rateTables: RateTables;
     before(async () => {
@@ -16,7 +16,7 @@ describe.skip('Extract rate tables', () => {
     });
     afterEach(() => {
     });
-    it('Execute autoload - regular - canada', async () => {
+    it('Execute autoload - regular', async () => {
         // also check the length of first and last row
         expect(rateTables['PriorityCanada1'][0].split(' ').length).to.equal(23);
         expect(rateTables['PriorityCanada1'].length).to.equal(62);
@@ -43,13 +43,13 @@ describe.skip('Extract rate tables', () => {
         expect(rateTables['RegularCanada2'][rateTables['RegularCanada2'].length - 1].split(' ').length).to.equal(22);
 
         expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
-        expect(rateTables['PriorityWorldwide'].length).to.equal(63);
+        expect(rateTables['PriorityWorldwide'].length).to.equal(61);
         expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
     });
 
     it('Execute autoload - regular - non-canada', async () => {
         expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
-        expect(rateTables['PriorityWorldwide'].length).to.equal(63);
+        expect(rateTables['PriorityWorldwide'].length).to.equal(61);
         expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
 
         expect(rateTables['ExpressUSA'][0].split(' ').length).to.equal(7);
@@ -127,12 +127,12 @@ describe.skip('Extract rate tables', () => {
         expect(rateTables['RegularCanada2'][rateTables['RegularCanada2'].length - 1].split(' ').length).to.equal(22);
 
         expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
-        expect(rateTables['PriorityWorldwide'].length).to.equal(63);
+        expect(rateTables['PriorityWorldwide'].length).to.equal(61);
         expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
     });
 });
 
-describe.skip('Extract rate tables - 2020 - int', () => {
+describe('Extract rate tables - 2020 - int', () => {
     let pageData: any;
     let pageDataSmallBusiness: any;
     before(async () => {
@@ -174,7 +174,7 @@ describe.skip('Extract rate tables - 2020 - int', () => {
     });
 })
 
-describe.skip('Load data into rates table for the year', async () => {
+describe('Load data into rates table for the year', async () => {
     let allRateTables: RateTables[];
     before(async () => {
         db.setDB(__dirname + "/resources/cplib_autoload.db");
@@ -186,10 +186,8 @@ describe.skip('Load data into rates table for the year', async () => {
         db.resetDB();
     });
 
-    it('Verify that the right number of rows was loaded for canada', async () => {
-        let canadaSmallBusinessRegular = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'small_business' and type = 'regular'`;
+    it('Verify that the right number of rows was loaded for canada (regular) ', async () => {
         let result: any;
-
         let canadaRegularRegular = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'regular' and type = 'regular'`;
         result = await db.executeCustomSQL(canadaRegularRegular);
         expect(result[0].count).to.equal(2745);
@@ -201,7 +199,10 @@ describe.skip('Load data into rates table for the year', async () => {
         let canadaRegularPriority = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'regular' and type = 'priority'`;
         result = await db.executeCustomSQL(canadaRegularPriority);
         expect(result[0].count).to.equal(2623);
-
+    });
+    it('Verify that the right number of rows was loaded for canada (small business) ', async () => {
+        let result: any;
+        let canadaSmallBusinessRegular = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'small_business' and type = 'regular'`;
         result = await db.executeCustomSQL(canadaSmallBusinessRegular);
         expect(result[0].count).to.equal(2745);
 
@@ -215,11 +216,10 @@ describe.skip('Load data into rates table for the year', async () => {
 
         let canadaSmallBusinessExpedited = `select count(*) as count from rates where year = 2021 and country = 'Canada' and customer_type = 'small_business' and type = 'expedited'`;
         result = await db.executeCustomSQL(canadaSmallBusinessExpedited);
-        expect(result[0].count).to.equal(1403);
+        expect(result[0].count).to.equal(2745);
     });
-    it('Verify that the right number of rows was loaded for USA', async () => {
+    it('Verify that the right number of rows was loaded for USA (regular)', async () => {
         let result: any;
-
         let regularExpress = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'regular' and type = 'express'`;
         result = await db.executeCustomSQL(regularExpress);
         expect(result[0].count).to.equal(427);
@@ -227,14 +227,17 @@ describe.skip('Load data into rates table for the year', async () => {
         let regularExpedited = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'regular' and type = 'expedited'`;
         result = await db.executeCustomSQL(regularExpedited);
         expect(result[0].count).to.equal(427);
+    });
 
-        /* let smallBusinessExpress = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'small_business' and type = 'express'`;
+    it('Verify that the right number of rows was loaded for USA (small business)', async () => {
+        let result: any;
+        let smallBusinessExpress = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'small_business' and type = 'express'`;
         result = await db.executeCustomSQL(smallBusinessExpress);
         expect(result[0].count).to.equal(427);
 
         let smallBusinessExpedited = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'small_business' and type = 'expedited'`;
         result = await db.executeCustomSQL(smallBusinessExpedited);
-        expect(result[0].count).to.equal(427); */
+        expect(result[0].count).to.equal(427);
     });
 
     it('Verify that the right number of rows was loaded for International', async () => {
@@ -242,9 +245,9 @@ describe.skip('Load data into rates table for the year', async () => {
 
         let regularPriority = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'priority'`;
         result = await db.executeCustomSQL(regularPriority);
-        expect(result[0].count).to.equal(427);
+        expect(result[0].count).to.equal(413);
 
-        /* let regularExpress = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'express'`;
+        let regularExpress = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'express'`;
         result = await db.executeCustomSQL(regularExpress);
         expect(result[0].count).to.equal(610);
 
@@ -254,7 +257,7 @@ describe.skip('Load data into rates table for the year', async () => {
 
         let regularAir = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'air'`;
         result = await db.executeCustomSQL(regularAir);
-        expect(result[0].count).to.equal(610); */
+        expect(result[0].count).to.equal(610);
 
         // TODO small business
     });
@@ -274,6 +277,9 @@ describe('Extract worldwide priority table', () => {
     afterEach(() => {
     });
     it('Extract envelope and pak tables at the bottom of the page', async () => {
-        extractPriorityWorldwide(pageData, priorityWorldwideNumber);
+        let priorityWorldwideTableOldMethod = extractRateTables(pageData, priorityWorldwideNumber, 7, 9);
+        let priorityWorldwideTable = extractPriorityWorldwide(pageData, priorityWorldwideNumber);
+        expect(priorityWorldwideTable.length).to.be.above(53);
+        expect(priorityWorldwideTable.length).to.be.below(priorityWorldwideTableOldMethod.length);
     });
 });
