@@ -494,10 +494,43 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
     return pageArray;
 }
 
+export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): string[] => {
+    let firstValidLine = -1;
+    for (let i = 0; i < pageArray.length; i++) {
+        if (pageArray[i].indexOf('Upto') >= 0 && firstValidLine < 0) {
+            firstValidLine = i;
+        }
+        pageArray[i] = pageArray[i].replace('Upto', '0 ').replace('upto', ' ');
+    }
+    pageArray = pageArray.slice(firstValidLine);
+    // convert all g/kg tokens to be kg and remove 
+    let finalTableRow: any[] = [];
+    finalTableRow.push(rateCodes.join(' '));
+    pageArray.forEach(row => {
+        let tokens: any = row.split(' ');
+        let maxToken: any = tokens[1];
+        let maxTokenInKg: number;
+        if (maxToken.indexOf('kg') >= 0) {
+            maxToken = maxToken.replace('kg', '');
+            maxTokenInKg = maxToken;
+        } else {
+            maxToken = maxToken.replace('g', '');
+            maxTokenInKg = maxToken / 1000;
+        }
+        tokens[1] = maxTokenInKg;
+        tokens.shift();
+        for (let i = 0; i < rateCodes.length; i++) {
+            tokens.push(tokens[tokens.length - 1]);
+        }
+        row = tokens.join(' ');
+        finalTableRow.push(row);
+    });
+    return finalTableRow;
+}
+
 export const loadBoth = (rates: RateTables[], year: number): Promise<any> => {
     return new Promise<any>((resolve, reject) => {
         saveTableEntries(rates[0], year, 'regular').then(data => {
-            console.log('Data success');
             saveTableEntries(rates[1], year, 'small_business').then(data => {
                 resolve(data);
             }).catch(err => {
@@ -508,7 +541,6 @@ export const loadBoth = (rates: RateTables[], year: number): Promise<any> => {
 }
 // remember, this gets called twice; once for regular and once for small business
 export const saveTableEntries = (ratesPage: RateTables, year: number, customerType: string): Promise<any> => {
-    console.log('customer type ', customerType);
     return new Promise<any>((resolve, reject) => {
         ratesPage['ExpressUSA'] = cleanExtraLines(ratesPage['ExpressUSA']);
         ratesPage['ExpeditedUSA'] = cleanExtraLines(ratesPage['ExpeditedUSA']);
@@ -520,59 +552,88 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
         let mapToDeliveryType = {
             'PriorityCanada1': {
                 type: 'priority',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'PriorityCanada2': {
                 type: 'priority',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'ExpressCanada1': {
                 type: 'express',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'ExpressCanada2': {
                 type: 'express',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'ExpeditedCanada1': {
                 type: 'expedited',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'ExpeditedCanada2': {
                 type: 'expedited',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'RegularCanada1': {
                 type: 'regular',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'RegularCanada2': {
                 type: 'regular',
-                country: 'Canada'
+                country: 'Canada',
+                overloadIncl: true,
             },
             'ExpressUSA': {
                 type: 'express',
-                country: 'USA'
+                country: 'USA',
+                overloadIncl: true,
             },
             'ExpeditedUSA': {
                 type: 'expedited',
-                country: 'USA'
+                country: 'USA',
+                overloadIncl: true,
             },
             'PriorityWorldwide': {
                 type: 'priority',
-                country: 'INTERNATIONAL'
+                country: 'INTERNATIONAL',
+                overloadIncl: true,
             },
             'ExpressInternational': {
                 type: 'express',
-                country: 'INTERNATIONAL'
+                country: 'INTERNATIONAL',
+                overloadIncl: true,
             },
             'AirInternational': {
                 type: 'air',
-                country: 'INTERNATIONAL'
+                country: 'INTERNATIONAL',
+                overloadIncl: true,
             },
             'SurfaceInternational': {
                 type: 'surface',
-                country: 'INTERNATIONAL'
+                country: 'INTERNATIONAL',
+                overloadIncl: true,
+            },
+            'TrackedPacketUSA': {
+                type: 'tracked_packet',
+                country: 'USA',
+                overloadIncl: false,
+            },
+            'SmallPacketUSA': {
+                type: 'small_packet',
+                country: 'USA',
+                overloadIncl: false,
+            },
+            'TrackedPacketInternational': {
+                type: 'tracked_packet',
+                country: 'INTERNATIONAL',
+                overloadIncl: false,
             }
         };
         Object.keys(mapToDeliveryType).forEach(deliveryType => {
@@ -593,15 +654,37 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                     inputsAll.push(insertDataSQL);
                 }
             }
-            for (let i = 0; i < labels.length; i++) {
-                const tokens = ratesPage[deliveryType][ratesPage[deliveryType].length - 1].split(' ');
-                const price = tokens[i];
-                const rate_code = labels[i];
-                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, 30.1, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
-                inputsAll.push(insertDataSQL);
+            if (mapToDeliveryType[deliveryType].overloadIncl) {
+                for (let i = 0; i < labels.length; i++) {
+                    const tokens = ratesPage[deliveryType][ratesPage[deliveryType].length - 1].split(' ');
+                    const price = tokens[i];
+                    const rate_code = labels[i];
+                    const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, 30.1, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
+                    inputsAll.push(insertDataSQL);
+                }
             }
         });
+        // handle small packet international
+        let labels: string[] = ratesPage['SmallPacketInternational'][0].split(' ');
+        let smallPacketIntlType = 'small_packet_air';
+        const country = 'INTERNATIONAL';
+        for (let i = 1; i < ratesPage['SmallPacketInternational'].length - 1; i++) {
+            let input = ratesPage['SmallPacketInternational'][i];
+            const tokens = input.split(' ');
+            if (tokens[0] === 'INTERNATIONAL – SURFACE') {
+                smallPacketIntlType = 'small_packet_surface';
+                continue;
+            }
+            const maxWeight = tokens[0];
+            for (let i = 0; i < labels.length; i++) {
+                const price = tokens[i + 1];
+                const rate_code = labels[i];
+                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${smallPacketIntlType}', '${country}', '${customerType}')`;
+                inputsAll.push(insertDataSQL);
+            }
+        }
         Promise.all(inputsAll.map(async entry => {
+            // resolve(entry);
             return saveToDb(entry)
         })).then(data => {
             resolve(data);

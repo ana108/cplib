@@ -5,7 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "start:dev": "nodemon",
-    "test": "mocha -r ts-node/register src/*.test.ts src/db/*.test.ts",
+    "test": "mocha -r ts-node/register src/calculate.test.ts src/index.test.ts src/db/sqlite3.test.ts",
     "int": "mocha -r ts-node/register src/integration/integration.test.ts",
     "recalibrate": "mocha -r ts-node/register src/integration/recalibrate.test.ts",
     "load": "mocha --timeout 0 -r ts-node/register src/preload.test.ts",

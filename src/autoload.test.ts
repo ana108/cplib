@@ -1,8 +1,8 @@
 import * as sinon from 'sinon';
 import * as db from './db/sqlite3';
-import { e2eProcess, loadPDF, pageHeaders, extractRateTables } from './autoload';
+import { e2eProcess, loadPDF, pageHeaders, extractRateTables, cleanExtraLines } from './autoload';
 import 'mocha';
-import { RateTables, RatesPages, saveTableEntries, extractPriorityWorldwide } from './autoload';
+import { RateTables, RatesPages, saveTableEntries, extractPriorityWorldwide, convertPacketToTable } from './autoload';
 import * as chai from 'chai';
 const expect = chai.expect;
 const YEAR = new Date().getFullYear();
@@ -268,11 +268,15 @@ describe('Extract worldwide priority table', () => {
     let pageData: any;
     let pageDataSmallBusiness: any;
     let priorityWorldwideNumber: any;
+    let priorityWorldwideNumberSB: any;
     before(async () => {
         pageData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
         let pageNumbers: RatesPages = pageHeaders(pageData);
         priorityWorldwideNumber = pageNumbers['PriorityWorldwide'];
-        // pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/SBprices-e-2020.pdf");
+
+        pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/SBprices-e-2020.pdf");
+        let pageNumbersSB: RatesPages = pageHeaders(pageDataSmallBusiness);
+        priorityWorldwideNumberSB = pageNumbersSB['PriorityWorldwide'];
     });
     afterEach(() => {
     });
@@ -281,5 +285,19 @@ describe('Extract worldwide priority table', () => {
         let priorityWorldwideTable = extractPriorityWorldwide(pageData, priorityWorldwideNumber);
         expect(priorityWorldwideTable.length).to.be.above(53);
         expect(priorityWorldwideTable.length).to.be.below(priorityWorldwideTableOldMethod.length);
+    });
+    it('Extract envelope and pak tables at the bottom of the page (small business)', async () => {
+        let priorityWorldwideTableOldMethod = extractRateTables(pageDataSmallBusiness, priorityWorldwideNumberSB, 7, 9);
+        let priorityWorldwideTable = extractPriorityWorldwide(pageDataSmallBusiness, priorityWorldwideNumberSB);
+        expect(priorityWorldwideTable.length).to.be.above(53);
+        expect(priorityWorldwideTable.length).to.be.below(priorityWorldwideTableOldMethod.length);
+    });
+    it.skip('Verify all rate tables, particularly tracked tables', async () => {
+        let allRateTables = await e2eProcess(YEAR);
+        // console.log(cleanExtraLines(allRateTables[0]['ExpressInternational']));
+        console.log(convertPacketToTable(allRateTables[0]['TrackedPacketUSA'], ['1', '2', '3', '4', '5', '6', '7']));
+        // console.log(convertPacketToTable(allRateTables[0]['SmallPacketUSA']));
+        // console.log(convertPacketToTable(allRateTables[0]['TrackedPacketInternational']));
+        // console.log(convertPacketToTable(allRateTables[0]['SmallPacketInternational']));
     });
 });
