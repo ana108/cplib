@@ -60,13 +60,13 @@ describe('Extract rate tables', () => {
         expect(rateTables['ExpeditedUSA'].length).to.equal(63);
         expect(rateTables['ExpeditedUSA'][rateTables['ExpeditedUSA'].length - 2].split(' ').length).to.equal(7);
 
-        expect(rateTables['TrackedPacketUSA'][0].split(' ').length).to.equal(2);
-        expect(rateTables['TrackedPacketUSA'].length).to.equal(8);
-        expect(rateTables['TrackedPacketUSA'][rateTables['TrackedPacketUSA'].length - 1].split(' ').length).to.equal(2);
+        expect(rateTables['TrackedPacketUSA'][0].split(' ').length).to.equal(7);
+        expect(rateTables['TrackedPacketUSA'].length).to.equal(7);
+        expect(rateTables['TrackedPacketUSA'][rateTables['TrackedPacketUSA'].length - 1].split(' ').length).to.equal(8);
 
-        expect(rateTables['SmallPacketUSA'][0].split(' ').length).to.equal(2);
-        expect(rateTables['SmallPacketUSA'].length).to.equal(8);
-        expect(rateTables['SmallPacketUSA'][rateTables['SmallPacketUSA'].length - 1].split(' ').length).to.equal(2);
+        expect(rateTables['SmallPacketUSA'][0].split(' ').length).to.equal(7);
+        expect(rateTables['SmallPacketUSA'].length).to.equal(7);
+        expect(rateTables['SmallPacketUSA'][rateTables['SmallPacketUSA'].length - 1].split(' ').length).to.equal(8);
 
         expect(rateTables['ExpressInternational'][0].split(' ').length).to.equal(10);
         expect(rateTables['ExpressInternational'].length).to.equal(62);
@@ -84,11 +84,14 @@ describe('Extract rate tables', () => {
         expect(rateTables['TrackedPacketInternational'].length).to.equal(7);
         expect(rateTables['TrackedPacketInternational'][rateTables['TrackedPacketInternational'].length - 1].split(' ').length).to.equal(11);
 
-        // since there are two tables on this page check them both
-        expect(rateTables['SmallPacketInternational'].length).to.equal(13);
-        expect(rateTables['SmallPacketInternational'][0].split(' ').length).to.equal(10);
-        expect(rateTables['SmallPacketInternational'][7].split(' ').length).to.equal(10);
-        expect(rateTables['SmallPacketInternational'][rateTables['SmallPacketInternational'].length - 1].split(' ').length).to.equal(11);
+        expect(rateTables['SmallPacketSurfaceInternational'].length).to.equal(6);
+        expect(rateTables['SmallPacketSurfaceInternational'][0].split(' ').length).to.equal(10);
+        expect(rateTables['SmallPacketSurfaceInternational'][rateTables['SmallPacketSurfaceInternational'].length - 1].split(' ').length).to.equal(11);
+
+        expect(rateTables['SmallPacketAirInternational'].length).to.equal(7);
+        expect(rateTables['SmallPacketAirInternational'][0].split(' ').length).to.equal(10);
+        expect(rateTables['SmallPacketAirInternational'][rateTables['SmallPacketAirInternational'].length - 1].split(' ').length).to.equal(11);
+
     });
 
     it('Execute autoload - small business - canada', async () => {
@@ -292,12 +295,43 @@ describe('Extract worldwide priority table', () => {
         expect(priorityWorldwideTable.length).to.be.above(53);
         expect(priorityWorldwideTable.length).to.be.below(priorityWorldwideTableOldMethod.length);
     });
-    it.skip('Verify all rate tables, particularly tracked tables', async () => {
+    it('Verify USA Packet tables get converted in the standard format', async () => {
         let allRateTables = await e2eProcess(YEAR);
-        // console.log(cleanExtraLines(allRateTables[0]['ExpressInternational']));
-        console.log(convertPacketToTable(allRateTables[0]['TrackedPacketUSA'], ['1', '2', '3', '4', '5', '6', '7']));
-        // console.log(convertPacketToTable(allRateTables[0]['SmallPacketUSA']));
-        // console.log(convertPacketToTable(allRateTables[0]['TrackedPacketInternational']));
-        // console.log(convertPacketToTable(allRateTables[0]['SmallPacketInternational']));
+        // they are all the same because the rate code gets retrieved from non packet usa page
+        // reason for this is packet rates are the same for all codes.
+        // by duplicating the price across all rate codes, it standardizes it so that
+        // packets can be treated the same as regular packages
+        expect(allRateTables[0]['TrackedPacketUSA'][0]).to.equal('1 2 3 4 5 6 7');
+        let lastElement: number = allRateTables[0]['TrackedPacketUSA'].length - 1;
+        let numElements: number = allRateTables[0]['TrackedPacketUSA'][0].split(' ').length + 1;
+        expect(allRateTables[0]['TrackedPacketUSA'][lastElement].split(' ').length).to.equal(numElements);
+
+        expect(allRateTables[0]['SmallPacketUSA'][0]).to.equal('1 2 3 4 5 6 7');
+        // verify that last line has correct number of elements
+        lastElement = allRateTables[0]['SmallPacketUSA'].length - 1;
+        numElements = allRateTables[0]['SmallPacketUSA'][0].split(' ').length + 1;
+        expect(allRateTables[0]['SmallPacketUSA'][lastElement].split(' ').length).to.equal(numElements);
+    });
+    it('Verify International Tracked Packet tables get converted in the standard format', async () => {
+        let allRateTables = await e2eProcess(YEAR);
+        expect(allRateTables[0]['TrackedPacketInternational'][0]).to.equal('401 402 403 404 405 406 407 408 409 410');
+        let lastElement: number = allRateTables[0]['TrackedPacketInternational'].length - 1;
+        let numElements: number = allRateTables[0]['TrackedPacketInternational'][0].split(' ').length + 1;
+        expect(allRateTables[0]['TrackedPacketInternational'][lastElement].split(' ').length).to.equal(numElements);
+    });
+    it('Verify International Small Packet (air) tables get converted in the standard format', async () => {
+        let allRateTables = await e2eProcess(YEAR);
+        expect(allRateTables[0]['SmallPacketAirInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
+
+        expect(allRateTables[0]['SmallPacketAirInternational'][1].split(' ')[0]).to.equal('0.1');
+        let lastIndex = allRateTables[0]['SmallPacketAirInternational'].length - 1;
+        expect(allRateTables[0]['SmallPacketAirInternational'][lastIndex].split(' ')[0]).to.equal('2');
+    });
+    it('Verify International Small Packet (surface) tables get converted in the standard format', async () => {
+        let allRateTables = await e2eProcess(YEAR);
+        expect(allRateTables[0]['SmallPacketSurfaceInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
+        expect(allRateTables[0]['SmallPacketSurfaceInternational'][1].split(' ')[0]).to.equal('0.25');
+        let lastIndex = allRateTables[0]['SmallPacketSurfaceInternational'].length - 1;
+        expect(allRateTables[0]['SmallPacketSurfaceInternational'][lastIndex].split(' ')[0]).to.equal('2');
     });
 });

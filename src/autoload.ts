@@ -93,7 +93,8 @@ export interface RateTables {
     'AirInternational': string[],
     'SurfaceInternational': string[],
     'TrackedPacketInternational': string[],
-    'SmallPacketInternational': string[]
+    'SmallPacketAirInternational': string[],
+    'SmallPacketSurfaceInternational': string[],
 }
 // this will iterate over the two docs; one for small business and one for regular rates
 export const e2eProcess = async (year: number): Promise<RateTables[]> => {
@@ -136,13 +137,14 @@ export const e2eProcess = async (year: number): Promise<RateTables[]> => {
         let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7);
         rateTables[expeditedUSALabel] = expeditedUSA;
 
+        const usaRateCodes: string = rateTables[expeditedUSALabel][0] || '';
         const trackedPacketUSALabel = 'TrackedPacketUSA';
         let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2);
-        rateTables[trackedPacketUSALabel] = trackedPacketUSA;
+        rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
 
         const smallPacketUSALabel = 'SmallPacketUSA';
         let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2);
-        rateTables[smallPacketUSALabel] = smallPacketUSA;
+        rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
 
         const worldwideExpressLabel = 'ExpressInternational';
         let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10);
@@ -156,13 +158,23 @@ export const e2eProcess = async (year: number): Promise<RateTables[]> => {
         let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10);
         rateTables[worldwideSurfaceLabel] = worldwideSurface;
 
+        const internationalRateCodes = rateTables['SurfaceInternational'][0] || '';
         const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
         let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
-        rateTables[worldwideTrackedPacketLabel] = worldwideTrackedPacket;
+        rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, internationalRateCodes.split(' '));
 
         const worldwideSmallPacketLabel = 'SmallPacketInternational';
         let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
-        rateTables[worldwideSmallPacketLabel] = worldwideSmallPacket;
+
+        const internationalPacketRateCodes = worldwideSmallPacket[0] || '';
+
+        const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
+        let worldwideSmallAirPacket = splitMultiTablePage(worldwideSmallPacket)[0];
+        rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, internationalPacketRateCodes.split(' '));
+        const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
+        let worldwideSmallSurfacePacket = splitMultiTablePage(worldwideSmallPacket)[1];
+        rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, internationalPacketRateCodes.split(' '));
+
         if (key === 'SmallBusiness') {
             const canadianExpeditedParcel = 'ExpeditedCanada';
             let canadianExpedited1 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23);
@@ -173,6 +185,28 @@ export const e2eProcess = async (year: number): Promise<RateTables[]> => {
         allRateTables.push(rateTables);
     }));
     return allRateTables;
+}
+export const splitMultiTablePage = (page: string[]): string[][] => {
+    /* conclusions: the "headers" ie ratecodes will always be either one or two characters
+    so any token that is length 2 or less can be assumed to be part of the header row
+    */
+    let subpages: string[][] = [];
+    let subpage: string[] = [];
+    for (let i = 0; i < page.length; i++) {
+        let line = page[i].split(' ');
+        if (line[0] && line[0].trim().length <= 2) {
+            // rate code line found
+            if (subpage.length != 0) { // first page
+                subpages.push(subpage);
+                subpage = [];
+            }
+            subpage.push(page[i]);
+        } else {
+            subpage.push(page[i]);
+        }
+    }
+    subpages.push(subpage);
+    return subpages;
 }
 export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
     let pdfParser = new PDFParser();
@@ -519,8 +553,10 @@ export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): 
         }
         tokens[1] = maxTokenInKg;
         tokens.shift();
-        for (let i = 0; i < rateCodes.length; i++) {
-            tokens.push(tokens[tokens.length - 1]);
+        if (tokens.length === 2) {
+            for (let i = 0; i < rateCodes.length - 1; i++) {
+                tokens.push(tokens[tokens.length - 1]);
+            }
         }
         row = tokens.join(' ');
         finalTableRow.push(row);
@@ -634,6 +670,16 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 type: 'tracked_packet',
                 country: 'INTERNATIONAL',
                 overloadIncl: false,
+            },
+            'SmallPacketAirInternational': {
+                type: 'small_packet_air',
+                country: 'INTERNATIONAL',
+                overloadIncl: false
+            },
+            'SmallPacketSurfaceInternational': {
+                type: 'small_packet_surface',
+                country: 'INTERNATIONAL',
+                overloadIncl: false
             }
         };
         Object.keys(mapToDeliveryType).forEach(deliveryType => {
@@ -664,27 +710,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 }
             }
         });
-        // handle small packet international
-        let labels: string[] = ratesPage['SmallPacketInternational'][0].split(' ');
-        let smallPacketIntlType = 'small_packet_air';
-        const country = 'INTERNATIONAL';
-        for (let i = 1; i < ratesPage['SmallPacketInternational'].length - 1; i++) {
-            let input = ratesPage['SmallPacketInternational'][i];
-            const tokens = input.split(' ');
-            if (tokens[0] === 'INTERNATIONAL – SURFACE') {
-                smallPacketIntlType = 'small_packet_surface';
-                continue;
-            }
-            const maxWeight = tokens[0];
-            for (let i = 0; i < labels.length; i++) {
-                const price = tokens[i + 1];
-                const rate_code = labels[i];
-                const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${smallPacketIntlType}', '${country}', '${customerType}')`;
-                inputsAll.push(insertDataSQL);
-            }
-        }
         Promise.all(inputsAll.map(async entry => {
-            // resolve(entry);
             return saveToDb(entry)
         })).then(data => {
             resolve(data);
