@@ -232,7 +232,6 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
                 let difference = weightInKg - 30.0;
                 shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
             }
-
             // get fuel rate
 
             const fuelSurchargePercentage = await getLatestFuelSurcharge('Canada', deliverySpeed);
@@ -243,9 +242,9 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
             const sourceProvince = await getProvince(sourcePostalCode);
             const destinationProvice = await getProvince(destinationPostalCode);
 
-
             // calculate tax
-            const finalPrice = pretaxCost + calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
+            const tax = calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
+            const finalPrice = pretaxCost + tax;
             resolve(round(finalPrice));
         } catch (e) {
             reject(e);

@@ -10,8 +10,12 @@ const expect = chai.expect;
 let allRecalibrations = "";
 
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
+    let newTestCases = tc.allTestCases;
+    before(() => {
+        db.setDB(__dirname + "/cplib_2021_int.db");
+    });
     after(() => {
-        let recalibratedCanada = "export const allTestCases = " + JSON.stringify(tc.allTestCases, null, 4);
+        let recalibratedCanada = "export let allTestCases = " + JSON.stringify(newTestCases, null, 4);
         allRecalibrations = recalibratedCanada;
     });
     let totalCases = Object.keys(tc.allTestCases).length;
@@ -36,7 +40,7 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
                 sourceAddr.postalCode = tc.allTestCases[rateCode].postalCodes.src;
                 destinationAddr.postalCode = tc.allTestCases[rateCode].postalCodes.dest;
                 let result = await calculateShipping(sourceAddr, destinationAddr, parseFloat(weight), 'regular', 'small_business');
-                tc.allTestCases[rateCode].weights[weight] = result;
+                newTestCases[rateCode].weights[weight] = result;
             });
         });
     }
@@ -44,7 +48,7 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
 
 describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () => {
     after(() => {
-        let recalibratedAmerican = "export const americanTestCases = " + JSON.stringify(tc.americanTestCases, null, 4);
+        let recalibratedAmerican = "export let americanTestCases = " + JSON.stringify(tc.americanTestCases, null, 4);
         allRecalibrations = allRecalibrations + "\n" + recalibratedAmerican;
     });
     let totalCases = Object.keys(tc.americanTestCases).length;
@@ -78,11 +82,13 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
 describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5kg', () => {
 
     after(() => {
-        let recalibratedInternational = "export const internationalTestCases = " + JSON.stringify(tc.internationalTestCases, null, 4);
+        let recalibratedInternational = "export let internationalTestCases = " + JSON.stringify(tc.internationalTestCases, null, 4);
         allRecalibrations = allRecalibrations + "\n" + recalibratedInternational;
         fs.writeFile(__dirname + "/testcases.ts", allRecalibrations, function (err) {
             if (err) {
                 console.log(err);
+            } else {
+                // console.log('Successfully wrote ' + allRecalibrations);
             }
         });
     });

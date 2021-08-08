@@ -689,10 +689,16 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
             let labels: string[] = ratesPage[deliveryType][0].split(' ');
             const type = mapToDeliveryType[deliveryType].type;
             const country = mapToDeliveryType[deliveryType].country;
-            for (let i = 1; i < ratesPage[deliveryType].length - 1; i++) {
+
+            let lineLength = ratesPage[deliveryType].length;
+            if (mapToDeliveryType[deliveryType].overloadIncl) {
+                lineLength = lineLength - 1;
+            }
+            for (let i = 1; i < lineLength; i++) {
                 let input = ratesPage[deliveryType][i];
                 const tokens = input.split(' ');
                 const maxWeight = tokens[0];
+
                 for (let i = 0; i < labels.length; i++) {
                     const price = tokens[i + 1];
                     const rate_code = labels[i];

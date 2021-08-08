@@ -180,7 +180,8 @@ describe('Extract rate tables - 2020 - int', () => {
 describe('Load data into rates table for the year', async () => {
     let allRateTables: RateTables[];
     before(async () => {
-        db.setDB(__dirname + "/resources/cplib_autoload.db");
+        db.setDB(__dirname + "/integration/cplib_2021_int.db");
+        //db.setDB(__dirname + "/resources/cplib_autoload.db");
         allRateTables = await e2eProcess(YEAR);
     });
     after(async () => {

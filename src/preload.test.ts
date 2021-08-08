@@ -10,7 +10,8 @@ describe('Preload data for next test case', () => {
     let allRateTables: RateTables[];
     const YEAR = 2021;
     before(async () => {
-        db.setDB(__dirname + "/resources/cplib_autoload.db");
+        //db.setDB(__dirname + "/resources/cplib_autoload.db");
+        db.setDB(__dirname + "/integration/cplib_2021_int.db");
         allRateTables = await e2eProcess(YEAR);
         await loadBoth(allRateTables, YEAR);
     });
