@@ -12,7 +12,7 @@ let allRecalibrations = "";
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
     let newTestCases = tc.allTestCases;
     before(() => {
-        db.setDB(__dirname + "/cplib_2021_int.db");
+        db.setDB(__dirname + "/cplib_int.db");
     });
     after(() => {
         let recalibratedCanada = "export let allTestCases = " + JSON.stringify(newTestCases, null, 4);

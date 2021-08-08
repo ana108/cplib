@@ -1,5 +1,4 @@
 To DO:
-figure out what happened with all the dbs everywhere; there's one for int, one for tests, and one real one
 Integrated data load into e2e process; be sure to delete existing year's data if its a replacement
 Automatically download the rates pdf file from cp; and verify if its the correct year\
 Remove unnecessary calls to database to extract provinces from postal codes
@@ -8,8 +7,6 @@ Figure out how to manually update province sales taxes (https://www.retailcounci
 (small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
 
 Documentation
- - explain how to run tests
- - explain what all the scripts do
  - get shipping cost
  - get shipping cost by postal code (canada only)
  - given a postal code, get province
