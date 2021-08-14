@@ -101,7 +101,7 @@ export interface RateTables {
 export const e2eProcess = async (year: number): Promise<RateTables[]> => {
     const dataSources = {
         'Regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
-        'SmallBusiness': __dirname + `/resources/small_business/${year}/SBprices-e-${year}.pdf`
+        'SmallBusiness': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
     };
     let allRateTables: RateTables[] = [];
     await Promise.all(Object.keys(dataSources).map(async (key) => {
@@ -220,7 +220,50 @@ export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
         pdfParser.loadPDF(pdfFileLoc);
     });
 }
-
+export const extractYear = (pdfData: string): any => {
+    let titlePage = pdfData[0]['Texts'];
+    let dataByLine = {};
+    titlePage.forEach(entry => {
+        if (dataByLine[entry.y]) {
+            dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, '').replace(/TM/g, '').replace(/%24/g, '$').replace(/%E2%80%93/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/&nbsp;/g, ' ').replace(/%20/g, ' ').replace(/%2C/g, ' ').trim();
+        } else {
+            dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, '').replace(/%24/g, '$').replace(/TM/g, ' ').replace(/%E2%80%93/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/&nbsp;/g, ' ').replace(/%20/g, ' ').replace(/%2C/g, ' ').trim();
+        }
+    });
+    let keys = Object.keys(dataByLine).sort(function (a, b) {
+        return parseFloat(a) - parseFloat(b);
+    });
+    let textsArray: any[] = [];
+    keys.forEach(key => {
+        if (dataByLine[key].indexOf('Prices') >= 0 || dataByLine[key].indexOf('Effective') >= 0) {
+            textsArray.push(dataByLine[key]);
+        }
+    });
+    let overlappingStr = '';
+    for (let i = 1; i < textsArray.length; i++) {
+        let foundOverlap = findOverlap(textsArray[i - 1], textsArray[i]);
+        if (foundOverlap.trim().length === 4) {
+            overlappingStr = foundOverlap;
+        }
+    }
+    return overlappingStr;
+}
+const findOverlap = (a, b): string => {
+    let match = '';
+    for (let x = 0; x < a.length - 3; x++) {
+        let xString = a.substr(x, 4);
+        for (let y = 0; y < b.length - 3; y++) {
+            let yString = b.substr(y, 4);
+            if (xString == yString) {
+                if (!isNaN(xString)) {
+                    match = xString;
+                    break;
+                }
+            }
+        }
+    }
+    return match;
+}
 export const extractPages = (pdfData: any): RatesPages => {
     let pages: RatesPages = {
         'PriorityCanada': 0,

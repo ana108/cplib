@@ -12,7 +12,7 @@
     "auto": "mocha --timeout 0 -r ts-node/register src/autoload.test.ts",
     "build": "rimraf ./build && tsc && cp -rf src/resources/ build/",
     "start": "npm run build && node build/index.js",
-    "sourcetest": "mocha -r ts-node/register src/source.test.ts",
+    "sourcetest": "mocha --timeout 0 -r ts-node/register src/source.test.ts",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],

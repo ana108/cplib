@@ -87,8 +87,6 @@ describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5k
         fs.writeFile(__dirname + "/testcases.ts", allRecalibrations, function (err) {
             if (err) {
                 console.log(err);
-            } else {
-                // console.log('Successfully wrote ' + allRecalibrations);
             }
         });
     });
