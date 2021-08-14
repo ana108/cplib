@@ -96,6 +96,7 @@ export interface RateTables {
     'SmallPacketAirInternational': string[],
     'SmallPacketSurfaceInternational': string[],
 }
+
 // this will iterate over the two docs; one for small business and one for regular rates
 export const e2eProcess = async (year: number): Promise<RateTables[]> => {
     const dataSources = {

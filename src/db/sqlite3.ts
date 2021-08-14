@@ -30,17 +30,16 @@ export const getRateCode = (source: string, destination: string, delivery_type?:
 
 }
 
+// db read/write
 export const saveToDb = (sqlStmt: string): Promise<any> => {
   return new Promise((resolve, reject) => {
     const stmt = db.prepare(sqlStmt, err => {
       if (err) {
-        console.log('ERROR SQL ' + sqlStmt);
         reject(err);
       }
     });
     stmt.run((err: Error) => {
       if (err) {
-        console.log('ERROR SQL ' + sqlStmt);
         reject(err.message);
       } else {
         resolve('Success');
@@ -57,21 +56,27 @@ export interface options {
   year?: number
 }
 export const getRate = (rateCode: string, weight: number,
-  opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<number> => {
-  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
+  opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' }): Promise<number> => {
+  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' };
   let options = { ...defaults, ...opts };
-  const getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = $year ' +
+  let getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = $year ' +
     'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
+  let getPriceParams = {
+    $country: options.country,
+    $rateCode: rateCode,
+    $weight: weight,
+    $year: options.year,
+    $deliverySpeed: options.type,
+    $customerType: options.customerType
+  };
+  if (!options.year) {
+    delete getPriceParams.$year;
+    getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = (select max(year) from rates) ' +
+      'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
+  }
   return new Promise<number>((resolve, reject) => {
     const stmt = db.prepare(getPrice);
-    stmt.get({
-      $country: options.country,
-      $rateCode: rateCode,
-      $weight: weight,
-      $year: options.year,
-      $deliverySpeed: options.type,
-      $customerType: options.customerType
-    }, (err, row) => {
+    stmt.get(getPriceParams, (err, row) => {
       if (err) {
         reject(err);
       } else if (!row) {
@@ -89,20 +94,26 @@ export interface maxRates {
   incrementalRate: number
 };
 export const getMaxRate = (rateCode: string,
-  opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() }): Promise<maxRates> => {
-  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular', year: new Date().getFullYear() };
+  opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' }): Promise<maxRates> => {
+  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' };
   let options = { ...defaults, ...opts };
-  const getPrice = 'select price from rates where country = $country and rate_code = $rateCode and year = $year and type = $deliverySpeed ' +
+  let getPrice = 'select price from rates where country = $country and rate_code = $rateCode and year = $year and type = $deliverySpeed ' +
     ' and customer_type = $customerType  order by max_weight desc limit 2';
+  let getMaxRateParams = {
+    $country: options.country,
+    $rateCode: rateCode,
+    $year: options.year,
+    $deliverySpeed: options.type,
+    $customerType: options.customerType
+  };
+  if (!options.year) {
+    delete getMaxRateParams.$year;
+    getPrice = 'select price from rates where country = $country and rate_code = $rateCode and year = (select max(year) from rates) and type = $deliverySpeed ' +
+      ' and customer_type = $customerType  order by max_weight desc limit 2';
+  }
   return new Promise<maxRates>((resolve, reject) => {
     const stmt = db.prepare(getPrice);
-    stmt.all({
-      $country: options.country,
-      $rateCode: rateCode,
-      $year: options.year,
-      $deliverySpeed: options.type,
-      $customerType: options.customerType
-    }, (err, rows) => {
+    stmt.all(getMaxRateParams, (err, rows) => {
       if (err) {
         reject(err);
       } else if (!rows || rows.length < 2) {
@@ -248,7 +259,6 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
           percentage: parseFloat(row.percentage),
           expiryUnixTimestamp: parseFloat(row.date)
         });
-        // resolve(parseFloat(row.percentage));
       }
     });
   })
