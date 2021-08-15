@@ -1,3 +1,4 @@
+import { rejects } from 'assert';
 import { join } from 'path';
 import sqlite3 from 'sqlite3';
 import { FuelTable } from '../autoload';
@@ -5,11 +6,27 @@ import { FuelTable } from '../autoload';
 let dbname = __dirname + "/../resources/cplib.db";
 export let db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
 
-export const setDB = (dbLocation: string) => {
-  db = new sqlite3.Database(dbLocation, sqlite3.OPEN_READWRITE);
+export const setDB = async (dbLocation: string) => {
+  return new Promise<void>((resolve, reject) => {
+    db.close(err => {
+      if (err) {
+        console.log(`Error closing DB ${dbname}`);
+      }
+      db = new sqlite3.Database(dbLocation, sqlite3.OPEN_READWRITE);
+      resolve();
+    });
+  });
 }
-export const resetDB = () => {
-  db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
+export const resetDB = async () => {
+  return new Promise((resolve, reject) => {
+    db.close(err => {
+      if (err) {
+        console.log(`Error closing DB on reset ${dbname}`);
+      }
+      db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
+      resolve(true);
+    });
+  });
 }
 export const getRateCode = (source: string, destination: string, delivery_type?: string): Promise<any> => {
   return new Promise(function (resolve, reject) {
@@ -39,6 +56,7 @@ export const saveToDb = (sqlStmt: string): Promise<any> => {
       }
     });
     stmt.run((err: Error) => {
+      stmt.finalize();
       if (err) {
         reject(err.message);
       } else {
@@ -77,6 +95,7 @@ export const getRate = (rateCode: string, weight: number,
   return new Promise<number>((resolve, reject) => {
     const stmt = db.prepare(getPrice);
     stmt.get(getPriceParams, (err, row) => {
+      stmt.finalize();
       if (err) {
         reject(err);
       } else if (!row) {
@@ -114,6 +133,7 @@ export const getMaxRate = (rateCode: string,
   return new Promise<maxRates>((resolve, reject) => {
     const stmt = db.prepare(getPrice);
     stmt.all(getMaxRateParams, (err, rows) => {
+      stmt.finalize();
       if (err) {
         reject(err);
       } else if (!rows || rows.length < 2) {
@@ -135,6 +155,7 @@ export const getProvince = (postalCode: string): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     const stmt = db.prepare(getProvince);
     stmt.get([], (err, row) => {
+      stmt.finalize();
       if (err) {
         reject(err);
       } else if (!row) {
@@ -144,11 +165,11 @@ export const getProvince = (postalCode: string): Promise<string> => {
         // be handled carefully
         resolve(row.province);
       }
-    })
+    });
   });
 }
 
-export const updateFuelSurcharge = (fuelSurchargeRates: FuelTable): Promise<void[]> => {
+export const updateFuelSurcharge = (fuelSurchargeRates: FuelTable): Promise<void> => {
   let expiryDate = fuelSurchargeRates['Expiry_Date'].valueOf();
   const fuelSurcharge = `insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, ${expiryDate}, $country, $delivery_type)`;
   const DOMESTIC = fuelSurchargeRates['Domestic Express and Non-Express Services'] / 100;
@@ -227,17 +248,25 @@ export const updateFuelSurcharge = (fuelSurchargeRates: FuelTable): Promise<void
     $delivery_type: TRACKED_PACKET,
   }];
   const stmt = db.prepare(fuelSurcharge);
-  return Promise.all(values.map(charge => {
-    return new Promise<void>((resolve, reject) => {
-      stmt.run(charge, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
+  return new Promise<void>((resolve, reject) => {
+    Promise.all(values.map(charge => {
+      return new Promise<void>((resolve, reject) => {
+        stmt.run(charge, (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
       });
+    })).then(_ => {
+      stmt.finalize();
+      resolve();
+    }).catch(err => {
+      stmt.finalize();
+      reject(err);
     });
-  }));
+  });
 }
 
 export interface FuelSurcharge {
@@ -252,6 +281,7 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
       $country: country,
       $deliveryType: deliveryType
     }, (err, row) => {
+      stmt.finalize();
       if (err) {
         reject(err);
       } else {

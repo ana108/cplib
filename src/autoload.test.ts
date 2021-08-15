@@ -180,13 +180,13 @@ describe('Extract rate tables - 2020 - int', () => {
 describe('Load data into rates table for the year', async () => {
     let allRateTables: RateTables[];
     before(async () => {
-        db.setDB(__dirname + "/integration/cplib_int.db");
+        await db.setDB(__dirname + "/integration/cplib_int.db");
         allRateTables = await e2eProcess(YEAR);
     });
     after(async () => {
         let numDeleted = await db.deleteRatesByYear(2021);
         console.log('Deleted ', numDeleted);
-        db.resetDB();
+        await db.resetDB();
     });
 
     it('Verify that the right number of rows was loaded for canada (regular) ', async () => {

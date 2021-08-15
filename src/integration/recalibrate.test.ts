@@ -11,8 +11,8 @@ let allRecalibrations = "";
 
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
     let newTestCases = tc.allTestCases;
-    before(() => {
-        db.setDB(__dirname + "/cplib_int.db");
+    before(async () => {
+        await db.setDB(__dirname + "/cplib_int.db");
     });
     after(() => {
         let recalibratedCanada = "export let allTestCases = " + JSON.stringify(newTestCases, null, 4);
@@ -81,7 +81,7 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
 
 describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5kg', () => {
 
-    after(() => {
+    after(async () => {
         let recalibratedInternational = "export let internationalTestCases = " + JSON.stringify(tc.internationalTestCases, null, 4);
         allRecalibrations = allRecalibrations + "\n" + recalibratedInternational;
         fs.writeFile(__dirname + "/testcases.ts", allRecalibrations, function (err) {
@@ -89,6 +89,7 @@ describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5k
                 console.log(err);
             }
         });
+        await db.resetDB();
     });
     let totalCases = Object.keys(tc.internationalTestCases).length;
     let sourceAddr = {

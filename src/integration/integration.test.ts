@@ -8,11 +8,11 @@ const expect = chai.expect;
 
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
 
-    before(() => {
-        db.setDB(__dirname + "/cplib_int.db");
+    before(async () => {
+        await db.setDB(__dirname + "/cplib_int.db");
     });
-    after(() => {
-        db.resetDB();
+    after(async () => {
+        await db.resetDB();
     });
     let totalCases = Object.keys(allTestCases).length;
     let sourceAddr = {
@@ -44,11 +44,11 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
 
 describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () => {
 
-    before(() => {
-        db.setDB(__dirname + "/cplib_int.db");
+    before(async () => {
+        await db.setDB(__dirname + "/cplib_int.db");
     });
-    after(() => {
-        db.resetDB();
+    after(async () => {
+        await db.resetDB();
     });
     let totalCases = Object.keys(americanTestCases).length;
     let sourceAddr = {
@@ -80,11 +80,11 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
 
 describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5kg', () => {
 
-    before(() => {
-        db.setDB(__dirname + "/cplib_int.db");
+    before(async () => {
+        await db.setDB(__dirname + "/cplib_int.db");
     });
-    after(() => {
-        db.resetDB();
+    after(async () => {
+        await db.resetDB();
     });
     let totalCases = Object.keys(internationalTestCases).length;
     let sourceAddr = {
