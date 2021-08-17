@@ -2,10 +2,8 @@ import * as sinon from 'sinon';
 import * as fs from 'fs';
 import 'mocha';
 import * as chai from 'chai';
-import http from 'http';
-import { savePDFS } from './source';
+import { savePDFS, checkAndUpdate } from './source';
 import { fail } from 'assert';
-import { assert } from 'console';
 const expect = chai.expect;
 const YEAR = new Date().getFullYear();
 
@@ -50,6 +48,13 @@ describe('Download and save pdfs - integration', () => {
         const tmpDir = __dirname + '/tmp';
         if (fs.existsSync(tmpDir)) {
             fail("The temporary directory was supposed to be removed but wasn't");
+        }
+    });
+    it('Check and update e2e', async () => {
+        try {
+            await checkAndUpdate();
+        } catch (e) {
+            fail('Error caught while loading data');
         }
     });
 });

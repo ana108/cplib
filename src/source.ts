@@ -1,14 +1,46 @@
 import fs from 'fs';
 import { copyFile } from 'fs/promises';
 import { https } from 'follow-redirects';
-import { loadPDF, extractYear } from './autoload';
+import { loadPDF, extractYear, updateAllFuelSurcharges } from './autoload';
+import { setDB, updateFuelSurcharge } from './db/sqlite3';
 // this will check if update needs to happen and call 
 // all the functions below
+export interface updateresults {
+    regular: boolean,
+    smallBusiness: boolean
+};
 export const checkAndUpdate = async () => {
+    let datacheck: updateresults;
+    try {
+        datacheck = await savePDFS(2020);
+        if (!datacheck.regular && !datacheck.smallBusiness) {
+            console.log('Nothing updated, because data check came back as not needed');
+            return Promise.resolve(); // all good
+        }
+        const dataLoadDbPath = `${__dirname}/cplib_interim.db`;
+        // step one - take a copy of the current cplib
+        await copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
+        console.log('Copied the db file');
+        // close all db connections, and open to copied db file
+        await setDB(dataLoadDbPath);
+        console.log('Set the db');
+        // update all fuel surcharge
+        await updateAllFuelSurcharges();
+        console.log('Updated the fuel surcharge on the interim db');
+    } catch (e) {
+        console.log('Error occurred during preparatory processing ', e);
+        Promise.reject(e);
+    }
+    return new Promise<void>((resolve, reject) => {
+        if (datacheck.regular) {
 
+        }
+        if (datacheck.smallBusiness) {
+        }
+    });
 }
 
-export const savePDFS = async (year: number): Promise<any> => {
+export const savePDFS = async (year: number): Promise<updateresults> => {
     const tmpDir = __dirname + '/resources/tmp';
     // tmp directory to load the pdf into so we can check if new pdf has been posted
     if (!fs.existsSync(tmpDir)) {
@@ -79,7 +111,7 @@ export const savePDFS = async (year: number): Promise<any> => {
     // this is done by extracting the first page and seeing the year displayed there
     const regularPDFFirstPage = await loadPDF(regularPDF);
     const yearOfRegular = extractYear(regularPDFFirstPage);
-    let updateRates = {
+    let updateRates: updateresults = {
         regular: false,
         smallBusiness: false
     };
