@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 
 import { db } from './sqlite3';
+import * as localDB from './sqlite3';
 import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 
@@ -13,6 +14,16 @@ import { getRateCode, saveToDb, getRate, getMaxRate, options, getProvince, updat
 import { fail } from 'assert';
 
 const expect = chai.expect;
+const fakeStmt = {
+    get: function () { },
+    finalize: function () { },
+    all: function () { },
+    run: function () { }
+};
+const fakeDB = {
+    close: function () { },
+    prepare: function () { }
+};
 
 describe('GetRateCode from db', () => {
     let dbGetStb;
@@ -48,17 +59,22 @@ describe('GetRateCode from db', () => {
 describe('Save to db', () => {
     let dbPrepareStb;
     let dbRunStb;
-    const fakeStmt = {
-        run: function () { }
-    }
-
+    let openForWriteStb;
+    let stmFinalizeStb;
+    let dbClose;
     beforeEach(() => {
-        dbPrepareStb = sinon.stub(db, 'prepare').returns(fakeStmt);
+        openForWriteStb = sinon.stub(localDB, 'openForWrite').returns(fakeDB);
+        dbPrepareStb = sinon.stub(fakeDB, 'prepare').returns(fakeStmt);
+        stmFinalizeStb = sinon.stub(fakeStmt, 'finalize');
         dbRunStb = sinon.stub(fakeStmt, 'run');
+        dbClose = sinon.stub(fakeDB, 'close').yields(null);
     });
     afterEach(() => {
         dbPrepareStb.restore();
         dbRunStb.restore();
+        openForWriteStb.restore();
+        stmFinalizeStb.restore();
+        dbClose.restore();
     });
 
     it('Successfully saves to the database', async () => {
@@ -76,9 +92,7 @@ describe('Save to db', () => {
 describe('GetRate from db', () => {
     let dbPrepareStb;
     let dbRunStb;
-    const fakeStmt = {
-        get: function () { }
-    }
+    let stmtFinalizeStb;
     const rateCode = 'A5';
     const opts: options = {
         country: 'Canada',
@@ -90,10 +104,12 @@ describe('GetRate from db', () => {
     beforeEach(() => {
         dbPrepareStb = sinon.stub(db, 'prepare').returns(fakeStmt);
         dbRunStb = sinon.stub(fakeStmt, 'get');
+        stmtFinalizeStb = sinon.stub(fakeStmt, 'finalize');
     });
     afterEach(() => {
         dbPrepareStb.restore();
         dbRunStb.restore();
+        stmtFinalizeStb.restore();
     });
 
     it('Successfully retrieves row', async () => {
@@ -116,9 +132,7 @@ describe('GetRate from db', () => {
 describe('Get Max Rate from db', () => {
     let dbPrepareStb;
     let dbAllStb;
-    const fakeStmt = {
-        all: function () { }
-    }
+    let stmtFinalizeStb;
 
     const rateCode = 'A5';
     const opts: options = {
@@ -132,10 +146,12 @@ describe('Get Max Rate from db', () => {
     beforeEach(() => {
         dbPrepareStb = sinon.stub(db, 'prepare').returns(fakeStmt);
         dbAllStb = sinon.stub(fakeStmt, 'all');
+        stmtFinalizeStb = sinon.stub(fakeStmt, 'finalize');
     });
     afterEach(() => {
         dbPrepareStb.restore();
         dbAllStb.restore();
+        stmtFinalizeStb.restore();
     });
 
     it('Successfully retrieves two rows', async () => {
@@ -166,17 +182,17 @@ describe('Get Max Rate from db', () => {
 describe('GetProvince from db', () => {
     let dbPrepareStb;
     let dbGetStb;
-    const fakeStmt = {
-        get: function () { }
-    }
+    let stmtFinalizeStb;
 
     beforeEach(() => {
         dbPrepareStb = sinon.stub(db, 'prepare').returns(fakeStmt);
         dbGetStb = sinon.stub(fakeStmt, 'get');
+        stmtFinalizeStb = sinon.stub(fakeStmt, 'finalize');
     });
     afterEach(() => {
         dbPrepareStb.restore();
         dbGetStb.restore();
+        stmtFinalizeStb.restore();
     });
 
     it('Successfully retrieves row', async () => {
@@ -199,6 +215,9 @@ describe('GetProvince from db', () => {
 describe('Update Fuel Surcharge', () => {
     let dbPrepareStb;
     let dbRunStb;
+    let openForWriteStb;
+    let stmtFinalizeStb;
+    let dbClose;
     const newCharges = {
         "Domestic Express and Non-Express Services": 11.00,
         "U.S. and International Express Services": 9.25,
@@ -206,24 +225,20 @@ describe('Update Fuel Surcharge', () => {
         "Priority Worldwide": 6.00,
         "Expiry_Date": new Date()
     };
-    const newChargesInvalidChar = {
-        "Domestic Express and Non-Express Services": -11.00,
-        "U.S. and International Express Services": 9.25,
-        "U.S. and International Non-Express Services": 7.25,
-        "Priority Worldwide": 6.00,
-        "Expiry_Date": new Date()
-    };
-    const fakeStmt = {
-        run: function () { }
-    }
 
     beforeEach(() => {
-        dbPrepareStb = sinon.stub(db, 'prepare').returns(fakeStmt);
+        dbPrepareStb = sinon.stub(fakeDB, 'prepare').returns(fakeStmt);
         dbRunStb = sinon.stub(fakeStmt, 'run');
+        openForWriteStb = sinon.stub(localDB, 'openForWrite').returns(fakeDB);
+        stmtFinalizeStb = sinon.stub(fakeStmt, 'finalize');
+        dbClose = sinon.stub(fakeDB, 'close').yields(null);
     });
     afterEach(() => {
         dbPrepareStb.restore();
         dbRunStb.restore();
+        openForWriteStb.restore();
+        stmtFinalizeStb.restore();
+        dbClose.restore();
     });
 
     it('Successfully updates table', async () => {
@@ -244,17 +259,17 @@ describe('Update Fuel Surcharge', () => {
 describe('Get Fuel Surcharge', () => {
     let dbPrepareStb;
     let dbGetStb;
-    const fakeStmt = {
-        get: function () { }
-    }
+    let stmtFinalizeStb;
 
     beforeEach(() => {
         dbPrepareStb = sinon.stub(db, 'prepare').returns(fakeStmt);
         dbGetStb = sinon.stub(fakeStmt, 'get');
+        stmtFinalizeStb = sinon.stub(fakeStmt, 'finalize');
     });
     afterEach(() => {
         dbPrepareStb.restore();
         dbGetStb.restore();
+        stmtFinalizeStb.restore();
     });
 
     it('Successfully retrieves percentage from db table', async () => {

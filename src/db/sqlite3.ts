@@ -3,8 +3,9 @@ import { join } from 'path';
 import sqlite3 from 'sqlite3';
 import { FuelTable } from '../autoload';
 
-let dbname = __dirname + "/../resources/cplib.db";
-export let db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
+const dbname = __dirname + "/../resources/cplib.db";
+let dbToOpen = dbname;
+export let db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY); // sqlite3.OPEN_READWRITE
 
 export const setDB = async (dbLocation: string) => {
   return new Promise<void>((resolve, reject) => {
@@ -12,7 +13,8 @@ export const setDB = async (dbLocation: string) => {
       if (err) {
         console.log(`Error closing DB ${dbname}`);
       }
-      db = new sqlite3.Database(dbLocation, sqlite3.OPEN_READWRITE);
+      dbToOpen = dbLocation;
+      db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY); // sqlite3.OPEN_READWRITE
       resolve();
     });
   });
@@ -23,11 +25,27 @@ export const resetDB = async () => {
       if (err) {
         console.log(`Error closing DB on reset ${dbname}`);
       }
-      db = new sqlite3.Database(dbname, sqlite3.OPEN_READWRITE);
+      dbToOpen = dbname;
+      db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY); // sqlite3.OPEN_READWRITE
       resolve(true);
     });
   });
 }
+
+export const openForWrite = async (): Promise<any> => { // sqlite3.Database
+  return new Promise<any>((resolve, reject) => { // sqlite3.Database
+    let readWriteDB: sqlite3.Database;
+    readWriteDB = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE, err => {
+      if (!err) {
+        resolve(readWriteDB);
+      } else {
+        console.log('Error opening db for write ', err);
+        reject(err);
+      }
+    });
+  });
+}
+
 export const getRateCode = (source: string, destination: string, delivery_type?: string): Promise<any> => {
   return new Promise(function (resolve, reject) {
     let getRateCodeMapping = `select rate_code from rate_code_mapping where source ='${source}' and (destination like '%${destination}%' OR upper(country) = '${destination}')`;
@@ -47,16 +65,126 @@ export const getRateCode = (source: string, destination: string, delivery_type?:
 
 }
 
-// db read/write
-export const saveToDb = (sqlStmt: string): Promise<any> => {
+export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promise<void> => {
+  let expiryDate = fuelSurchargeRates['Expiry_Date'].valueOf();
+  const fuelSurcharge = `insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, ${expiryDate}, $country, $delivery_type)`;
+  const DOMESTIC = fuelSurchargeRates['Domestic Express and Non-Express Services'] / 100;
+  const USA_INTL_EXPRESS = fuelSurchargeRates['U.S. and International Express Services'] / 100;
+  const USA_INTL_NON_EXPRESS = fuelSurchargeRates['U.S. and International Non-Express Services'] / 100;
+  const USA_INTL_PRIORITY = fuelSurchargeRates['Priority Worldwide'] / 100;
+
+  const CANADA = 'Canada';
+  const USA = 'USA';
+  const INTL = 'INTERNATIONAL';
+
+  const PRIORITY = 'priority';
+  const EXPRESS = 'express';
+  const REG = 'regular';
+  const EXPEDITED = 'expedited';
+  const TRACKED_PACKET = 'tracked_packet';
+  const SMALL_PACKET = 'small_packet';
+  const AIR = 'air';
+  const SURFACE = 'surface';
+
+  let values = [{
+    $percentage: DOMESTIC,
+    $country: CANADA,
+    $delivery_type: PRIORITY,
+  }, {
+    $percentage: DOMESTIC,
+    $country: CANADA,
+    $delivery_type: EXPRESS,
+  }, {
+    $percentage: DOMESTIC,
+    $country: CANADA,
+    $delivery_type: REG,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: USA,
+    $delivery_type: EXPEDITED,
+  }, {
+    $percentage: USA_INTL_EXPRESS,
+    $country: USA,
+    $delivery_type: EXPRESS,
+  }, {
+    $percentage: USA_INTL_PRIORITY,
+    $country: USA,
+    $delivery_type: PRIORITY,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: USA,
+    $delivery_type: TRACKED_PACKET,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: USA,
+    $delivery_type: SMALL_PACKET,
+  }, {
+    $percentage: USA_INTL_PRIORITY,
+    $country: INTL,
+    $delivery_type: PRIORITY,
+  }, {
+    $percentage: USA_INTL_EXPRESS,
+    $country: INTL,
+    $delivery_type: EXPRESS,
+  }, {
+    $percentage: USA_INTL_EXPRESS,
+    $country: INTL,
+    $delivery_type: AIR,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: INTL,
+    $delivery_type: SURFACE,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: INTL,
+    $delivery_type: SMALL_PACKET,
+  }, {
+    $percentage: USA_INTL_NON_EXPRESS,
+    $country: INTL,
+    $delivery_type: TRACKED_PACKET,
+  }];
+  const writeDB = await openForWrite();
+  const stmt = writeDB.prepare(fuelSurcharge);
+  return new Promise<void>((resolve, reject) => {
+    Promise.all(values.map(charge => {
+      return new Promise<void>((resolve, reject) => {
+        stmt.run(charge, (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    })).then(_ => {
+      stmt.finalize();
+      writeDB.close(err => {
+        if (err) console.log('Failed to close write db error: ', err);
+      });
+      resolve();
+    }).catch(err => {
+      stmt.finalize();
+      writeDB.close(err => {
+        if (err) console.log('Failed to close after error write db error: ', err);
+      });
+      reject(err);
+    });
+  });
+}
+
+export const saveToDb = async (sqlStmt: string): Promise<any> => {
+  const writeDB = await openForWrite();
   return new Promise((resolve, reject) => {
-    const stmt = db.prepare(sqlStmt, err => {
+    const stmt = writeDB.prepare(sqlStmt, err => {
       if (err) {
         reject(err);
       }
     });
     stmt.run((err: Error) => {
       stmt.finalize();
+      writeDB.close(err => {
+        if (err) console.log('Failed to close after error write db error: ', err);
+      });
       if (err) {
         reject(err.message);
       } else {
@@ -165,106 +293,6 @@ export const getProvince = (postalCode: string): Promise<string> => {
         // be handled carefully
         resolve(row.province);
       }
-    });
-  });
-}
-
-export const updateFuelSurcharge = (fuelSurchargeRates: FuelTable): Promise<void> => {
-  let expiryDate = fuelSurchargeRates['Expiry_Date'].valueOf();
-  const fuelSurcharge = `insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, ${expiryDate}, $country, $delivery_type)`;
-  const DOMESTIC = fuelSurchargeRates['Domestic Express and Non-Express Services'] / 100;
-  const USA_INTL_EXPRESS = fuelSurchargeRates['U.S. and International Express Services'] / 100;
-  const USA_INTL_NON_EXPRESS = fuelSurchargeRates['U.S. and International Non-Express Services'] / 100;
-  const USA_INTL_PRIORITY = fuelSurchargeRates['Priority Worldwide'] / 100;
-
-  const CANADA = 'Canada';
-  const USA = 'USA';
-  const INTL = 'INTERNATIONAL';
-
-  const PRIORITY = 'priority';
-  const EXPRESS = 'express';
-  const REG = 'regular';
-  const EXPEDITED = 'expedited';
-  const TRACKED_PACKET = 'tracked_packet';
-  const SMALL_PACKET = 'small_packet';
-  const AIR = 'air';
-  const SURFACE = 'surface';
-
-  let values = [{
-    $percentage: DOMESTIC,
-    $country: CANADA,
-    $delivery_type: PRIORITY,
-  }, {
-    $percentage: DOMESTIC,
-    $country: CANADA,
-    $delivery_type: EXPRESS,
-  }, {
-    $percentage: DOMESTIC,
-    $country: CANADA,
-    $delivery_type: REG,
-  }, {
-    $percentage: USA_INTL_NON_EXPRESS,
-    $country: USA,
-    $delivery_type: EXPEDITED,
-  }, {
-    $percentage: USA_INTL_EXPRESS,
-    $country: USA,
-    $delivery_type: EXPRESS,
-  }, {
-    $percentage: USA_INTL_PRIORITY,
-    $country: USA,
-    $delivery_type: PRIORITY,
-  }, {
-    $percentage: USA_INTL_NON_EXPRESS,
-    $country: USA,
-    $delivery_type: TRACKED_PACKET,
-  }, {
-    $percentage: USA_INTL_NON_EXPRESS,
-    $country: USA,
-    $delivery_type: SMALL_PACKET,
-  }, {
-    $percentage: USA_INTL_PRIORITY,
-    $country: INTL,
-    $delivery_type: PRIORITY,
-  }, {
-    $percentage: USA_INTL_EXPRESS,
-    $country: INTL,
-    $delivery_type: EXPRESS,
-  }, {
-    $percentage: USA_INTL_EXPRESS,
-    $country: INTL,
-    $delivery_type: AIR,
-  }, {
-    $percentage: USA_INTL_NON_EXPRESS,
-    $country: INTL,
-    $delivery_type: SURFACE,
-  }, {
-    $percentage: USA_INTL_NON_EXPRESS,
-    $country: INTL,
-    $delivery_type: SMALL_PACKET,
-  }, {
-    $percentage: USA_INTL_NON_EXPRESS,
-    $country: INTL,
-    $delivery_type: TRACKED_PACKET,
-  }];
-  const stmt = db.prepare(fuelSurcharge);
-  return new Promise<void>((resolve, reject) => {
-    Promise.all(values.map(charge => {
-      return new Promise<void>((resolve, reject) => {
-        stmt.run(charge, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      });
-    })).then(_ => {
-      stmt.finalize();
-      resolve();
-    }).catch(err => {
-      stmt.finalize();
-      reject(err);
     });
   });
 }
