@@ -1,12 +1,13 @@
 import { rejects } from 'assert';
+import { write } from 'fs';
 import { join } from 'path';
 import sqlite3 from 'sqlite3';
 import { FuelTable } from '../autoload';
 
 const dbname = __dirname + "/../resources/cplib.db";
 let dbToOpen = dbname;
-export let db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY); // sqlite3.OPEN_READWRITE
-
+export let db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
+export let writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
 export const setDB = async (dbLocation: string) => {
   return new Promise<void>((resolve, reject) => {
     db.close(err => {
@@ -14,21 +15,29 @@ export const setDB = async (dbLocation: string) => {
         console.log(`Error closing DB ${dbname}`);
       }
       dbToOpen = dbLocation;
-      db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY); // sqlite3.OPEN_READWRITE
+      console.log('DB to open ' + dbToOpen);
+      db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
+      writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
       resolve();
     });
   });
 }
 export const resetDB = async () => {
   return new Promise((resolve, reject) => {
+    dbToOpen = dbname;
     db.close(err => {
       if (err) {
         console.log(`Error closing DB on reset ${dbname}`);
       }
-      dbToOpen = dbname;
       db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY); // sqlite3.OPEN_READWRITE
       resolve(true);
     });
+    writedb.close(err => {
+      if (err) {
+        console.log(`Error closing write DB on reset ${dbname}`);
+      }
+      writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
+    })
   });
 }
 
@@ -143,8 +152,8 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
     $country: INTL,
     $delivery_type: TRACKED_PACKET,
   }];
-  const writeDB = await openForWrite();
-  const stmt = writeDB.prepare(fuelSurcharge);
+  //const writeDB = await openForWrite();
+  const stmt = writedb.prepare(fuelSurcharge);
   return new Promise<void>((resolve, reject) => {
     Promise.all(values.map(charge => {
       return new Promise<void>((resolve, reject) => {
@@ -158,39 +167,42 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
       });
     })).then(_ => {
       stmt.finalize();
-      writeDB.close(err => {
-        if (err) console.log('Failed to close write db error: ', err);
-      });
+      // writeDB.close(err => {
+      //   if (err) console.log('Failed to close write db error: ', err);
+      // });
       resolve();
     }).catch(err => {
       stmt.finalize();
-      writeDB.close(err => {
-        if (err) console.log('Failed to close after error write db error: ', err);
-      });
+      // writeDB.close(err => {
+      //   if (err) console.log('Failed to close after error write db error: ', err);
+      // });
       reject(err);
     });
   });
 }
 
 export const saveToDb = async (sqlStmt: string): Promise<any> => {
-  const writeDB = await openForWrite();
-  return new Promise((resolve, reject) => {
-    const stmt = writeDB.prepare(sqlStmt, err => {
+  return new Promise(async (resolve, reject) => {
+    // const writeDB = await openForWrite();
+    const stmt = writedb.prepare(sqlStmt, err => {
       if (err) {
         reject(err);
       }
     });
-    stmt.run((err: Error) => {
-      stmt.finalize();
-      writeDB.close(err => {
-        if (err) console.log('Failed to close after error write db error: ', err);
-      });
+    stmt.run((error: Error) => {
+      if (error) {
+        console.log('ERROR running the statement ', error);
+      }
+    });
+    stmt.finalize();
+    resolve('Success');
+    /* writeDB.close(err => {
       if (err) {
         reject(err.message);
       } else {
         resolve('Success');
       }
-    });
+    }); */
   });
 }
 
@@ -322,17 +334,26 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
   })
 }
 // For integration tests
-export const deleteRatesByYear = (year: number): Promise<number> => {
+export const deleteRatesByYear = async (year: number): Promise<number> => {
   const deleteSql = `delete from rates where year = ${year}`;
+  const writeDB = await openForWrite();
   return new Promise<number>((resolve, reject) => {
-    db.run(deleteSql, [], function (err) {
-      if (err) {
 
+    if (!writeDB) {
+      console.log('Could not open a connection to db');
+    }
+    writeDB.run(deleteSql, [], function (this: any, err) {
+      if (err) {
         reject(err);
       } else {
-        const self: any = this!;
-        resolve(self.changes);
+        console.log('Num rows deleted write db ', this.changes);
+        resolve(this.changes);
       }
+      writeDB.close(err => {
+        if (err) {
+          console.log('Error closing connection to db after deleting year data ', err);
+        }
+      })
     });
   });
 }

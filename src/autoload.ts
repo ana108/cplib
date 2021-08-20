@@ -2,6 +2,8 @@ const axios = require('axios').default;
 import { updateFuelSurcharge } from './db/sqlite3';
 import { saveToDb } from './db/sqlite3';
 const PDFParser = require("pdf2json");
+export const REGULAR = 'regular';
+export const SMALL_BUSINESS = 'small_business';
 export interface FuelTable {
     'Domestic Express and Non-Express Services': number,
     'U.S. and International Express Services': number,
@@ -98,94 +100,91 @@ export interface RateTables {
 }
 
 // this will iterate over the two docs; one for small business and one for regular rates
-export const e2eProcess = async (year: number): Promise<RateTables[]> => {
+// TODO change so that the type passed in can be either regular or SmallBusiness
+export const e2eProcess = async (year: number, type: string): Promise<RateTables> => {
     const dataSources = {
-        'Regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
-        'SmallBusiness': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
+        'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
+        'small_business': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
     };
-    let allRateTables: RateTables[] = [];
-    await Promise.all(Object.keys(dataSources).map(async (key) => {
-        let pdfData = await loadPDF(dataSources[key]);
-        let pageTables: RatesPages = pageHeaders(pdfData);
-        let rateTables = <RateTables>{};
-        const canadianPriority = 'PriorityCanada';
-        let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20);
-        let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20);
-        rateTables['PriorityCanada1'] = canadianPriority1;
-        rateTables['PriorityCanada2'] = canadianPriority2;
+    let pdfData = await loadPDF(dataSources[type]);
+    let pageTables: RatesPages = pageHeaders(pdfData);
+    let rateTables = <RateTables>{};
+    const canadianPriority = 'PriorityCanada';
+    let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20);
+    let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20);
+    rateTables['PriorityCanada1'] = canadianPriority1;
+    rateTables['PriorityCanada2'] = canadianPriority2;
 
-        const canadianExpress = 'ExpressCanada';
-        let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20);
-        let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20);
-        rateTables['ExpressCanada1'] = canadianExpress1;
-        rateTables['ExpressCanada2'] = canadianExpress2;
+    const canadianExpress = 'ExpressCanada';
+    let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20);
+    let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20);
+    rateTables['ExpressCanada1'] = canadianExpress1;
+    rateTables['ExpressCanada2'] = canadianExpress2;
 
-        const canadianRegularParcel = 'RegularCanada';
-        let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20);
-        let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20);
-        rateTables['RegularCanada1'] = canadianRegular1;
-        rateTables['RegularCanada2'] = canadianRegular2;
+    const canadianRegularParcel = 'RegularCanada';
+    let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20);
+    let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20);
+    rateTables['RegularCanada1'] = canadianRegular1;
+    rateTables['RegularCanada2'] = canadianRegular2;
 
-        const internationalPriority = 'PriorityWorldwide';
-        let worldwidePriority = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
-        rateTables[internationalPriority] = worldwidePriority;
+    const internationalPriority = 'PriorityWorldwide';
+    let worldwidePriority = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
+    rateTables[internationalPriority] = worldwidePriority;
 
-        const expressUSALabel = 'ExpressUSA';
-        let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7);
-        rateTables[expressUSALabel] = expressUSA;
+    const expressUSALabel = 'ExpressUSA';
+    let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7);
+    rateTables[expressUSALabel] = expressUSA;
 
-        const expeditedUSALabel = 'ExpeditedUSA';
-        let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7);
-        rateTables[expeditedUSALabel] = expeditedUSA;
+    const expeditedUSALabel = 'ExpeditedUSA';
+    let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7);
+    rateTables[expeditedUSALabel] = expeditedUSA;
 
-        const usaRateCodes: string = rateTables[expeditedUSALabel][0] || '';
-        const trackedPacketUSALabel = 'TrackedPacketUSA';
-        let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2);
-        rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
+    const usaRateCodes: string = rateTables[expeditedUSALabel][0] || '';
+    const trackedPacketUSALabel = 'TrackedPacketUSA';
+    let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2);
+    rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
 
-        const smallPacketUSALabel = 'SmallPacketUSA';
-        let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2);
-        rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
+    const smallPacketUSALabel = 'SmallPacketUSA';
+    let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2);
+    rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
 
-        const worldwideExpressLabel = 'ExpressInternational';
-        let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10);
-        rateTables[worldwideExpressLabel] = worldwideExpress;
+    const worldwideExpressLabel = 'ExpressInternational';
+    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10);
+    rateTables[worldwideExpressLabel] = worldwideExpress;
 
-        const worldwideAirLabel = 'AirInternational';
-        let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10);
-        rateTables[worldwideAirLabel] = worldwideAir;
+    const worldwideAirLabel = 'AirInternational';
+    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10);
+    rateTables[worldwideAirLabel] = worldwideAir;
 
-        const worldwideSurfaceLabel = 'SurfaceInternational';
-        let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10);
-        rateTables[worldwideSurfaceLabel] = worldwideSurface;
+    const worldwideSurfaceLabel = 'SurfaceInternational';
+    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10);
+    rateTables[worldwideSurfaceLabel] = worldwideSurface;
 
-        const internationalRateCodes = rateTables['SurfaceInternational'][0] || '';
-        const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
-        let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
-        rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, internationalRateCodes.split(' '));
+    const internationalRateCodes = rateTables['SurfaceInternational'][0] || '';
+    const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
+    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
+    rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, internationalRateCodes.split(' '));
 
-        const worldwideSmallPacketLabel = 'SmallPacketInternational';
-        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
+    const worldwideSmallPacketLabel = 'SmallPacketInternational';
+    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
 
-        const internationalPacketRateCodes = worldwideSmallPacket[0] || '';
+    const internationalPacketRateCodes = worldwideSmallPacket[0] || '';
 
-        const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
-        let worldwideSmallAirPacket = splitMultiTablePage(worldwideSmallPacket)[0];
-        rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, internationalPacketRateCodes.split(' '));
-        const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
-        let worldwideSmallSurfacePacket = splitMultiTablePage(worldwideSmallPacket)[1];
-        rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, internationalPacketRateCodes.split(' '));
+    const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
+    let worldwideSmallAirPacket = splitMultiTablePage(worldwideSmallPacket)[0];
+    rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, internationalPacketRateCodes.split(' '));
+    const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
+    let worldwideSmallSurfacePacket = splitMultiTablePage(worldwideSmallPacket)[1];
+    rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, internationalPacketRateCodes.split(' '));
 
-        if (key === 'SmallBusiness') {
-            const canadianExpeditedParcel = 'ExpeditedCanada';
-            let canadianExpedited1 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23);
-            let canadianExpedited2 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22);
-            rateTables['ExpeditedCanada1'] = canadianExpedited1;
-            rateTables['ExpeditedCanada2'] = canadianExpedited2;
-        }
-        allRateTables.push(rateTables);
-    }));
-    return allRateTables;
+    if (type === SMALL_BUSINESS) {
+        const canadianExpeditedParcel = 'ExpeditedCanada';
+        let canadianExpedited1 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23);
+        let canadianExpedited2 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22);
+        rateTables['ExpeditedCanada1'] = canadianExpedited1;
+        rateTables['ExpeditedCanada2'] = canadianExpedited2;
+    }
+    return rateTables;
 }
 export const splitMultiTablePage = (page: string[]): string[][] => {
     /* conclusions: the "headers" ie ratecodes will always be either one or two characters
@@ -608,15 +607,13 @@ export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): 
     return finalTableRow;
 }
 
-export const loadBoth = (rates: RateTables[], year: number): Promise<any> => {
+export const loadByType = (rates: RateTables, year: number, type: string): Promise<any> => { // type: regular or small_business
     return new Promise<any>((resolve, reject) => {
-        saveTableEntries(rates[0], year, 'regular').then(data => {
-            saveTableEntries(rates[1], year, 'small_business').then(data => {
-                resolve(data);
-            }).catch(err => {
-                reject(err);
-            });
-        }).catch(error => reject(error));
+        saveTableEntries(rates, year, type).then(data => {
+            resolve(data);
+        }).catch(err => {
+            reject(err);
+        });
     });
 }
 // remember, this gets called twice; once for regular and once for small business
@@ -760,7 +757,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 }
             }
         });
-        Promise.all(inputsAll.map(async entry => {
+        return Promise.all(inputsAll.map(entry => {
             return saveToDb(entry)
         })).then(data => {
             resolve(data);
