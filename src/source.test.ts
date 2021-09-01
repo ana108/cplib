@@ -16,8 +16,7 @@ describe('Download and save pdfs - integration', () => {
         // requestStb.restore();
     });
     it('Create dir and download pdfs', async () => {
-        const year = YEAR - 1;
-        const result = await savePDFS(year);
+        const result = await savePDFS(YEAR);
         let pdfFound = false;
         if (result.regular) { // if regular was found, then check if new year was created
             const regularDir = __dirname + `/resources/regular/${YEAR}`;
