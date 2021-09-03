@@ -28,7 +28,8 @@ export const resetDB = async () => {
       if (err) {
         console.log(`Error closing DB on reset ${dbname}`);
       }
-      db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY); // sqlite3.OPEN_READWRITE
+      db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
+      writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
       resolve(true);
     });
     writedb.close(err => {
@@ -76,9 +77,9 @@ export const getRateCode = (source: string, destination: string, delivery_type?:
 export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promise<void> => {
   let expiryDate = fuelSurchargeRates['Expiry_Date'].valueOf();
   const fuelSurcharge = `insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, ${expiryDate}, $country, $delivery_type)`;
-  const DOMESTIC = fuelSurchargeRates['Domestic Express and Non-Express Services'] / 100;
-  const USA_INTL_EXPRESS = fuelSurchargeRates['U.S. and International Express Services'] / 100;
-  const USA_INTL_NON_EXPRESS = fuelSurchargeRates['U.S. and International Non-Express Services'] / 100;
+  const DOMESTIC = fuelSurchargeRates['Domestic Services'] / 100;
+  const USA_INTL_PARCEL = fuelSurchargeRates['USA and International Parcel Services'] / 100;
+  const USA_INTL_PACKET = fuelSurchargeRates['USA and International Packet Services'] / 100;
   const USA_INTL_PRIORITY = fuelSurchargeRates['Priority Worldwide'] / 100;
 
   const CANADA = 'Canada';
@@ -107,11 +108,11 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
     $country: CANADA,
     $delivery_type: REG,
   }, {
-    $percentage: USA_INTL_NON_EXPRESS,
+    $percentage: USA_INTL_PARCEL,
     $country: USA,
     $delivery_type: EXPEDITED,
   }, {
-    $percentage: USA_INTL_EXPRESS,
+    $percentage: USA_INTL_PARCEL,
     $country: USA,
     $delivery_type: EXPRESS,
   }, {
@@ -119,11 +120,11 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
     $country: USA,
     $delivery_type: PRIORITY,
   }, {
-    $percentage: USA_INTL_NON_EXPRESS,
+    $percentage: USA_INTL_PACKET,
     $country: USA,
     $delivery_type: TRACKED_PACKET,
   }, {
-    $percentage: USA_INTL_NON_EXPRESS,
+    $percentage: USA_INTL_PACKET,
     $country: USA,
     $delivery_type: SMALL_PACKET,
   }, {
@@ -131,23 +132,23 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
     $country: INTL,
     $delivery_type: PRIORITY,
   }, {
-    $percentage: USA_INTL_EXPRESS,
+    $percentage: USA_INTL_PARCEL,
     $country: INTL,
     $delivery_type: EXPRESS,
   }, {
-    $percentage: USA_INTL_EXPRESS,
+    $percentage: USA_INTL_PARCEL,
     $country: INTL,
     $delivery_type: AIR,
   }, {
-    $percentage: USA_INTL_NON_EXPRESS,
+    $percentage: USA_INTL_PARCEL,
     $country: INTL,
     $delivery_type: SURFACE,
   }, {
-    $percentage: USA_INTL_NON_EXPRESS,
+    $percentage: USA_INTL_PACKET,
     $country: INTL,
     $delivery_type: SMALL_PACKET,
   }, {
-    $percentage: USA_INTL_NON_EXPRESS,
+    $percentage: USA_INTL_PACKET,
     $country: INTL,
     $delivery_type: TRACKED_PACKET,
   }];
@@ -165,15 +166,9 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
       });
     })).then(_ => {
       stmt.finalize();
-      // writeDB.close(err => {
-      //   if (err) console.log('Failed to close write db error: ', err);
-      // });
       resolve();
     }).catch(err => {
       stmt.finalize();
-      // writeDB.close(err => {
-      //   if (err) console.log('Failed to close after error write db error: ', err);
-      // });
       reject(err);
     });
   });
@@ -223,6 +218,7 @@ export const getRate = (rateCode: string, weight: number,
     getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = (select max(year) from rates) ' +
       'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
   }
+  // console.log(getPrice.replace('$country', getPriceParams.$country).replace('$rateCode', getPriceParams.$rateCode).replace('$weight', getPriceParams.$weight.toString()).replace('$deliverySpeed', getPriceParams.$deliverySpeed).replace('$customerType', getPriceParams.$customerType));
   return new Promise<number>((resolve, reject) => {
     const stmt = db.prepare(getPrice);
     stmt.get(getPriceParams, (err, row) => {
@@ -367,7 +363,6 @@ export const getHighestYear = (): Promise<number> => {
     const stmt = db.prepare(sql);
     stmt.get([], (err, row) => {
       if (err) {
-        console.log('ERROR ', err);
         reject(err);
       } else if (!row) {
         reject(new Error('Failed to find any year in rates table'));
