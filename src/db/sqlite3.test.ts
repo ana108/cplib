@@ -63,8 +63,8 @@ describe('Save to db', () => {
     let stmFinalizeStb;
     let dbClose;
     beforeEach(() => {
-        openForWriteStb = sinon.stub(localDB, 'openForWrite').returns(fakeDB);
-        dbPrepareStb = sinon.stub(fakeDB, 'prepare').returns(fakeStmt);
+        openForWriteStb = sinon.stub(localDB, 'writedb').returns(fakeDB);
+        dbPrepareStb = sinon.stub(localDB.writedb, 'prepare').returns(fakeStmt);
         stmFinalizeStb = sinon.stub(fakeStmt, 'finalize');
         dbRunStb = sinon.stub(fakeStmt, 'run');
         dbClose = sinon.stub(fakeDB, 'close').yields(null);
@@ -227,7 +227,7 @@ describe('Update Fuel Surcharge', () => {
     };
 
     beforeEach(() => {
-        dbPrepareStb = sinon.stub(fakeDB, 'prepare').returns(fakeStmt);
+        dbPrepareStb = sinon.stub(localDB.writedb, 'prepare').returns(fakeStmt);
         dbRunStb = sinon.stub(fakeStmt, 'run');
         openForWriteStb = sinon.stub(localDB, 'openForWrite').returns(fakeDB);
         stmtFinalizeStb = sinon.stub(fakeStmt, 'finalize');

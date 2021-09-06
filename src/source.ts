@@ -1,8 +1,8 @@
 import fs from 'fs';
 import { copyFile } from 'fs/promises';
 import { https } from 'follow-redirects';
-import { loadPDF, extractYear, updateAllFuelSurcharges } from './autoload';
-import { setDB, updateFuelSurcharge } from './db/sqlite3';
+import { loadPDF, extractYear, updateAllFuelSurcharges, REGULAR, SMALL_BUSINESS, e2eProcess } from './autoload';
+import { setDB, getHighestYear, updateFuelSurcharge } from './db/sqlite3';
 // this will check if update needs to happen and call 
 // all the functions below
 export interface updateresults {
@@ -10,9 +10,10 @@ export interface updateresults {
     smallBusiness: boolean
 };
 export const checkAndUpdate = async () => {
+    const currentYear = new Date().getFullYear();
     let datacheck: updateresults;
     try {
-        datacheck = await savePDFS(2020);
+        datacheck = await savePDFS(currentYear);
         if (!datacheck.regular && !datacheck.smallBusiness) {
             console.log('Nothing updated, because data check came back as not needed');
             return Promise.resolve(); // all good
@@ -31,16 +32,23 @@ export const checkAndUpdate = async () => {
         console.log('Error occurred during preparatory processing ', e);
         Promise.reject(e);
     }
-    return new Promise<void>((resolve, reject) => {
-        if (datacheck.regular) {
-
-        }
-        if (datacheck.smallBusiness) {
+    return new Promise<void>(async (resolve, reject) => {
+        try {
+            if (datacheck.regular) {
+                await e2eProcess(currentYear, REGULAR);
+            }
+            if (datacheck.smallBusiness) {
+                await e2eProcess(currentYear, SMALL_BUSINESS);
+            }
+            resolve();
+        } catch (err) {
+            reject(err);
         }
     });
 }
 
-export const savePDFS = async (year: number): Promise<updateresults> => {
+export const savePDFS = async (year): Promise<updateresults> => {
+    const currentHighestYear = await getHighestYear();
     const tmpDir = __dirname + '/resources/tmp';
     // tmp directory to load the pdf into so we can check if new pdf has been posted
     if (!fs.existsSync(tmpDir)) {
@@ -118,7 +126,7 @@ export const savePDFS = async (year: number): Promise<updateresults> => {
     if (isNaN(yearOfRegular)) {
         return Promise.reject('Failed to extract year from the title page of the regular rates pdf from canada post');
     }
-    if (year !== yearOfRegular && yearOfRegular > year) {
+    if (currentHighestYear !== yearOfRegular && yearOfRegular > currentHighestYear) {
         // copy the regular pdf, rename it to its final destination
         updateRates.regular = true;
         let regularPdfDest = __dirname + `/resources/regular/${yearOfRegular}`;
@@ -133,7 +141,7 @@ export const savePDFS = async (year: number): Promise<updateresults> => {
     if (isNaN(yearOfSmallBusiness)) {
         return Promise.reject('Failed to extract year from the title page of the small business rates pdf from canada post');
     }
-    if (year !== yearOfSmallBusiness && yearOfSmallBusiness > year) {
+    if (currentHighestYear !== yearOfSmallBusiness && yearOfSmallBusiness > currentHighestYear) {
         updateRates.smallBusiness = true;
         let smallBusinessPdfDest = __dirname + `/resources/small_business/${yearOfRegular}`;
         if (!fs.existsSync(smallBusinessPdfDest)) {

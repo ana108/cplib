@@ -15,7 +15,6 @@ export const setDB = async (dbLocation: string) => {
         console.log(`Error closing DB ${dbname}`);
       }
       dbToOpen = dbLocation;
-      console.log('DB to open ' + dbToOpen);
       db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
       writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
       resolve();
@@ -152,7 +151,6 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
     $country: INTL,
     $delivery_type: TRACKED_PACKET,
   }];
-  //const writeDB = await openForWrite();
   const stmt = writedb.prepare(fuelSurcharge);
   return new Promise<void>((resolve, reject) => {
     Promise.all(values.map(charge => {
@@ -183,7 +181,6 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
 
 export const saveToDb = async (sqlStmt: string): Promise<any> => {
   return new Promise(async (resolve, reject) => {
-    // const writeDB = await openForWrite();
     const stmt = writedb.prepare(sqlStmt, err => {
       if (err) {
         reject(err);
@@ -191,18 +188,12 @@ export const saveToDb = async (sqlStmt: string): Promise<any> => {
     });
     stmt.run((error: Error) => {
       if (error) {
-        console.log('ERROR running the statement ', error);
-      }
-    });
-    stmt.finalize();
-    resolve('Success');
-    /* writeDB.close(err => {
-      if (err) {
-        reject(err.message);
+        reject(error);
       } else {
         resolve('Success');
       }
-    }); */
+    });
+    stmt.finalize();
   });
 }
 
@@ -367,5 +358,23 @@ export const executeCustomSQL = (sqlStmt: string): Promise<any> => {
         resolve(rows);
       }
     })
+  });
+}
+export const getHighestYear = (): Promise<number> => {
+  const sql = 'select max(year) as year from rates';
+
+  return new Promise<number>((resolve, reject) => {
+    const stmt = db.prepare(sql);
+    stmt.get([], (err, row) => {
+      if (err) {
+        console.log('ERROR ', err);
+        reject(err);
+      } else if (!row) {
+        reject(new Error('Failed to find any year in rates table'));
+      } else {
+        resolve(parseInt(row.year));
+      }
+    });
+    stmt.finalize();
   });
 }
