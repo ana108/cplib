@@ -219,9 +219,9 @@ describe('Update Fuel Surcharge', () => {
     let stmtFinalizeStb;
     let dbClose;
     const newCharges = {
-        "Domestic Express and Non-Express Services": 11.00,
-        "U.S. and International Express Services": 9.25,
-        "U.S. and International Non-Express Services": 7.25,
+        "Domestic Services": 11.00,
+        "USA and International Parcel Services": 9.25,
+        "USA and International Packet Services": 7.25,
         "Priority Worldwide": 6.00,
         "Expiry_Date": new Date()
     };

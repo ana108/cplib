@@ -21,22 +21,10 @@ describe('Preload data for next test case - regular', () => {
         await db.resetDB();
     });
     it('Test - Empty', (done) => {
-        let tmpTst = new Promise((resolve, reject) => {
-            let i = 0;
-            e2eProcess(YEAR, REGULAR).then(regularRateTables => {
-                loadByType(regularRateTables, YEAR, REGULAR).then(() => {
-                    console.log('Done regular');
-                    i++;
-                    if (i == 2) resolve(true);
-                });
-            });
-            e2eProcess(YEAR, SMALL_BUSINESS).then(smallBusinessRateTables => {
-                loadByType(smallBusinessRateTables, YEAR, SMALL_BUSINESS).then(() => {
-                    console.log('Done small business');
-                    i++;
-                    if (i == 2) resolve(true);
-                });
-            });
+        let tmpTst = new Promise(async (resolve, reject) => {
+            await e2eProcess(YEAR, REGULAR);
+            await e2eProcess(YEAR, SMALL_BUSINESS);
+            resolve(true);
         });
         tmpTst.then(() => {
             console.log('done done');

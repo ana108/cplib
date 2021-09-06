@@ -5,21 +5,30 @@ const PDFParser = require("pdf2json");
 export const REGULAR = 'regular';
 export const SMALL_BUSINESS = 'small_business';
 export interface FuelTable {
-    'Domestic Express and Non-Express Services': number,
-    'U.S. and International Express Services': number,
-    'U.S. and International Non-Express Services': number,
+    'Domestic Services': number,
+    'USA and International Parcel Services': number,
+    'USA and International Packet Services': number,
     'Priority Worldwide': number,
     'Expiry_Date': Date
 }
 export const updateAllFuelSurcharges = async (): Promise<any> => {
     const newFuelTable = await getFuelSurchargeTable();
+    if (!newFuelTable['Domestic Services'] || !newFuelTable['USA and International Parcel Services'] || !newFuelTable['USA and International Packet Services']
+        || !newFuelTable['Priority Worldwide']) {
+        return Promise.reject('Missing values returned from HTML. Please investigate ' + JSON.stringify(newFuelTable, null, 4));
+    }
+    if (!newFuelTable['Expiry_Date']) {
+        let defaultExpiryDate = new Date();
+        defaultExpiryDate.setDate(defaultExpiryDate.getDate() + 21);
+        newFuelTable['Expiry_Date'] = defaultExpiryDate;
+    }
     return updateFuelSurcharge(newFuelTable);
 }
 export const getFuelSurchargeTable = async (): Promise<FuelTable> => {
     return new Promise<any>((resolve, reject) => {
         axios.get('https://www.canadapost-postescanada.ca/cpc/en/support/kb/sending/rates-dimensions/fuel-surcharges-on-mail-and-parcels').
             then(data => {
-                let fuelTable: FuelTable = extractFuelTable(data.data);
+                const fuelTable: FuelTable = extractFuelTable(data.data);
                 resolve(fuelTable);
             }).catch(error => {
                 reject(error);
@@ -184,7 +193,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
         rateTables['ExpeditedCanada1'] = canadianExpedited1;
         rateTables['ExpeditedCanada2'] = canadianExpedited2;
     }
-    return rateTables;
+    return loadByType(rateTables, year, type);
 }
 export const splitMultiTablePage = (page: string[]): string[][] => {
     /* conclusions: the "headers" ie ratecodes will always be either one or two characters
