@@ -8,13 +8,6 @@ const expect = chai.expect;
 const YEAR = new Date().getFullYear();
 
 describe('Download and save pdfs - integration', () => {
-    let requestStb;
-    before(async () => {
-        // requestStb = sinon.stub(http, 'request');
-    });
-    after(async () => {
-        // requestStb.restore();
-    });
     it('Create dir and download pdfs', async () => {
         const result = await savePDFS(YEAR);
         let pdfFound = false;

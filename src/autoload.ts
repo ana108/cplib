@@ -193,7 +193,8 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
         rateTables['ExpeditedCanada1'] = canadianExpedited1;
         rateTables['ExpeditedCanada2'] = canadianExpedited2;
     }
-    return loadByType(rateTables, year, type);
+    await loadByType(rateTables, year, type);
+    return rateTables;
 }
 export const splitMultiTablePage = (page: string[]): string[][] => {
     /* conclusions: the "headers" ie ratecodes will always be either one or two characters
@@ -596,6 +597,7 @@ export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): 
         let tokens: any = row.split(' ');
         let maxToken: any = tokens[1];
         let maxTokenInKg: number;
+        let maxTokenInLb: number;
         if (maxToken.indexOf('kg') >= 0) {
             maxToken = maxToken.replace('kg', '');
             maxTokenInKg = maxToken;
@@ -604,8 +606,10 @@ export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): 
             maxTokenInKg = maxToken / 1000;
         }
         tokens[1] = maxTokenInKg;
+        maxTokenInLb = Number((maxTokenInKg * 2.2).toFixed(2));
+        tokens.splice(2, 0, maxTokenInLb);
         tokens.shift();
-        if (tokens.length === 2) {
+        if (tokens.length === 3) {
             for (let i = 0; i < rateCodes.length - 1; i++) {
                 tokens.push(tokens[tokens.length - 1]);
             }
@@ -750,7 +754,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 const maxWeight = tokens[0];
 
                 for (let i = 0; i < labels.length; i++) {
-                    const price = tokens[i + 1];
+                    const price = tokens[i + 2];
                     const rate_code = labels[i];
                     const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, ${maxWeight}, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
                     inputsAll.push(insertDataSQL);

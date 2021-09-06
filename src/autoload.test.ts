@@ -11,10 +11,13 @@ describe('Extract rate tables', () => {
     let regularRateTables: RateTables;
     let smallBusinessRateTables: RateTables;
     before(async () => {
+        await db.setDB(__dirname + "/integration/cplib_int.db");
+        await db.deleteRatesByYear(YEAR);
         regularRateTables = await e2eProcess(2021, REGULAR);
         smallBusinessRateTables = await e2eProcess(2021, SMALL_BUSINESS);
     });
-    afterEach(() => {
+    after(async () => {
+        await db.resetDB();
     });
     it('Execute autoload - regular', async () => {
         // also check the length of first and last row
@@ -42,31 +45,31 @@ describe('Extract rate tables', () => {
         expect(regularRateTables['RegularCanada2'].length).to.equal(62);
         expect(regularRateTables['RegularCanada2'][regularRateTables['RegularCanada2'].length - 1].split(' ').length).to.equal(22);
 
-        expect(regularRateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
-        expect(regularRateTables['PriorityWorldwide'].length).to.equal(61);
-        expect(regularRateTables['PriorityWorldwide'][regularRateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
+        expect(regularRateTables['PriorityWorldwide'][0].split(' ').length).to.equal(7);
+        expect(regularRateTables['PriorityWorldwide'].length).to.equal(60);
+        expect(regularRateTables['PriorityWorldwide'][regularRateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(9);
     });
 
     it('Execute autoload - regular - non-canada', async () => {
-        expect(regularRateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
-        expect(regularRateTables['PriorityWorldwide'].length).to.equal(61);
-        expect(regularRateTables['PriorityWorldwide'][regularRateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
+        expect(regularRateTables['PriorityWorldwide'][0].split(' ').length).to.equal(7);
+        expect(regularRateTables['PriorityWorldwide'].length).to.equal(60);
+        expect(regularRateTables['PriorityWorldwide'][regularRateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(9);
 
         expect(regularRateTables['ExpressUSA'][0].split(' ').length).to.equal(7);
-        expect(regularRateTables['ExpressUSA'].length).to.equal(63);
-        expect(regularRateTables['ExpressUSA'][regularRateTables['ExpressUSA'].length - 2].split(' ').length).to.equal(7);
+        expect(regularRateTables['ExpressUSA'].length).to.equal(62);
+        expect(regularRateTables['ExpressUSA'][regularRateTables['ExpressUSA'].length - 2].split(' ').length).to.equal(9);
 
         expect(regularRateTables['ExpeditedUSA'][0].split(' ').length).to.equal(7);
-        expect(regularRateTables['ExpeditedUSA'].length).to.equal(63);
-        expect(regularRateTables['ExpeditedUSA'][regularRateTables['ExpeditedUSA'].length - 2].split(' ').length).to.equal(7);
+        expect(regularRateTables['ExpeditedUSA'].length).to.equal(62);
+        expect(regularRateTables['ExpeditedUSA'][regularRateTables['ExpeditedUSA'].length - 2].split(' ').length).to.equal(9);
 
         expect(regularRateTables['TrackedPacketUSA'][0].split(' ').length).to.equal(7);
         expect(regularRateTables['TrackedPacketUSA'].length).to.equal(7);
-        expect(regularRateTables['TrackedPacketUSA'][regularRateTables['TrackedPacketUSA'].length - 1].split(' ').length).to.equal(8);
+        expect(regularRateTables['TrackedPacketUSA'][regularRateTables['TrackedPacketUSA'].length - 1].split(' ').length).to.equal(9);
 
         expect(regularRateTables['SmallPacketUSA'][0].split(' ').length).to.equal(7);
         expect(regularRateTables['SmallPacketUSA'].length).to.equal(7);
-        expect(regularRateTables['SmallPacketUSA'][regularRateTables['SmallPacketUSA'].length - 1].split(' ').length).to.equal(8);
+        expect(regularRateTables['SmallPacketUSA'][regularRateTables['SmallPacketUSA'].length - 1].split(' ').length).to.equal(9);
 
         expect(regularRateTables['ExpressInternational'][0].split(' ').length).to.equal(10);
         expect(regularRateTables['ExpressInternational'].length).to.equal(62);
@@ -82,15 +85,15 @@ describe('Extract rate tables', () => {
 
         expect(regularRateTables['TrackedPacketInternational'][0].split(' ').length).to.equal(10);
         expect(regularRateTables['TrackedPacketInternational'].length).to.equal(7);
-        expect(regularRateTables['TrackedPacketInternational'][regularRateTables['TrackedPacketInternational'].length - 1].split(' ').length).to.equal(11);
+        expect(regularRateTables['TrackedPacketInternational'][regularRateTables['TrackedPacketInternational'].length - 1].split(' ').length).to.equal(12);
 
         expect(regularRateTables['SmallPacketSurfaceInternational'].length).to.equal(6);
         expect(regularRateTables['SmallPacketSurfaceInternational'][0].split(' ').length).to.equal(10);
-        expect(regularRateTables['SmallPacketSurfaceInternational'][regularRateTables['SmallPacketSurfaceInternational'].length - 1].split(' ').length).to.equal(11);
+        expect(regularRateTables['SmallPacketSurfaceInternational'][regularRateTables['SmallPacketSurfaceInternational'].length - 1].split(' ').length).to.equal(12);
 
         expect(regularRateTables['SmallPacketAirInternational'].length).to.equal(7);
         expect(regularRateTables['SmallPacketAirInternational'][0].split(' ').length).to.equal(10);
-        expect(regularRateTables['SmallPacketAirInternational'][regularRateTables['SmallPacketAirInternational'].length - 1].split(' ').length).to.equal(11);
+        expect(regularRateTables['SmallPacketAirInternational'][regularRateTables['SmallPacketAirInternational'].length - 1].split(' ').length).to.equal(12);
 
     });
 
@@ -129,9 +132,9 @@ describe('Extract rate tables', () => {
         expect(rateTables['RegularCanada2'].length).to.equal(62);
         expect(rateTables['RegularCanada2'][rateTables['RegularCanada2'].length - 1].split(' ').length).to.equal(22);
 
-        expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(8);
-        expect(rateTables['PriorityWorldwide'].length).to.equal(61);
-        expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(7);
+        expect(rateTables['PriorityWorldwide'][0].split(' ').length).to.equal(7);
+        expect(rateTables['PriorityWorldwide'].length).to.equal(60);
+        expect(rateTables['PriorityWorldwide'][rateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(9);
     });
 });
 
@@ -182,12 +185,11 @@ describe('Load data into rates table for the year', async () => {
     let smallBusinessRateTables: RateTables;
     before(async () => {
         await db.setDB(__dirname + "/integration/cplib_int.db");
-        regularRateTables = await e2eProcess(YEAR, REGULAR);
-        smallBusinessRateTables = await e2eProcess(YEAR, SMALL_BUSINESS);
+        //regularRateTables = await e2eProcess(YEAR, REGULAR);
+        //smallBusinessRateTables = await e2eProcess(YEAR, SMALL_BUSINESS);
     });
     after(async () => {
-        let numDeleted = await db.deleteRatesByYear(2021);
-        console.log('Deleted ', numDeleted);
+        //let numDeleted = await db.deleteRatesByYear(2021);
         await db.resetDB();
     });
 
@@ -274,6 +276,7 @@ describe('Extract worldwide priority table', () => {
     let pageDataSmallBusiness: any;
     let priorityWorldwideNumber: any;
     let priorityWorldwideNumberSB: any;
+    let regularRateTables: RateTables;
     before(async () => {
         pageData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
         let pageNumbers: RatesPages = pageHeaders(pageData);
@@ -282,8 +285,13 @@ describe('Extract worldwide priority table', () => {
         pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/SBprices-e-2020.pdf");
         let pageNumbersSB: RatesPages = pageHeaders(pageDataSmallBusiness);
         priorityWorldwideNumberSB = pageNumbersSB['PriorityWorldwide'];
+        await db.setDB(__dirname + "/integration/cplib_int.db");
+        await db.deleteRatesByYear(2021);
+        regularRateTables = await e2eProcess(YEAR, REGULAR);
+        await e2eProcess(YEAR, SMALL_BUSINESS);
     });
-    afterEach(() => {
+    after(async () => {
+        await db.resetDB();
     });
     it('Extract envelope and pak tables at the bottom of the page', async () => {
         let priorityWorldwideTableOldMethod = extractRateTables(pageData, priorityWorldwideNumber, 7, 9);
@@ -298,7 +306,6 @@ describe('Extract worldwide priority table', () => {
         expect(priorityWorldwideTable.length).to.be.below(priorityWorldwideTableOldMethod.length);
     });
     it('Verify USA Packet tables get converted in the standard format', async () => {
-        let regularRateTables = await e2eProcess(YEAR, REGULAR);
         // they are all the same because the rate code gets retrieved from non packet usa page
         // reason for this is packet rates are the same for all codes.
         // by duplicating the price across all rate codes, it standardizes it so that
@@ -306,23 +313,23 @@ describe('Extract worldwide priority table', () => {
         expect(regularRateTables['TrackedPacketUSA'][0]).to.equal('1 2 3 4 5 6 7');
         let lastElement: number = regularRateTables['TrackedPacketUSA'].length - 1;
         let numElements: number = regularRateTables['TrackedPacketUSA'][0].split(' ').length + 1;
-        expect(regularRateTables['TrackedPacketUSA'][lastElement].split(' ').length).to.equal(numElements);
+        expect(regularRateTables['TrackedPacketUSA'][lastElement].split(' ').length).to.equal(numElements + 1);
 
         expect(regularRateTables['SmallPacketUSA'][0]).to.equal('1 2 3 4 5 6 7');
         // verify that last line has correct number of elements
         lastElement = regularRateTables['SmallPacketUSA'].length - 1;
         numElements = regularRateTables['SmallPacketUSA'][0].split(' ').length + 1;
-        expect(regularRateTables['SmallPacketUSA'][lastElement].split(' ').length).to.equal(numElements);
+        expect(regularRateTables['SmallPacketUSA'][lastElement].split(' ').length).to.equal(numElements + 1);
     });
     it('Verify International Tracked Packet tables get converted in the standard format', async () => {
-        let regularRateTables = await e2eProcess(YEAR, REGULAR);
+        // let regularRateTables = await e2eProcess(YEAR, REGULAR);
         expect(regularRateTables['TrackedPacketInternational'][0]).to.equal('401 402 403 404 405 406 407 408 409 410');
         let lastElement: number = regularRateTables['TrackedPacketInternational'].length - 1;
         let numElements: number = regularRateTables['TrackedPacketInternational'][0].split(' ').length + 1;
-        expect(regularRateTables['TrackedPacketInternational'][lastElement].split(' ').length).to.equal(numElements);
+        expect(regularRateTables['TrackedPacketInternational'][lastElement].split(' ').length).to.equal(numElements + 1);
     });
     it('Verify International Small Packet (air) tables get converted in the standard format', async () => {
-        let regularRateTables = await e2eProcess(YEAR, REGULAR);
+        // let regularRateTables = await e2eProcess(YEAR, REGULAR);
         expect(regularRateTables['SmallPacketAirInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
 
         expect(regularRateTables['SmallPacketAirInternational'][1].split(' ')[0]).to.equal('0.1');
@@ -330,7 +337,7 @@ describe('Extract worldwide priority table', () => {
         expect(regularRateTables['SmallPacketAirInternational'][lastIndex].split(' ')[0]).to.equal('2');
     });
     it('Verify International Small Packet (surface) tables get converted in the standard format', async () => {
-        let regularRateTables = await e2eProcess(YEAR, REGULAR);
+        // let regularRateTables = await e2eProcess(YEAR, REGULAR);
         expect(regularRateTables['SmallPacketSurfaceInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
         expect(regularRateTables['SmallPacketSurfaceInternational'][1].split(' ')[0]).to.equal('0.25');
         let lastIndex = regularRateTables['SmallPacketSurfaceInternational'].length - 1;

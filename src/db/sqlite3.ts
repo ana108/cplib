@@ -333,7 +333,6 @@ export const deleteRatesByYear = async (year: number): Promise<number> => {
       if (err) {
         reject(err);
       } else {
-        console.log('Num rows deleted write db ', this.changes);
         resolve(this.changes);
       }
       writeDB.close(err => {

@@ -1,8 +1,9 @@
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import { copyFile } from 'fs/promises';
 import { https } from 'follow-redirects';
 import { loadPDF, extractYear, updateAllFuelSurcharges, REGULAR, SMALL_BUSINESS, e2eProcess } from './autoload';
-import { setDB, getHighestYear, updateFuelSurcharge } from './db/sqlite3';
+import { setDB, getHighestYear, updateFuelSurcharge, resetDB } from './db/sqlite3';
 // this will check if update needs to happen and call 
 // all the functions below
 export interface updateresults {
@@ -12,13 +13,14 @@ export interface updateresults {
 export const checkAndUpdate = async () => {
     const currentYear = new Date().getFullYear();
     let datacheck: updateresults;
+    let dataLoadDbPath: string;
     try {
         datacheck = await savePDFS(currentYear);
         if (!datacheck.regular && !datacheck.smallBusiness) {
             console.log('Nothing updated, because data check came back as not needed');
             return Promise.resolve(); // all good
         }
-        const dataLoadDbPath = `${__dirname}/cplib_interim.db`;
+        dataLoadDbPath = `${__dirname}/cplib_interim.db`;
         // step one - take a copy of the current cplib
         await copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
         console.log('Copied the db file');
@@ -26,8 +28,8 @@ export const checkAndUpdate = async () => {
         await setDB(dataLoadDbPath);
         console.log('Set the db');
         // update all fuel surcharge
-        await updateAllFuelSurcharges();
-        console.log('Updated the fuel surcharge on the interim db');
+        //await updateAllFuelSurcharges();
+        //console.log('Updated the fuel surcharge on the interim db');
     } catch (e) {
         console.log('Error occurred during preparatory processing ', e);
         Promise.reject(e);
@@ -40,6 +42,12 @@ export const checkAndUpdate = async () => {
             if (datacheck.smallBusiness) {
                 await e2eProcess(currentYear, SMALL_BUSINESS);
             }
+            console.log(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
+            await copyFile(dataLoadDbPath, `${__dirname}/resources/cplib.db`);
+            console.log('Closing db');
+            await resetDB();
+            console.log('Delete temp db');
+            await fsPromises.unlink(dataLoadDbPath);
             resolve();
         } catch (err) {
             reject(err);
