@@ -526,7 +526,8 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
             header = headerTokens.splice(headerHalfPoint, headerHalfPoint).join(' ');
             const ratesTokens = allText[keys[i + 2]].split(' ');
             const ratesHalfPoint = ratesTokens.length / 2;
-            rates = '1.5 3.3 ' + ratesTokens.splice(0, ratesHalfPoint).join(' ');
+            let kiloAndAHalfPakRates = ratesTokens.splice(ratesHalfPoint).join(' ');
+            rates = '1.5 3.3 ' + kiloAndAHalfPakRates;
         }
     }
 

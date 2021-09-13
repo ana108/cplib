@@ -15,7 +15,12 @@ export const checkAndUpdate = async () => {
     let datacheck: updateresults;
     let dataLoadDbPath: string;
     try {
-        datacheck = await savePDFS(currentYear);
+        const currentHighestYear = await getHighestYear();
+        if (currentYear === currentHighestYear) {
+            console.log('Current year matches current highest year, therefore not updating');
+            return Promise.resolve();
+        }
+        datacheck = await savePDFS(currentYear, currentHighestYear);
         if (!datacheck.regular && !datacheck.smallBusiness) {
             console.log('Nothing updated, because data check came back as not needed');
             return Promise.resolve(); // all good
@@ -55,8 +60,7 @@ export const checkAndUpdate = async () => {
     });
 }
 
-export const savePDFS = async (year): Promise<updateresults> => {
-    const currentHighestYear = await getHighestYear();
+export const savePDFS = async (year, currentHighestYear): Promise<updateresults> => {
     const tmpDir = __dirname + '/resources/tmp';
     // tmp directory to load the pdf into so we can check if new pdf has been posted
     if (!fs.existsSync(tmpDir)) {

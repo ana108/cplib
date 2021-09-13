@@ -2,6 +2,7 @@ import * as sinon from 'sinon';
 import * as fs from 'fs';
 import 'mocha';
 import * as chai from 'chai';
+import { getHighestYear } from './db/sqlite3';
 import { savePDFS, checkAndUpdate } from './source';
 import { fail } from 'assert';
 const expect = chai.expect;
@@ -9,7 +10,8 @@ const YEAR = new Date().getFullYear();
 
 describe('Download and save pdfs - integration', () => {
     it('Create dir and download pdfs', async () => {
-        const result = await savePDFS(YEAR);
+        const currentHighestYear = await getHighestYear();
+        const result = await savePDFS(YEAR, currentHighestYear);
         let pdfFound = false;
         if (result.regular) { // if regular was found, then check if new year was created
             const regularDir = __dirname + `/resources/regular/${YEAR}`;
