@@ -119,84 +119,111 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     let pageTables: RatesPages = pageHeaders(pdfData);
     let rateTables = <RateTables>{};
     const canadianPriority = 'PriorityCanada';
-    let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20);
-    let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20);
-    rateTables['PriorityCanada1'] = canadianPriority1;
-    rateTables['PriorityCanada2'] = canadianPriority2;
+    console.log('Page Tables ', pageTables);
+    if (pageTables[canadianPriority] !== 0) {
+        let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20);
+        let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20);
+        rateTables['PriorityCanada1'] = canadianPriority1;
+        rateTables['PriorityCanada2'] = canadianPriority2;
+    } else {
+        console.error('Failed to populate Canadian Priority tables');
+    }
 
     const canadianExpress = 'ExpressCanada';
-    let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20);
-    let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20);
-    rateTables['ExpressCanada1'] = canadianExpress1;
-    rateTables['ExpressCanada2'] = canadianExpress2;
+    if (pageTables[canadianExpress] !== 0) {
+        let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20);
+        let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20);
+        rateTables['ExpressCanada1'] = canadianExpress1;
+        rateTables['ExpressCanada2'] = canadianExpress2;
+    }
 
     const canadianRegularParcel = 'RegularCanada';
-    let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20);
-    let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20);
-    rateTables['RegularCanada1'] = canadianRegular1;
-    rateTables['RegularCanada2'] = canadianRegular2;
+    if (pageTables[canadianRegularParcel] !== 0) {
+        let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20);
+        let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20);
+        rateTables['RegularCanada1'] = canadianRegular1;
+        rateTables['RegularCanada2'] = canadianRegular2;
+    }
 
     const internationalPriority = 'PriorityWorldwide';
-    let worldwidePriority = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
-    rateTables[internationalPriority] = worldwidePriority;
+    if (pageTables[internationalPriority] !== 0) {
+        let worldwidePriority = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
+        rateTables[internationalPriority] = worldwidePriority;
+    }
 
     const expressUSALabel = 'ExpressUSA';
-    let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7);
-    rateTables[expressUSALabel] = expressUSA;
-
+    if (pageTables[expressUSALabel] !== 0) {
+        console.log(' Start express USA ');
+        let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7);
+        rateTables[expressUSALabel] = expressUSA;
+    }
     const expeditedUSALabel = 'ExpeditedUSA';
-    let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7);
-    rateTables[expeditedUSALabel] = expeditedUSA;
+    if (pageTables[expeditedUSALabel] !== 0) {
+        let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7);
+        rateTables[expeditedUSALabel] = expeditedUSA;
+    }
 
-    const usaRateCodes: string = rateTables[expeditedUSALabel][0] || '';
+    const usaRateCodes: string = (rateTables[expeditedUSALabel] && rateTables[expeditedUSALabel][0]) || '';
     const trackedPacketUSALabel = 'TrackedPacketUSA';
-    let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2);
-    rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
+    if (pageTables[trackedPacketUSALabel] !== 0) {
+        let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2);
+        rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
+    }
 
     const smallPacketUSALabel = 'SmallPacketUSA';
-    let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2);
-    rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
-
+    if (pageTables[smallPacketUSALabel] !== 0) {
+        let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2);
+        rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
+    }
     const worldwideExpressLabel = 'ExpressInternational';
-    let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10);
-    rateTables[worldwideExpressLabel] = worldwideExpress;
+    if (pageTables[worldwideExpressLabel] !== 0) {
+        let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10);
+        rateTables[worldwideExpressLabel] = worldwideExpress;
+    }
 
     const worldwideAirLabel = 'AirInternational';
-    let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10);
-    rateTables[worldwideAirLabel] = worldwideAir;
+    if (pageTables[worldwideAirLabel] !== 0) {
+        let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10);
+        rateTables[worldwideAirLabel] = worldwideAir;
+    }
 
     const worldwideSurfaceLabel = 'SurfaceInternational';
-    let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10);
-    rateTables[worldwideSurfaceLabel] = worldwideSurface;
+    if (pageTables[worldwideSurfaceLabel] !== 0) {
+        let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10);
+        rateTables[worldwideSurfaceLabel] = worldwideSurface;
+    }
 
-    const internationalRateCodes = rateTables['SurfaceInternational'][0] || '';
+    const internationalRateCodes = (rateTables['SurfaceInternational'] && rateTables['SurfaceInternational'][0]) || '';
     const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
-    let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
-    rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, internationalRateCodes.split(' '));
-
+    if (pageTables[worldwideTrackedPacketLabel] !== 0) {
+        let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
+        rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, internationalRateCodes.split(' '));
+    }
     const worldwideSmallPacketLabel = 'SmallPacketInternational';
-    let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
-
-    const internationalPacketRateCodes = worldwideSmallPacket[0] || '';
-
-    const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
-    let worldwideSmallAirPacket = splitMultiTablePage(worldwideSmallPacket)[0];
-    rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, internationalPacketRateCodes.split(' '));
-    const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
-    let worldwideSmallSurfacePacket = splitMultiTablePage(worldwideSmallPacket)[1];
-    rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, internationalPacketRateCodes.split(' '));
-
+    if (pageTables[worldwideSmallPacketLabel] !== 0) {
+        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
+        const knownRateCodes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+        const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
+        const splitOfSmallPackets = splitMultiTablePage(worldwideSmallPacket, knownRateCodes.join(' '));
+        let worldwideSmallAirPacket = splitOfSmallPackets[0];
+        rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, knownRateCodes);
+        const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
+        let worldwideSmallSurfacePacket = splitOfSmallPackets[1];
+        rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, knownRateCodes);  //  internationalPacketRateCodes.split(' ')
+    }
     if (type === SMALL_BUSINESS) {
         const canadianExpeditedParcel = 'ExpeditedCanada';
-        let canadianExpedited1 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23);
-        let canadianExpedited2 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22);
-        rateTables['ExpeditedCanada1'] = canadianExpedited1;
-        rateTables['ExpeditedCanada2'] = canadianExpedited2;
+        if (pageTables[canadianExpeditedParcel] !== 0) {
+            let canadianExpedited1 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23);
+            rateTables['ExpeditedCanada1'] = canadianExpedited1;
+            let canadianExpedited2 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22);
+            rateTables['ExpeditedCanada2'] = canadianExpedited2;
+        }
     }
     await loadByType(rateTables, year, type);
     return rateTables;
 }
-export const splitMultiTablePage = (page: string[]): string[][] => {
+export const splitMultiTablePage = (page: string[], rateCodes?: string): string[][] => {
     /* conclusions: the "headers" ie ratecodes will always be either one or two characters
     so any token that is length 2 or less can be assumed to be part of the header row
     */
@@ -204,7 +231,7 @@ export const splitMultiTablePage = (page: string[]): string[][] => {
     let subpage: string[] = [];
     for (let i = 0; i < page.length; i++) {
         let line = page[i].split(' ');
-        if (line[0] && line[0].trim().length <= 2) {
+        if (line[0] && (line[0].trim().length <= 2 || (rateCodes && page[i].indexOf(rateCodes) >= 0))) {
             // rate code line found
             if (subpage.length != 0) { // first page
                 subpages.push(subpage);
@@ -234,26 +261,34 @@ export const extractYear = (pdfData: string): any => {
     let dataByLine = {};
     titlePage.forEach(entry => {
         if (dataByLine[entry.y]) {
-            dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, '').replace(/TM/g, '').replace(/%24/g, '$').replace(/%E2%80%93/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/&nbsp;/g, ' ').replace(/%20/g, ' ').replace(/%2C/g, ' ').trim();
+            dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, ' ').replace(/TM/g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/&nbsp;/g, ' ').replace(/%20/g, ' ').replace(/%2C/g, ' ');
         } else {
-            dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, '').replace(/%24/g, '$').replace(/TM/g, ' ').replace(/%E2%80%93/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/&nbsp;/g, ' ').replace(/%20/g, ' ').replace(/%2C/g, ' ').trim();
+            dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, ' ').replace(/%24/g, '$').replace(/TM/g, ' ').replace(/%E2%80%93/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/&nbsp;/g, ' ').replace(/%20/g, ' ').replace(/%2C/g, ' ');
         }
+        dataByLine[entry.y] = dataByLine[entry.y].replace(/  +/g, ' ');
     });
     let keys = Object.keys(dataByLine).sort(function (a, b) {
         return parseFloat(a) - parseFloat(b);
     });
     let textsArray: any[] = [];
     keys.forEach(key => {
-        if (dataByLine[key].indexOf('Prices') >= 0 || dataByLine[key].indexOf('Effective') >= 0) {
+        if (dataByLine[key].indexOf('Prices') >= 0 || dataByLine[key].indexOf('Effective') >= 0 || dataByLine[key].indexOf('Updated') >= 0) {
             textsArray.push(dataByLine[key]);
         }
     });
     let overlappingStr = '';
     for (let i = 1; i < textsArray.length; i++) {
-        let foundOverlap = findOverlap(textsArray[i - 1], textsArray[i]);
-        if (foundOverlap.trim().length === 4) {
-            overlappingStr = foundOverlap;
-        }
+        let tokens = textsArray[i].trim().split(' ');
+        tokens.forEach(token => {
+            if (token.trim().length == 4 && !isNaN(token.trim())) {
+                overlappingStr = token.trim();
+            }
+        });
+
+        // let foundOverlap = findOverlap(textsArray[i - 1], textsArray[i]);
+        // if (foundOverlap.trim().length === 4) {
+        //     overlappingStr = foundOverlap;
+        // }
     }
     return overlappingStr;
 }
@@ -321,7 +356,8 @@ export const extractPages = (pdfData: any): RatesPages => {
         } else if (searchText.indexOf('..') >= 0 && title.length > 0) {
 
         } else if (title.length > 0) {
-            let massagedTitle = title.replace(/%20/g, ' ').replace(/%E2%84%A2/g, '').replace(/%E2%80%93/g, '').replace(/%2C/g, '').replace(/  /g, ' ').trim();
+            let massagedTitle = title.replace(/%20/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/%E2%80%93/g, ' ').replace(/%2C/g, ' ').replace(/  /g, ' ').trim();
+            massagedTitle = massagedTitle.replace(/  +/g, ' ');
             const pageNumber = pdfData[1]['Texts'][j]['R'][0]['T'];
             if (pageTitleMapping[massagedTitle] && pages[pageTitleMapping[massagedTitle]] === 0) {
                 pages[pageTitleMapping[massagedTitle]] = parseInt(pageNumber) + 3 - 1; // introduction pages, ie i,ii, etc Indexing - 1 for all pages
@@ -361,8 +397,9 @@ export const pageHeaders = (pdfData: any): RatesPages => {
             if (dataByLine[entry.y]) {
                 dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, '').replace(/TM/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
             } else {
-                dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/TM/g, '').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();;
+                dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/TM/g, '').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
             }
+            dataByLine[entry.y] = dataByLine[entry.y].replace(/  +/g, ' ');
         });
         let keys = Object.keys(dataByLine).sort(function (a, b) {
             return parseFloat(a) - parseFloat(b);
@@ -378,6 +415,7 @@ export const pageHeaders = (pdfData: any): RatesPages => {
     return pages;
 }
 export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, pageNum: number): void => {
+    // console.log('Raw Text ', rawText);
     let pageTitleMapping = {
         'PriorityPrices': 'PriorityCanada',
         'XpresspostPrices': 'ExpressCanada',
@@ -386,8 +424,11 @@ export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, 
         'XpresspostUSAPrices': 'ExpressUSA',
         'ExpeditedParcelUSAPrices': 'ExpeditedUSA',
         'TrackedPacketUSAPrices': 'TrackedPacketUSA',
+        'USApricesTrackedPacket': 'TrackedPacketUSA',
         'SmallPacketU.S.A.Prices': 'SmallPacketUSA',
+        'usapricessmallpacket': 'SmallPacketUSA',
         'PriorityWorldwideInternationalPrices': 'PriorityWorldwide',
+        'PriorityWorldwidePrices': 'PriorityWorldwide',
         'XpresspostInternationalPrices': 'ExpressInternational',
         'InternationalParcelAirPrices': 'AirInternational',
         'InternationalParcelSurfacePrices': 'SurfaceInternational',
@@ -399,7 +440,8 @@ export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, 
     let pageFound = -1;
     let matchingTitle = '';
     Object.keys(pageTitleMapping).forEach(expectedHeader => {
-        if (rawText.trim().replace(/-/g, '').indexOf(expectedHeader) >= 0) {
+        // console.log('Checking ' + rawText.trim().replace(/-/g, '').toLowerCase() + ' against ' + expectedHeader);
+        if (rawText.trim().replace(/-/g, '').toLowerCase().indexOf(expectedHeader.toLowerCase()) >= 0) {
             pageFound = pageNum;
             matchingTitle = pageTitleMapping[expectedHeader];
         }
@@ -482,14 +524,22 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
 
 export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): string[] => {
     let fullPage = extractRateTables(pdfPages, pageNumber, 7, 9);
-    // find the two tables at the bottom
     // convert text of the page to be in a line by line format
     let wholeText = pdfPages[pageNumber - 1]['Texts'];
     let wholeTextLength = wholeText.length;
     let line = '';
-    let allText = {};
+    let allText: any = {};
+    // hard code this because it is unlikely to change
+    const header = '1 2 3 4 5 6 7';
+    fullPage[0] = header;
     for (let i = 0; i < wholeTextLength; i++) {
-        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '')
+            .replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').replace('%C3', '')
+            .replace('%89', '').replace('%E2', '').replace('%80', '').replace('%A0', '').replace('%E2', '').replace('%80', '').replace('%A0', '').trim(); // %E2%80%A0%E2%80%A0
+        if (line.trim().length == 0) {
+            continue;
+        }
+
         if (allText[wholeText[i].y]) {
             allText[wholeText[i].y] = allText[wholeText[i].y].trim() + ' ' + line;
         } else {
@@ -500,35 +550,27 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
     let keys = Object.keys(allText).sort(function (a, b) {
         return parseFloat(a) - parseFloat(b);
     });
-    let prevKey = '';
-    keys.forEach(key => {
-        let tokens = allText[key].split(' ');
-        // if allText[key] tokens is 2 and both those tokens are number; attach the previous key's values to this one and delete previous key
-        if (isAllNum(tokens) && tokens.length === 2 && isAllNum(allText[prevKey].split(' '))) {
-            allText[key] = allText[key] + ' ' + allText[prevKey];
-            delete allText[prevKey];
-        } else if (allText[key].trim().toLowerCase().indexOf('upto') >= 0 && tokens.length === 1) {
-            allText[key] = allText[key] + ' ' + allText[prevKey];
-            delete allText[prevKey];
-        }
-        prevKey = key;
-    });
-    // sort again to clean up deleted keys
-    keys = Object.keys(allText).sort(function (a, b) {
-        return parseFloat(a) - parseFloat(b);
-    });
-    let header = '';
     let rates = '';
-    for (let i = 0; i < keys.length - 2; i++) {
-        if (allText[keys[i]].indexOf('ENVELOPE(MAXIMUM500G) PAK(MAXIMUM1.5KG)') >= 0) {
-            const headerTokens = allText[keys[i + 1]].replace(/\(USA\)/g, '').replace(/  /g, ' ').split(' ');
-            const headerHalfPoint = headerTokens.length / 2;
-            header = headerTokens.splice(headerHalfPoint, headerHalfPoint).join(' ');
-            const ratesTokens = allText[keys[i + 2]].split(' ');
-            const ratesHalfPoint = ratesTokens.length / 2;
-            let kiloAndAHalfPakRates = ratesTokens.splice(ratesHalfPoint).join(' ');
-            rates = '1.5 3.3 ' + kiloAndAHalfPakRates;
+
+    let indexWhereSearchStarts = 0;
+    for (let i = 0; i < keys.length; i++) { // for (let i = 0; i < keys.length - 2; i++) 
+        let value = allText[keys[i]].replace(/\s/g, '');
+        // to find the row with all the weights, we find the row that has 2x tokens, where x is the number of rate codes
+        if (value.indexOf('ENVELOPE(MAXIMUM500G)PAK(MAXIMUM1.5KG)') >= 0) {
+            indexWhereSearchStarts = i;
         }
+        if (indexWhereSearchStarts > 0) {
+            const ratesTokens = allText[keys[i]].split(' ');
+            if (ratesTokens.length === 14) {
+                const ratesHalfPoint = ratesTokens.length / 2;
+                let kiloAndAHalfPakRates = ratesTokens.splice(ratesHalfPoint).join(' ');
+                rates = '1.5 3.3 ' + kiloAndAHalfPakRates;
+            }
+        }
+    }
+    let orderedArray: string[] = [];
+    for (let i = 0; i < keys.length; i++) {
+        orderedArray.push(allText[keys[i]]);
     }
 
     for (let i = fullPage.length - 1; i >= 1; i--) {
@@ -584,16 +626,23 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
 
 export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): string[] => {
     let firstValidLine = -1;
+
+    console.log('Page Array ', pageArray);
     for (let i = 0; i < pageArray.length; i++) {
-        if (pageArray[i].indexOf('Upto') >= 0 && firstValidLine < 0) {
+        console.log('Page Array at i ', pageArray[i]);
+        if (pageArray[i].toUpperCase().indexOf('UPTO') >= 0 && firstValidLine < 0) {
+            console.log('Set first Valid Line ', i);
             firstValidLine = i;
         }
         pageArray[i] = pageArray[i].replace('Upto', '0 ').replace('upto', ' ');
     }
+    console.log('Page Array after 1st clean ', pageArray);
+    console.log('First Valid Line ', firstValidLine);
     pageArray = pageArray.slice(firstValidLine);
     // convert all g/kg tokens to be kg and remove 
     let finalTableRow: any[] = [];
     finalTableRow.push(rateCodes.join(' '));
+    console.log('Final Table Row First row ', finalTableRow);
     pageArray.forEach(row => {
         let tokens: any = row.split(' ');
         let maxToken: any = tokens[1];
@@ -618,6 +667,7 @@ export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): 
         row = tokens.join(' ');
         finalTableRow.push(row);
     });
+    console.log('Returning ', finalTableRow);
     return finalTableRow;
 }
 

@@ -1,5 +1,6 @@
 import { getRateCode, getRate, getProvince, getFuelSurcharge, maxRates, getMaxRate, FuelSurcharge } from './db/sqlite3';
 import { updateAllFuelSurcharges } from './autoload';
+import { checkAndUpdate } from './source';
 export interface Address {
     streetAddress: string, // full street address, number + apartment
     city: string,
@@ -134,6 +135,7 @@ export const calculateShipping = async (sourceAddress: Address, destinationAddre
     const deliverySpeed = deliveryType.trim().toLowerCase();
     return new Promise<number>(async (resolve, reject) => {
         try {
+            checkAndUpdate();
             if (!weightInKg || weightInKg <= 0) {
                 throw new Error('Weight must be present and be a non-negative number');
             }

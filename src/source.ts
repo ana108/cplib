@@ -17,10 +17,11 @@ export const checkAndUpdate = async () => {
     try {
         const currentHighestYear = await getHighestYear();
         if (currentYear === currentHighestYear) {
-            console.log('Current year matches current highest year, therefore not updating');
+            console.log(`Current year ${currentYear} matches current highest year ${currentHighestYear}, therefore not updating`);
             return Promise.resolve();
         }
         datacheck = await savePDFS(currentYear, currentHighestYear);
+        console.log('Datacheck ', datacheck);
         if (!datacheck.regular && !datacheck.smallBusiness) {
             console.log('Nothing updated, because data check came back as not needed');
             return Promise.resolve(); // all good
@@ -33,8 +34,8 @@ export const checkAndUpdate = async () => {
         await setDB(dataLoadDbPath);
         console.log('Set the db');
         // update all fuel surcharge
-        //await updateAllFuelSurcharges();
-        //console.log('Updated the fuel surcharge on the interim db');
+        await updateAllFuelSurcharges();
+        console.log('Updated the fuel surcharge on the interim db');
     } catch (e) {
         console.log('Error occurred during preparatory processing ', e);
         Promise.reject(e);
@@ -147,6 +148,8 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
         }
         regularPdfDest = regularPdfDest + `/Rates_${yearOfRegular}.pdf`;
         await copyFile(regularPDF, regularPdfDest);
+    } else {
+        console.log(`failing here currentHighestYear ${currentHighestYear} and year of regular ${yearOfRegular}`);
     }
     const smallBusinessPDFFirstPage = await loadPDF(smallBusinessPDF);
     const yearOfSmallBusiness = extractYear(smallBusinessPDFFirstPage);

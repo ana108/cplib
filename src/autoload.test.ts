@@ -13,8 +13,8 @@ describe('Extract rate tables', () => {
     before(async () => {
         await db.setDB(__dirname + "/integration/cplib_int.db");
         await db.deleteRatesByYear(YEAR);
-        regularRateTables = await e2eProcess(2021, REGULAR);
-        smallBusinessRateTables = await e2eProcess(2021, SMALL_BUSINESS);
+        regularRateTables = await e2eProcess(YEAR, REGULAR);
+        smallBusinessRateTables = await e2eProcess(YEAR, SMALL_BUSINESS);
     });
     after(async () => {
         await db.resetDB();
@@ -143,7 +143,7 @@ describe('Extract rate tables - 2020 - int', () => {
     let pageDataSmallBusiness: any;
     before(async () => {
         pageData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
-        pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/SBprices-e-2020.pdf");
+        pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/Rates_2020.pdf");
     });
     afterEach(() => {
     });
@@ -181,15 +181,10 @@ describe('Extract rate tables - 2020 - int', () => {
 })
 
 describe('Load data into rates table for the year', async () => {
-    let regularRateTables: RateTables;
-    let smallBusinessRateTables: RateTables;
     before(async () => {
         await db.setDB(__dirname + "/integration/cplib_int.db");
-        //regularRateTables = await e2eProcess(YEAR, REGULAR);
-        //smallBusinessRateTables = await e2eProcess(YEAR, SMALL_BUSINESS);
     });
     after(async () => {
-        //let numDeleted = await db.deleteRatesByYear(2021);
         await db.resetDB();
     });
 
@@ -282,7 +277,7 @@ describe('Extract worldwide priority table', () => {
         let pageNumbers: RatesPages = pageHeaders(pageData);
         priorityWorldwideNumber = pageNumbers['PriorityWorldwide'];
 
-        pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/SBprices-e-2020.pdf");
+        pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/Rates_2020.pdf");
         let pageNumbersSB: RatesPages = pageHeaders(pageDataSmallBusiness);
         priorityWorldwideNumberSB = pageNumbersSB['PriorityWorldwide'];
         await db.setDB(__dirname + "/integration/cplib_int.db");

@@ -1,4 +1,5 @@
 To DO:
+Use case to test: If the year has incremented; check and update gets triggered, but the previous year should be used until the data is loaded
 Integrate data load into e2e process; be sure to delete existing year's data if its a replacement
 Remove unnecessary calls to database to extract provinces from postal codes
 Figure out how to manually update province sales taxes (https://www.retailcouncil.org/resources/quick-facts/sales-tax-rates-by-province/)
