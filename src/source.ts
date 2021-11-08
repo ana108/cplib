@@ -181,11 +181,3 @@ export const cleanUp = async () => {
         })
     });
 }
-
-export const loadData = async () => {
-    // create a copy of cplib.db
-    // update fuel surcharge on it
-    // do data load using autoload
-    // if autoload fails, run clean up
-    // if autoload succeeds, copy over the db
-}

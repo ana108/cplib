@@ -109,7 +109,6 @@ export interface RateTables {
 }
 
 // this will iterate over the two docs; one for small business and one for regular rates
-// TODO change so that the type passed in can be either regular or SmallBusiness
 export const e2eProcess = async (year: number, type: string): Promise<RateTables> => {
     const dataSources = {
         'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
@@ -117,91 +116,118 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     };
     let pdfData = await loadPDF(dataSources[type]);
     let pageTables: RatesPages = pageHeaders(pdfData);
-    let rateTables = <RateTables>{};
+    let rateTables = <RateTables>{
+        'PriorityCanada1': [],
+        'PriorityCanada2': [],
+        'ExpressCanada1': [],
+        'ExpressCanada2': [],
+        'ExpeditedCanada1': [],
+        'ExpeditedCanada2': [],
+        'RegularCanada1': [],
+        'RegularCanada2': [],
+        'PriorityWorldwide': [],
+        'ExpressUSA': [],
+        'ExpeditedUSA': [],
+        'TrackedPacketUSA': [],
+        'SmallPacketUSA': [],
+        'ExpressInternational': [],
+        'AirInternational': [],
+        'SurfaceInternational': [],
+        'TrackedPacketInternational': [],
+        'SmallPacketAirInternational': [],
+        'SmallPacketSurfaceInternational': [],
+    }
     const canadianPriority = 'PriorityCanada';
-    console.log('Page Tables ', pageTables);
     if (pageTables[canadianPriority] !== 0) {
-        let canadianPriority1 = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20);
-        let canadianPriority2 = extractRateTables(pdfData, pageTables[canadianPriority], 20);
-        rateTables['PriorityCanada1'] = canadianPriority1;
-        rateTables['PriorityCanada2'] = canadianPriority2;
+        rateTables['PriorityCanada1'] = extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20, 3);
+        rateTables['PriorityCanada2'] = extractRateTables(pdfData, pageTables[canadianPriority], 20, 3);
     } else {
         console.error('Failed to populate Canadian Priority tables');
     }
 
     const canadianExpress = 'ExpressCanada';
     if (pageTables[canadianExpress] !== 0) {
-        let canadianExpress1 = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20);
-        let canadianExpress2 = extractRateTables(pdfData, pageTables[canadianExpress], 20);
-        rateTables['ExpressCanada1'] = canadianExpress1;
-        rateTables['ExpressCanada2'] = canadianExpress2;
+        rateTables['ExpressCanada1'] = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20, 3);
+        rateTables['ExpressCanada2'] = extractRateTables(pdfData, pageTables[canadianExpress], 20, 3);
+    } else {
+        console.error('Failed to populate Canadian Express tables');
     }
 
     const canadianRegularParcel = 'RegularCanada';
     if (pageTables[canadianRegularParcel] !== 0) {
-        let canadianRegular1 = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20);
-        let canadianRegular2 = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20);
-        rateTables['RegularCanada1'] = canadianRegular1;
-        rateTables['RegularCanada2'] = canadianRegular2;
+        rateTables['RegularCanada1'] = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 3, 20);
+        rateTables['RegularCanada2'] = extractRateTables(pdfData, pageTables[canadianRegularParcel], 3, 20);
+    } else {
+        console.error('Failed to populate Regular canadian parcel tables');
     }
 
     const internationalPriority = 'PriorityWorldwide';
     if (pageTables[internationalPriority] !== 0) {
-        let worldwidePriority = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
-        rateTables[internationalPriority] = worldwidePriority;
+        rateTables[internationalPriority] = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
+    } else {
+        console.error('Failed to populate worldwide priority tables');
     }
 
     const expressUSALabel = 'ExpressUSA';
     if (pageTables[expressUSALabel] !== 0) {
-        console.log(' Start express USA ');
-        let expressUSA = extractRateTables(pdfData, pageTables[expressUSALabel], 7);
-        rateTables[expressUSALabel] = expressUSA;
+        rateTables[expressUSALabel] = extractRateTables(pdfData, pageTables[expressUSALabel], 3, 7);
+    } else {
+        console.error('Failed to populate express USA tables');
     }
     const expeditedUSALabel = 'ExpeditedUSA';
     if (pageTables[expeditedUSALabel] !== 0) {
-        let expeditedUSA = extractRateTables(pdfData, pageTables[expeditedUSALabel], 7);
-        rateTables[expeditedUSALabel] = expeditedUSA;
+        rateTables[expeditedUSALabel] = extractRateTables(pdfData, pageTables[expeditedUSALabel], 3, 7);
+    } else {
+        console.error('Failed to populate USA Expedited tables');
     }
 
     const usaRateCodes: string = (rateTables[expeditedUSALabel] && rateTables[expeditedUSALabel][0]) || '';
     const trackedPacketUSALabel = 'TrackedPacketUSA';
     if (pageTables[trackedPacketUSALabel] !== 0) {
-        let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 2);
+        let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 0);
         rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
+    } else {
+        console.error('Failed to populate Tracked Packet USA tables');
     }
 
     const smallPacketUSALabel = 'SmallPacketUSA';
     if (pageTables[smallPacketUSALabel] !== 0) {
-        let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 2);
+        let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 0);
         rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
+    } else {
+        console.error('Failed to populate Small Packet USA tables');
     }
     const worldwideExpressLabel = 'ExpressInternational';
     if (pageTables[worldwideExpressLabel] !== 0) {
-        let worldwideExpress = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10);
-        rateTables[worldwideExpressLabel] = worldwideExpress;
+        rateTables[worldwideExpressLabel] = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10, 3);
+    } else {
+        console.error('Failed to populate Express International tables');
     }
 
     const worldwideAirLabel = 'AirInternational';
     if (pageTables[worldwideAirLabel] !== 0) {
-        let worldwideAir = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10);
-        rateTables[worldwideAirLabel] = worldwideAir;
+        rateTables[worldwideAirLabel] = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10, 4);
+    } else {
+        console.error('Failed to populate Air International tables');
     }
 
     const worldwideSurfaceLabel = 'SurfaceInternational';
     if (pageTables[worldwideSurfaceLabel] !== 0) {
-        let worldwideSurface = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10);
-        rateTables[worldwideSurfaceLabel] = worldwideSurface;
+        rateTables[worldwideSurfaceLabel] = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10, 3);
+    } else {
+        console.error('Failed to populate Air Surface tables');
     }
 
-    const internationalRateCodes = (rateTables['SurfaceInternational'] && rateTables['SurfaceInternational'][0]) || '';
     const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
     if (pageTables[worldwideTrackedPacketLabel] !== 0) {
         let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
-        rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, internationalRateCodes.split(' '));
+        rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, worldwideTrackedPacket[0].split(' '));
+    } else {
+        console.error('Failed to populate worldwide tracked packet tables');
     }
     const worldwideSmallPacketLabel = 'SmallPacketInternational';
     if (pageTables[worldwideSmallPacketLabel] !== 0) {
-        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10); // working, beware that it can be split up into two air and surface, air comes first
+        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 3); // working, beware that it can be split up into two air and surface, air comes first
         const knownRateCodes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
         const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
         const splitOfSmallPackets = splitMultiTablePage(worldwideSmallPacket, knownRateCodes.join(' '));
@@ -209,15 +235,17 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
         rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, knownRateCodes);
         const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
         let worldwideSmallSurfacePacket = splitOfSmallPackets[1];
-        rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, knownRateCodes);  //  internationalPacketRateCodes.split(' ')
+        rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, knownRateCodes);
+    } else {
+        console.error('Failed to populate worldwide small packet (air/surface) tables');
     }
     if (type === SMALL_BUSINESS) {
         const canadianExpeditedParcel = 'ExpeditedCanada';
         if (pageTables[canadianExpeditedParcel] !== 0) {
-            let canadianExpedited1 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23);
-            rateTables['ExpeditedCanada1'] = canadianExpedited1;
-            let canadianExpedited2 = extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22);
-            rateTables['ExpeditedCanada2'] = canadianExpedited2;
+            rateTables['ExpeditedCanada1'] = extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23, 3);
+            rateTables['ExpeditedCanada2'] = extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22, 3);
+        } else {
+            console.error('Failed to populate canada expedited parcel tables');
         }
     }
     await loadByType(rateTables, year, type);
@@ -284,30 +312,10 @@ export const extractYear = (pdfData: string): any => {
                 overlappingStr = token.trim();
             }
         });
-
-        // let foundOverlap = findOverlap(textsArray[i - 1], textsArray[i]);
-        // if (foundOverlap.trim().length === 4) {
-        //     overlappingStr = foundOverlap;
-        // }
     }
     return overlappingStr;
 }
-const findOverlap = (a, b): string => {
-    let match = '';
-    for (let x = 0; x < a.length - 3; x++) {
-        let xString = a.substr(x, 4);
-        for (let y = 0; y < b.length - 3; y++) {
-            let yString = b.substr(y, 4);
-            if (xString == yString) {
-                if (!isNaN(xString)) {
-                    match = xString;
-                    break;
-                }
-            }
-        }
-    }
-    return match;
-}
+
 export const extractPages = (pdfData: any): RatesPages => {
     let pages: RatesPages = {
         'PriorityCanada': 0,
@@ -415,7 +423,6 @@ export const pageHeaders = (pdfData: any): RatesPages => {
     return pages;
 }
 export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, pageNum: number): void => {
-    // console.log('Raw Text ', rawText);
     let pageTitleMapping = {
         'PriorityPrices': 'PriorityCanada',
         'XpresspostPrices': 'ExpressCanada',
@@ -440,7 +447,6 @@ export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, 
     let pageFound = -1;
     let matchingTitle = '';
     Object.keys(pageTitleMapping).forEach(expectedHeader => {
-        // console.log('Checking ' + rawText.trim().replace(/-/g, '').toLowerCase() + ' against ' + expectedHeader);
         if (rawText.trim().replace(/-/g, '').toLowerCase().indexOf(expectedHeader.toLowerCase()) >= 0) {
             pageFound = pageNum;
             matchingTitle = pageTitleMapping[expectedHeader];
@@ -473,18 +479,26 @@ export const isAllNum = (values: any[]): boolean => {
 // expectation of return: rate code header
 // each row of weight/cost
 // final row of overweight
-export const extractRateTables = (pdfPages: any, page: number, numRateCodes: number, maxTokens?: number): string[] => {
+export const extractRateTables = (pdfPages: any, page: number, numRateCodes: number, decimalPoint: number): string[] => {
     let wholeText = pdfPages[page - 1]['Texts'];
     let wholeTextLength = wholeText.length;
     let line = '';
     /* suggestion: if a new "y" is found append it to an existing y in a map, then list over all the ys*/
     let allText = {};
+    wholeText = wholeText.sort(function (a, b) {
+        return parseFloat(a.y) - parseFloat(b.y);
+    });
+
     for (let i = 0; i < wholeTextLength; i++) {
         line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
-        if (allText[wholeText[i].y]) {
-            allText[wholeText[i].y] = allText[wholeText[i].y].trim() + ' ' + line;
+        if (allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)]) {
+            if (allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)].indexOf('$') >= 0) { // canada post apparently doesn't know how to draw straight lines. this is a bandaid
+                allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)] = line + ' ' + allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)].trim();
+            } else {
+                allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)] = allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)].trim() + ' ' + line;
+            }
         } else {
-            allText[wholeText[i].y] = line;
+            allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)] = line;
         }
     }
     // sort all values by row
@@ -495,26 +509,31 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
     keys.forEach(key => {
         let tokens = allText[key].split(' ');
         // if allText[key] tokens is 2 and both those tokens are number; attach the previous key's values to this one and delete previous key
-        if (isAllNum(tokens) && tokens.length === 2 && isAllNum(allText[prevKey].split(' '))) {
+        if (prevKey != '' && isAllNum(allText[prevKey].split(' ')) && allText[prevKey].split(' ').length === (numRateCodes + 2)) {
+            // dont do anything leave well enough alone
+        } else if (isAllNum(tokens) && (tokens.length === 2 || tokens.length === 3) && isAllNum(allText[prevKey].split(' '))) {
             allText[key] = allText[key] + ' ' + allText[prevKey];
             delete allText[prevKey];
         } else if (allText[key].trim().toLowerCase().indexOf('upto') >= 0 && tokens.length === 1) {
             allText[key] = allText[key] + ' ' + allText[prevKey];
             delete allText[prevKey];
+        } else if (isAllNum(tokens) && (tokens.length < (numRateCodes + 2)) && isAllNum(allText[prevKey].split(' ')) && allText[prevKey].split(' ').length < (numRateCodes + 2)) {
+            allText[key] = allText[prevKey] + ' ' + allText[key];
+            delete allText[prevKey];
         }
+
         prevKey = key;
     });
     // sort again to clean up deleted keys
-    keys = Object.keys(allText).sort(function (a, b) {
-        return parseFloat(a) - parseFloat(b);
-    });
+    // keys = Object.keys(allText).sort(function (a, b) {
+    //     return parseFloat(a) - parseFloat(b);
+    // });
+    keys = Object.keys(allText);
     let cleanArray: string[] = [];
     for (let i = 0; i < keys.length; i++) {
-        let totalTokens = allText[keys[i]].trim().split(' ').length;
-        if (totalTokens >= numRateCodes) {
-            if (maxTokens && totalTokens <= maxTokens) {
-                cleanArray.push(allText[keys[i]].trim());
-            } else if (!maxTokens) {
+        if (allText[keys[i]]) {
+            let totalTokens = allText[keys[i]].trim().split(' ').length;
+            if (totalTokens >= numRateCodes) {
                 cleanArray.push(allText[keys[i]].trim());
             }
         }
@@ -523,7 +542,7 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
 }
 
 export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): string[] => {
-    let fullPage = extractRateTables(pdfPages, pageNumber, 7, 9);
+    let fullPage = extractRateTables(pdfPages, pageNumber, 7, 3);
     // convert text of the page to be in a line by line format
     let wholeText = pdfPages[pageNumber - 1]['Texts'];
     let wholeTextLength = wholeText.length;
@@ -553,7 +572,7 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
     let rates = '';
 
     let indexWhereSearchStarts = 0;
-    for (let i = 0; i < keys.length; i++) { // for (let i = 0; i < keys.length - 2; i++) 
+    for (let i = 0; i < keys.length; i++) {
         let value = allText[keys[i]].replace(/\s/g, '');
         // to find the row with all the weights, we find the row that has 2x tokens, where x is the number of rate codes
         if (value.indexOf('ENVELOPE(MAXIMUM500G)PAK(MAXIMUM1.5KG)') >= 0) {
@@ -567,10 +586,6 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
                 rates = '1.5 3.3 ' + kiloAndAHalfPakRates;
             }
         }
-    }
-    let orderedArray: string[] = [];
-    for (let i = 0; i < keys.length; i++) {
-        orderedArray.push(allText[keys[i]]);
     }
 
     for (let i = fullPage.length - 1; i >= 1; i--) {
@@ -591,18 +606,20 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
         }
     }
     fullPage.splice(indexOfFirstLineAfterHeader, 0, rates);
+    // remove the updated lines (ie the 1.5kg and less that were moved to the beginning)
+    let lastLine = -1;
+    for (let i = 0; i < fullPage.length; i++) {
+        if (fullPage[i].split(' ').length === 14) {
+            lastLine = i - 1;
+        }
+    }
+    fullPage.length = lastLine;
     return fullPage;
 }
 
 export const cleanExtraLines = (pageArray: string[]): string[] => {
-    // clean the end of the array
-    for (let i = pageArray.length - 1; i > 0; i--) {
-        let firstTokenNumeric: any = pageArray[i].split(' ')[0].trim();
-        if (isNaN(firstTokenNumeric)) {
-            pageArray.splice(i, 1);
-        } else {
-            break; // break out once we get into real numbers
-        }
+    if (pageArray.length === 0) {
+        return pageArray;
     }
     // clean the beginning of the array, by identifying the first functioning row
     // if you have 3 rows in a row that all have identical number of tokens, then the one
@@ -621,45 +638,55 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
     }
     // first line shouldn't have anything other than rate codes
     pageArray[0] = pageArray[0].replace('(USA)', '').replace(/  /g, ' ');
+
+    // clean from the bottom up.... if line has anything non numeric, just delete it
+    for (let i = pageArray.length - 1; i > 0; i--) {
+        if (!isAllNum(pageArray[i].split(' '))) {
+            pageArray.splice(i, 1);
+        }
+    }
     return pageArray;
 }
 
-export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): string[] => {
+export const convertPacketToTable = (pageArray: string[], rcs: string[]): string[] => {
     let firstValidLine = -1;
-
-    console.log('Page Array ', pageArray);
     for (let i = 0; i < pageArray.length; i++) {
-        console.log('Page Array at i ', pageArray[i]);
-        if (pageArray[i].toUpperCase().indexOf('UPTO') >= 0 && firstValidLine < 0) {
-            console.log('Set first Valid Line ', i);
+        if ((pageArray[i].toUpperCase().indexOf('UPTO') >= 0 || pageArray[i].toUpperCase().indexOf('INKG') >= 0) && firstValidLine < 0) {
             firstValidLine = i;
+            pageArray[i] = pageArray[i].replace('Upto', '').replace('upto', '');
+        } else if (pageArray[i].toUpperCase().indexOf('INKG') >= 0 && firstValidLine < 0) {
+            firstValidLine = i + 1;
+            pageArray[i] = pageArray[i].replace('INKG', '').replace('INLB', '');
+        } else {
+            pageArray[i] = pageArray[i].replace('INKG', '').replace('INLB', '');
         }
-        pageArray[i] = pageArray[i].replace('Upto', '0 ').replace('upto', ' ');
+        if (pageArray[i].trim().length == 0) {
+            delete pageArray[i];
+        }
     }
-    console.log('Page Array after 1st clean ', pageArray);
-    console.log('First Valid Line ', firstValidLine);
     pageArray = pageArray.slice(firstValidLine);
     // convert all g/kg tokens to be kg and remove 
     let finalTableRow: any[] = [];
-    finalTableRow.push(rateCodes.join(' '));
-    console.log('Final Table Row First row ', finalTableRow);
+    let rateCodes = rcs.join(' ').replace('INKG ', '').replace('INLB', '').trim().split(' ');
     pageArray.forEach(row => {
+        row = row.replace('$', '');
         let tokens: any = row.split(' ');
         let maxToken: any = tokens[1];
-        let maxTokenInKg: number;
-        let maxTokenInLb: number;
+        let maxTokenInKg: number = tokens[0];
+        let maxTokenInLb: number = tokens[1];
         if (maxToken.indexOf('kg') >= 0) {
             maxToken = maxToken.replace('kg', '');
             maxTokenInKg = maxToken;
-        } else {
+        } else if (maxToken.indexOf('g') >= 0) {
             maxToken = maxToken.replace('g', '');
             maxTokenInKg = maxToken / 1000;
         }
+
         tokens[1] = maxTokenInKg;
         maxTokenInLb = Number((maxTokenInKg * 2.2).toFixed(2));
         tokens.splice(2, 0, maxTokenInLb);
         tokens.shift();
-        if (tokens.length === 3) {
+        if (tokens.length === 3 || tokens.length === 2) {
             for (let i = 0; i < rateCodes.length - 1; i++) {
                 tokens.push(tokens[tokens.length - 1]);
             }
@@ -667,7 +694,7 @@ export const convertPacketToTable = (pageArray: string[], rateCodes: string[]): 
         row = tokens.join(' ');
         finalTableRow.push(row);
     });
-    console.log('Returning ', finalTableRow);
+    finalTableRow[0] = rateCodes.join(' ');
     return finalTableRow;
 }
 
@@ -689,6 +716,24 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
         ratesPage['ExpressInternational'] = cleanExtraLines(ratesPage['ExpressInternational']);
         ratesPage['AirInternational'] = cleanExtraLines(ratesPage['AirInternational']);
         ratesPage['SurfaceInternational'] = cleanExtraLines(ratesPage['SurfaceInternational']);
+        ratesPage['SmallPacketUSA'] = cleanExtraLines(ratesPage['SmallPacketUSA']);
+        ratesPage['TrackedPacketUSA'] = cleanExtraLines(ratesPage['TrackedPacketUSA']);
+
+        ratesPage['RegularCanada1'] = cleanExtraLines(ratesPage['RegularCanada1']);
+        ratesPage['RegularCanada2'] = cleanExtraLines(ratesPage['RegularCanada2']);
+
+        ratesPage['PriorityCanada1'] = cleanExtraLines(ratesPage['PriorityCanada1']);
+        ratesPage['PriorityCanada2'] = cleanExtraLines(ratesPage['PriorityCanada2']);
+
+        ratesPage['ExpressCanada1'] = cleanExtraLines(ratesPage['ExpressCanada1']);
+        ratesPage['ExpressCanada2'] = cleanExtraLines(ratesPage['ExpressCanada2']);
+
+        ratesPage['ExpeditedCanada1'] = cleanExtraLines(ratesPage['ExpeditedCanada1']);
+        ratesPage['ExpeditedCanada2'] = cleanExtraLines(ratesPage['ExpeditedCanada2']);
+        ratesPage['TrackedPacketInternational'] = cleanExtraLines(ratesPage['TrackedPacketInternational']);
+        ratesPage['SmallPacketAirInternational'] = cleanExtraLines(ratesPage['SmallPacketAirInternational']);
+        ratesPage['SmallPacketSurfaceInternational'] = cleanExtraLines(ratesPage['SmallPacketAirInternational']);
+
         const inputsAll: string[] = [];
         let mapToDeliveryType = {
             'PriorityCanada1': {
@@ -788,7 +833,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
             }
         };
         Object.keys(mapToDeliveryType).forEach(deliveryType => {
-            if (!ratesPage[deliveryType]) {
+            if (!ratesPage[deliveryType] || ratesPage[deliveryType].length === 0) {
                 return;
             }
             let labels: string[] = ratesPage[deliveryType][0].split(' ');
@@ -797,7 +842,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
 
             let lineLength = ratesPage[deliveryType].length;
             if (mapToDeliveryType[deliveryType].overloadIncl) {
-                lineLength = lineLength - 1;
+                lineLength = lineLength - 2;
             }
             for (let i = 1; i < lineLength; i++) {
                 let input = ratesPage[deliveryType][i];
@@ -826,7 +871,6 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
         })).then(data => {
             resolve(data);
         }).catch(e => {
-            console.log('ERROR! ', e);
             reject(e);
         });
     });

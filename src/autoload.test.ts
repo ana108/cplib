@@ -1,6 +1,6 @@
 import * as sinon from 'sinon';
 import * as db from './db/sqlite3';
-import { e2eProcess, loadPDF, pageHeaders, extractRateTables, REGULAR, SMALL_BUSINESS } from './autoload';
+import { e2eProcess, loadPDF, pageHeaders, extractRateTables, REGULAR, SMALL_BUSINESS, convertPacketToTable } from './autoload';
 import 'mocha';
 import { RateTables, RatesPages, extractPriorityWorldwide } from './autoload';
 import * as chai from 'chai';
@@ -337,5 +337,29 @@ describe('Extract worldwide priority table', () => {
         expect(regularRateTables['SmallPacketSurfaceInternational'][1].split(' ')[0]).to.equal('0.25');
         let lastIndex = regularRateTables['SmallPacketSurfaceInternational'].length - 1;
         expect(regularRateTables['SmallPacketSurfaceInternational'][lastIndex].split(' ')[0]).to.equal('2');
+    });
+});
+
+describe('Temp Test', () => {
+    it('Debugging - convert packet to test', async () => {
+        let pageArray = [
+            'TrackedPacket USA',
+            '(UPTOANDINCLUDING) WEIGHT',
+            'INKG INLB',
+            '0.1 0.2',
+            '0.25 0.5',
+            '0.5 1.1',
+            '1.0 2.2',
+            '1.5 3.3',
+            '2.0 4.4'
+        ];
+        let rateCodes = [
+            '1', '2', '3',
+            '4', '5', '6',
+            '7'
+        ];
+        let results = convertPacketToTable(pageArray, rateCodes);
+        console.log('Results: ', results);
+        expect(true).to.equal(true);
     });
 });
