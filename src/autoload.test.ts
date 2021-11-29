@@ -15,6 +15,7 @@ describe('Extract rate tables', () => {
             await db.setDB(__dirname + "/integration/cplib_int.db");
             await db.deleteRatesByYear(YEAR);
             regularRateTables = await e2eProcess(YEAR, REGULAR);
+            // console.log('Regular Canada ', regularRateTables['ExpressUSA']);
             smallBusinessRateTables = await e2eProcess(YEAR, SMALL_BUSINESS);
         } catch (e) {
             console.log('Error in execute ', e);
@@ -188,7 +189,7 @@ describe('Extract rate tables', () => {
         expect(smallBusinessRateTables['PriorityWorldwide'].length).to.equal(60);
         expect(smallBusinessRateTables['PriorityWorldwide'][smallBusinessRateTables['PriorityWorldwide'].length - 2].split(' ').length).to.equal(9);
     });
-    it.skip('Execute autoload - small business - worldwide small packet surface', async () => {
+    it('Execute autoload - small business - worldwide small packet surface', async () => {
         expect(smallBusinessRateTables['SmallPacketSurfaceInternational'].length).to.equal(6);
         expect(smallBusinessRateTables['SmallPacketSurfaceInternational'][0].split(' ').length).to.equal(10);
         expect(smallBusinessRateTables['SmallPacketSurfaceInternational'][smallBusinessRateTables['SmallPacketSurfaceInternational'].length - 1].split(' ').length).to.equal(12);
@@ -229,7 +230,7 @@ describe('Extract rate tables', () => {
     });
 });
 
-describe.skip('Extract rate tables - 2020 - int', () => {
+describe('Extract rate tables - 2020 - int', () => {
     let pageData: any;
     let pageDataSmallBusiness: any;
     before(async () => {
@@ -272,7 +273,7 @@ describe.skip('Extract rate tables - 2020 - int', () => {
     });
 })
 
-describe.skip('Load data into rates table for the year', async () => {
+describe('Load data into rates table for the year', async () => {
     before(async () => {
         await db.setDB(__dirname + "/integration/cplib_int.db");
     });
@@ -284,15 +285,15 @@ describe.skip('Load data into rates table for the year', async () => {
         let result: any;
         let canadaRegularRegular = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'regular'`;
         result = await db.executeCustomSQL(canadaRegularRegular);
-        expect(result[0].count).to.equal(2745);
+        expect(result[0].count).to.equal(2790);
 
         let canadaRegularExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'express'`;
         result = await db.executeCustomSQL(canadaRegularExpress);
-        expect(result[0].count).to.equal(2745);
+        expect(result[0].count).to.equal(2790);
 
         let canadaRegularPriority = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'priority'`;
         result = await db.executeCustomSQL(canadaRegularPriority);
-        expect(result[0].count).to.equal(2623);
+        expect(result[0].count).to.equal(2666);
     });
     it('Verify that the right number of rows was loaded for canada (small business) ', async () => {
         let result: any;
@@ -325,11 +326,11 @@ describe.skip('Load data into rates table for the year', async () => {
 
     it('Verify that the right number of rows was loaded for USA (small business)', async () => {
         let result: any;
-        let smallBusinessExpress = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'small_business' and type = 'express'`;
+        let smallBusinessExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'small_business' and type = 'express'`;
         result = await db.executeCustomSQL(smallBusinessExpress);
         expect(result[0].count).to.equal(427);
 
-        let smallBusinessExpedited = `select count(*) as count from rates where year = 2021 and country = 'USA' and customer_type = 'small_business' and type = 'expedited'`;
+        let smallBusinessExpedited = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'small_business' and type = 'expedited'`;
         result = await db.executeCustomSQL(smallBusinessExpedited);
         expect(result[0].count).to.equal(427);
     });
@@ -358,7 +359,7 @@ describe.skip('Load data into rates table for the year', async () => {
 
 });
 
-describe.skip('Extract worldwide priority table', () => {
+describe('Extract worldwide priority table', () => {
     let pageData: any;
     let pageDataSmallBusiness: any;
     let priorityWorldwideNumber: any;
@@ -409,26 +410,24 @@ describe.skip('Extract worldwide priority table', () => {
         expect(regularRateTables['SmallPacketUSA'][lastElement].split(' ').length).to.equal(numElements + 1);
     });
     it('Verify International Tracked Packet tables get converted in the standard format', async () => {
-        // let regularRateTables = await e2eProcess(YEAR, REGULAR);
-        expect(regularRateTables['TrackedPacketInternational'][0]).to.equal('401 402 403 404 405 406 407 408 409 410');
+        expect(regularRateTables['TrackedPacketInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
         let lastElement: number = regularRateTables['TrackedPacketInternational'].length - 1;
         let numElements: number = regularRateTables['TrackedPacketInternational'][0].split(' ').length + 1;
         expect(regularRateTables['TrackedPacketInternational'][lastElement].split(' ').length).to.equal(numElements + 1);
     });
     it('Verify International Small Packet (air) tables get converted in the standard format', async () => {
-        // let regularRateTables = await e2eProcess(YEAR, REGULAR);
         expect(regularRateTables['SmallPacketAirInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
 
         expect(regularRateTables['SmallPacketAirInternational'][1].split(' ')[0]).to.equal('0.1');
         let lastIndex = regularRateTables['SmallPacketAirInternational'].length - 1;
-        expect(regularRateTables['SmallPacketAirInternational'][lastIndex].split(' ')[0]).to.equal('2');
+        expect(parseInt(regularRateTables['SmallPacketAirInternational'][lastIndex].split(' ')[0])).to.equal(2);
     });
     it('Verify International Small Packet (surface) tables get converted in the standard format', async () => {
         // let regularRateTables = await e2eProcess(YEAR, REGULAR);
         expect(regularRateTables['SmallPacketSurfaceInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
         expect(regularRateTables['SmallPacketSurfaceInternational'][1].split(' ')[0]).to.equal('0.25');
         let lastIndex = regularRateTables['SmallPacketSurfaceInternational'].length - 1;
-        expect(regularRateTables['SmallPacketSurfaceInternational'][lastIndex].split(' ')[0]).to.equal('2');
+        expect(parseInt(regularRateTables['SmallPacketSurfaceInternational'][lastIndex].split(' ')[0])).to.equal(2);
     });
 });
 

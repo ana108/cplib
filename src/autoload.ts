@@ -875,7 +875,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
 
             let lineLength = ratesPage[deliveryType].length;
             if (mapToDeliveryType[deliveryType].overloadIncl) {
-                lineLength = lineLength - 2;
+                lineLength = lineLength - 1;
             }
             for (let i = 1; i < lineLength; i++) {
                 let input = ratesPage[deliveryType][i];
