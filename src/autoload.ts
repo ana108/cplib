@@ -155,8 +155,8 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const canadianRegularParcel = 'RegularCanada';
     if (pageTables[canadianRegularParcel] !== 0) {
-        rateTables['RegularCanada1'] = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 3, 20);
-        rateTables['RegularCanada2'] = extractRateTables(pdfData, pageTables[canadianRegularParcel], 3, 20);
+        rateTables['RegularCanada1'] = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20, 3);
+        rateTables['RegularCanada2'] = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20, 2);
     } else {
         console.error('Failed to populate Regular canadian parcel tables');
     }
@@ -176,7 +176,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     }
     const expeditedUSALabel = 'ExpeditedUSA';
     if (pageTables[expeditedUSALabel] !== 0) {
-        rateTables[expeditedUSALabel] = extractRateTables(pdfData, pageTables[expeditedUSALabel], 3, 7);
+        rateTables[expeditedUSALabel] = cleanExtraLines(extractRateTables(pdfData, pageTables[expeditedUSALabel], 3, 7));
     } else {
         console.error('Failed to populate USA Expedited tables');
     }
@@ -220,14 +220,14 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
     if (pageTables[worldwideTrackedPacketLabel] !== 0) {
-        let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 11);
+        let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 1);
         rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, worldwideTrackedPacket[0].split(' '));
     } else {
         console.error('Failed to populate worldwide tracked packet tables');
     }
     const worldwideSmallPacketLabel = 'SmallPacketInternational';
     if (pageTables[worldwideSmallPacketLabel] !== 0) {
-        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 3); // working, beware that it can be split up into two air and surface, air comes first
+        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 1); // working, beware that it can be split up into two air and surface, air comes first
         const knownRateCodes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
         const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
         const splitOfSmallPackets = splitMultiTablePage(worldwideSmallPacket, knownRateCodes.join(' '));
@@ -248,6 +248,30 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
             console.error('Failed to populate canada expedited parcel tables');
         }
     }
+    // TODO clean extra lines here instead of in load by type
+    rateTables['ExpressUSA'] = cleanExtraLines(rateTables['ExpressUSA']);
+    rateTables['ExpeditedUSA'] = cleanExtraLines(rateTables['ExpeditedUSA']);
+    rateTables['PriorityWorldwide'] = cleanExtraLines(rateTables['PriorityWorldwide']);
+    rateTables['ExpressInternational'] = cleanExtraLines(rateTables['ExpressInternational']);
+    rateTables['AirInternational'] = cleanExtraLines(rateTables['AirInternational']);
+    rateTables['SurfaceInternational'] = cleanExtraLines(rateTables['SurfaceInternational']);
+    rateTables['SmallPacketUSA'] = cleanExtraLines(rateTables['SmallPacketUSA']);
+    rateTables['TrackedPacketUSA'] = cleanExtraLines(rateTables['TrackedPacketUSA']);
+
+    rateTables['RegularCanada1'] = cleanExtraLines(rateTables['RegularCanada1']);
+    rateTables['RegularCanada2'] = cleanExtraLines(rateTables['RegularCanada2']);
+
+    rateTables['PriorityCanada1'] = cleanExtraLines(rateTables['PriorityCanada1']);
+    rateTables['PriorityCanada2'] = cleanExtraLines(rateTables['PriorityCanada2']);
+
+    rateTables['ExpressCanada1'] = cleanExtraLines(rateTables['ExpressCanada1']);
+    rateTables['ExpressCanada2'] = cleanExtraLines(rateTables['ExpressCanada2']);
+
+    rateTables['ExpeditedCanada1'] = cleanExtraLines(rateTables['ExpeditedCanada1']);
+    rateTables['ExpeditedCanada2'] = cleanExtraLines(rateTables['ExpeditedCanada2']);
+    rateTables['TrackedPacketInternational'] = cleanExtraLines(rateTables['TrackedPacketInternational']);
+    rateTables['SmallPacketAirInternational'] = cleanExtraLines(rateTables['SmallPacketAirInternational']);
+    rateTables['SmallPacketSurfaceInternational'] = cleanExtraLines(rateTables['SmallPacketSurfaceInternational']);
     await loadByType(rateTables, year, type);
     return rateTables;
 }
@@ -516,6 +540,7 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
             delete allText[prevKey];
         } else if (allText[key].trim().toLowerCase().indexOf('upto') >= 0 && tokens.length === 1) {
             allText[key] = allText[key] + ' ' + allText[prevKey];
+
             delete allText[prevKey];
         } else if (isAllNum(tokens) && (tokens.length < (numRateCodes + 2)) && isAllNum(allText[prevKey].split(' ')) && allText[prevKey].split(' ').length < (numRateCodes + 2)) {
             allText[key] = allText[prevKey] + ' ' + allText[key];
@@ -525,16 +550,25 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
         prevKey = key;
     });
     // sort again to clean up deleted keys
-    // keys = Object.keys(allText).sort(function (a, b) {
-    //     return parseFloat(a) - parseFloat(b);
-    // });
+    keys = Object.keys(allText).sort(function (a, b) {
+        return parseFloat(a) - parseFloat(b);
+    });
     keys = Object.keys(allText);
     let cleanArray: string[] = [];
     for (let i = 0; i < keys.length; i++) {
         if (allText[keys[i]]) {
             let totalTokens = allText[keys[i]].trim().split(' ').length;
             if (totalTokens >= numRateCodes) {
-                cleanArray.push(allText[keys[i]].trim());
+                let lineOfRates = allText[keys[i]].trim();
+                // this is for cases where upTo token is last in line
+                let idxOfUpTo = allText[keys[i]].toLowerCase().indexOf('upto');
+                if (idxOfUpTo > 6) { // we know now that the index is last
+                    const tokens = allText[keys[i]].split(' ');
+                    let uptoStmt = tokens.pop();
+                    tokens.unshift(uptoStmt);
+                    lineOfRates = tokens.join(' ');
+                }
+                cleanArray.push(lineOfRates);
             }
         }
     }
@@ -608,10 +642,15 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
     fullPage.splice(indexOfFirstLineAfterHeader, 0, rates);
     // remove the updated lines (ie the 1.5kg and less that were moved to the beginning)
     let lastLine = -1;
-    for (let i = 0; i < fullPage.length; i++) {
+    for (let i = 1; i < fullPage.length; i++) {
         if (fullPage[i].split(' ').length === 14) {
-            lastLine = i - 1;
+            lastLine = i;
+            break;
         }
+    }
+    const lastIdx = lastLine - 1;
+    if (fullPage[lastIdx].split(' ').length != header.split(' ').length && fullPage[lastIdx].split(' ').length != header.split(' ').length + 2) {
+        lastLine--;
     }
     fullPage.length = lastLine;
     return fullPage;
@@ -645,6 +684,16 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
             pageArray.splice(i, 1);
         }
     }
+    // check the first row matches the rate code format, if not, pop it
+    const firstRowTokens = pageArray[0].split(' ');
+    const invalidTokens = firstRowTokens.filter(token => {
+        if (token.trim().length > 3) {
+            return token;
+        }
+    });
+    if (invalidTokens.length > 0) {
+        pageArray.shift();
+    }
     return pageArray;
 }
 
@@ -653,25 +702,27 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
     for (let i = 0; i < pageArray.length; i++) {
         if ((pageArray[i].toUpperCase().indexOf('UPTO') >= 0 || pageArray[i].toUpperCase().indexOf('INKG') >= 0) && firstValidLine < 0) {
             firstValidLine = i;
-            pageArray[i] = pageArray[i].replace('Upto', '').replace('upto', '');
+            // pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ');
         } else if (pageArray[i].toUpperCase().indexOf('INKG') >= 0 && firstValidLine < 0) {
             firstValidLine = i + 1;
-            pageArray[i] = pageArray[i].replace('INKG', '').replace('INLB', '');
+            pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '');
         } else {
-            pageArray[i] = pageArray[i].replace('INKG', '').replace('INLB', '');
+            pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '');
         }
         if (pageArray[i].trim().length == 0) {
             delete pageArray[i];
         }
+        pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ');
     }
     pageArray = pageArray.slice(firstValidLine);
     // convert all g/kg tokens to be kg and remove 
     let finalTableRow: any[] = [];
-    let rateCodes = rcs.join(' ').replace('INKG ', '').replace('INLB', '').trim().split(' ');
+    let rateCodes = rcs.join(' ').toUpperCase().replace('INKG ', '').replace('INLB', '').trim().split(' ');
+    // console.log('Rate Codes ', rateCodes);
     pageArray.forEach(row => {
         row = row.replace('$', '');
         let tokens: any = row.split(' ');
-        let maxToken: any = tokens[1];
+        let maxToken: any = tokens[1].toLowerCase();
         let maxTokenInKg: number = tokens[0];
         let maxTokenInLb: number = tokens[1];
         if (maxToken.indexOf('kg') >= 0) {
@@ -686,6 +737,7 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
         maxTokenInLb = Number((maxTokenInKg * 2.2).toFixed(2));
         tokens.splice(2, 0, maxTokenInLb);
         tokens.shift();
+        // console.log('Tokens ', tokens);
         if (tokens.length === 3 || tokens.length === 2) {
             for (let i = 0; i < rateCodes.length - 1; i++) {
                 tokens.push(tokens[tokens.length - 1]);
@@ -694,7 +746,12 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
         row = tokens.join(' ');
         finalTableRow.push(row);
     });
-    finalTableRow[0] = rateCodes.join(' ');
+    // finalTableRow[0] = rateCodes.join(' ');
+    let ratesCodeIndx = firstValidLine - 1;
+    if (ratesCodeIndx < 0) {
+        ratesCodeIndx = 0;
+    }
+    finalTableRow.splice(ratesCodeIndx, 0, rateCodes.join(' '));
     return finalTableRow;
 }
 
@@ -710,30 +767,6 @@ export const loadByType = (rates: RateTables, year: number, type: string): Promi
 // remember, this gets called twice; once for regular and once for small business
 export const saveTableEntries = (ratesPage: RateTables, year: number, customerType: string): Promise<any> => {
     return new Promise<any>((resolve, reject) => {
-        ratesPage['ExpressUSA'] = cleanExtraLines(ratesPage['ExpressUSA']);
-        ratesPage['ExpeditedUSA'] = cleanExtraLines(ratesPage['ExpeditedUSA']);
-        ratesPage['PriorityWorldwide'] = cleanExtraLines(ratesPage['PriorityWorldwide']);
-        ratesPage['ExpressInternational'] = cleanExtraLines(ratesPage['ExpressInternational']);
-        ratesPage['AirInternational'] = cleanExtraLines(ratesPage['AirInternational']);
-        ratesPage['SurfaceInternational'] = cleanExtraLines(ratesPage['SurfaceInternational']);
-        ratesPage['SmallPacketUSA'] = cleanExtraLines(ratesPage['SmallPacketUSA']);
-        ratesPage['TrackedPacketUSA'] = cleanExtraLines(ratesPage['TrackedPacketUSA']);
-
-        ratesPage['RegularCanada1'] = cleanExtraLines(ratesPage['RegularCanada1']);
-        ratesPage['RegularCanada2'] = cleanExtraLines(ratesPage['RegularCanada2']);
-
-        ratesPage['PriorityCanada1'] = cleanExtraLines(ratesPage['PriorityCanada1']);
-        ratesPage['PriorityCanada2'] = cleanExtraLines(ratesPage['PriorityCanada2']);
-
-        ratesPage['ExpressCanada1'] = cleanExtraLines(ratesPage['ExpressCanada1']);
-        ratesPage['ExpressCanada2'] = cleanExtraLines(ratesPage['ExpressCanada2']);
-
-        ratesPage['ExpeditedCanada1'] = cleanExtraLines(ratesPage['ExpeditedCanada1']);
-        ratesPage['ExpeditedCanada2'] = cleanExtraLines(ratesPage['ExpeditedCanada2']);
-        ratesPage['TrackedPacketInternational'] = cleanExtraLines(ratesPage['TrackedPacketInternational']);
-        ratesPage['SmallPacketAirInternational'] = cleanExtraLines(ratesPage['SmallPacketAirInternational']);
-        ratesPage['SmallPacketSurfaceInternational'] = cleanExtraLines(ratesPage['SmallPacketAirInternational']);
-
         const inputsAll: string[] = [];
         let mapToDeliveryType = {
             'PriorityCanada1': {
