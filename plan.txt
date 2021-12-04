@@ -1,17 +1,17 @@
 To DO:
-Add a variable so that a second data update doesn't get kicked off when current one is running
-Remove unnecessary calls to database to extract provinces from postal codes
+1. Add a variable so that a second data update doesn't get kicked off when current one is running
+2. Remove unnecessary calls to database to extract provinces from postal codes
 Figure out how to manually update province sales taxes (https://www.retailcouncil.org/resources/quick-facts/sales-tax-rates-by-province/)
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
 (small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
+3. Add licensing
 
-Documentation
+4. Documentation
  - get shipping cost
  - get shipping cost by postal code (canada only)
  - given a postal code, get province
  - get valid delivery types for country
  - How to check if your shipping rates are valid, and what to do if they're not
 
-Update package.json and publish package
-Manually configure and test installing package through npm on both ubuntu and windows
-Add licensing
+5. Update package.json and publish package
+6. Manually configure and test installing package through npm on both ubuntu and windows
