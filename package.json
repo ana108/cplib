@@ -8,7 +8,6 @@
     "test": "mocha -r ts-node/register src/calculate.test.ts src/index.test.ts src/db/sqlite3.test.ts",
     "int": "mocha -r ts-node/register src/integration/integration.test.ts",
     "recalibrate": "mocha -r ts-node/register src/integration/recalibrate.test.ts",
-    "preload": "mocha --timeout 0 -r ts-node/register src/preload.test.ts",
     "auto": "mocha --timeout 0 -r ts-node/register src/autoload.test.ts",
     "build": "rimraf ./build && tsc && cp -rf src/resources/ build/",
     "start": "npm run build && node build/index.js",

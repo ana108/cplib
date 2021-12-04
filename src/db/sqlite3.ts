@@ -321,8 +321,11 @@ export const getFuelSurcharge = (country: string, deliveryType: string): Promise
   })
 }
 // For integration tests
-export const deleteRatesByYear = async (year: number): Promise<number> => {
-  const deleteSql = `delete from rates where year = ${year}`;
+export const deleteRatesByYear = async (year: number, customerType?: string): Promise<number> => {
+  let deleteSql = `delete from rates where year = ${year}`;
+  if (customerType) {
+    deleteSql += ` and customer_type = '${customerType}'`;
+  }
   const writeDB = await openForWrite();
   return new Promise<number>((resolve, reject) => {
 

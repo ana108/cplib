@@ -15,7 +15,6 @@ describe('Extract rate tables', () => {
             await db.setDB(__dirname + "/integration/cplib_int.db");
             await db.deleteRatesByYear(YEAR);
             regularRateTables = await e2eProcess(YEAR, REGULAR);
-            // console.log('Regular Canada ', regularRateTables['ExpressUSA']);
             smallBusinessRateTables = await e2eProcess(YEAR, SMALL_BUSINESS);
         } catch (e) {
             console.log('Error in execute ', e);

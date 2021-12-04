@@ -248,7 +248,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
             console.error('Failed to populate canada expedited parcel tables');
         }
     }
-    // TODO clean extra lines here instead of in load by type
+
     rateTables['ExpressUSA'] = cleanExtraLines(rateTables['ExpressUSA']);
     rateTables['ExpeditedUSA'] = cleanExtraLines(rateTables['ExpeditedUSA']);
     rateTables['PriorityWorldwide'] = cleanExtraLines(rateTables['PriorityWorldwide']);

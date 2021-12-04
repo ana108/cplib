@@ -3,7 +3,7 @@ import fsPromises from 'fs/promises';
 import { copyFile } from 'fs/promises';
 import { https } from 'follow-redirects';
 import { loadPDF, extractYear, updateAllFuelSurcharges, REGULAR, SMALL_BUSINESS, e2eProcess } from './autoload';
-import { setDB, getHighestYear, updateFuelSurcharge, resetDB } from './db/sqlite3';
+import { setDB, getHighestYear, updateFuelSurcharge, resetDB, deleteRatesByYear } from './db/sqlite3';
 // this will check if update needs to happen and call 
 // all the functions below
 export interface updateresults {
@@ -43,9 +43,13 @@ export const checkAndUpdate = async () => {
     return new Promise<void>(async (resolve, reject) => {
         try {
             if (datacheck.regular) {
+                const numberDeletedRows = await deleteRatesByYear(currentYear, 'regular');
+                console.log(`While deleting year ${currentYear} of type regular: `, numberDeletedRows);
                 await e2eProcess(currentYear, REGULAR);
             }
             if (datacheck.smallBusiness) {
+                const numberDeletedRows = await deleteRatesByYear(currentYear, 'small_business');
+                console.log(`While deleting year ${currentYear} of type small business: `, numberDeletedRows);
                 await e2eProcess(currentYear, SMALL_BUSINESS);
             }
             console.log(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
