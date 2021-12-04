@@ -17,7 +17,7 @@ export const checkAndUpdate = async () => {
     try {
         const currentHighestYear = await getHighestYear();
         if (currentYear === currentHighestYear) {
-            console.log(`Current year ${currentYear} matches current highest year ${currentHighestYear}, therefore not updating`);
+            // console.log(`Current year ${currentYear} matches current highest year ${currentHighestYear}, therefore not updating`);
             return Promise.resolve();
         }
         datacheck = await savePDFS(currentYear, currentHighestYear);
