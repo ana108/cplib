@@ -130,7 +130,7 @@ export const validateAddress = (address: Address): Address => {
             throw new Error('Invalid postal code. Please make sure its in format of A1A1A1');
         }
         cleanAddress.region = mapProvinceToCode(cleanAddress.region);
-    } else if (cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITED STATES') {
+    } else if (cleanAddress.country === 'US' || cleanAddress.country === 'USA' || cleanAddress.country === 'UNITED STATES' || cleanAddress.country === 'U.S.A.') {
         cleanAddress.country = 'USA';
         cleanAddress.region = mapProvinceToCode(cleanAddress.region);
     } else {

@@ -13,10 +13,9 @@ export const checkAndUpdate = async (): Promise<void> => {
     const currentYear = new Date().getFullYear();
     let datacheck: updateresults;
     let dataLoadDbPath: string;
-    let state: { isUpdating: boolean };
+    const fileReading = fs.readFileSync(__dirname + '/resources/isUpdating.json');
+    let state = JSON.parse(fileReading.toString());
     try {
-        const fileReading = fs.readFileSync(__dirname + '/resources/isUpdating.json');
-        state = JSON.parse(fileReading.toString());
         if (state.isUpdating) {
             console.log('Not updating the database because it is currently updating');
             return Promise.resolve();
@@ -44,6 +43,7 @@ export const checkAndUpdate = async (): Promise<void> => {
         await setWriteDB(dataLoadDbPath);
     } catch (e) {
         console.log('Error occurred during preparatory processing ', e);
+        await setUpdating(state, false);
         return Promise.reject(e);
     }
     try {
@@ -129,7 +129,6 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
         });
 
         req.on('error', (error) => {
-            console.log('Error on download of small')
             reject(error);
         });
         req.end();
