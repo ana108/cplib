@@ -1,17 +1,16 @@
 To DO:
-2. Remove unnecessary calls to database to extract provinces from postal codes
-(regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
-(small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
-3. Add licensing
-4. Convert console.log to winston logs for future debugging (add morgan to detail api calls also)
-
+1. Verify that everything works as expected when user has no internet access; ie go back to using old data
+2. Add licensing
+3. Convert console.log to winston logs for future debugging (add morgan to detail api calls also)
 4. Documentation
  - get shipping cost
  - get shipping cost by postal code (canada only)
  - given a postal code, get province
  - get valid delivery types for country
  - How to check if your shipping rates are valid, and what to do if they're not
-
 5. Update package.json and publish package
 6. Manually configure and test installing package through npm on both ubuntu and windows
-7. Verify that everything works as expected when user has no internet access; ie go back to using old data
+
+References Info:
+(regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
+(small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)

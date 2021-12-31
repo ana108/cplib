@@ -218,7 +218,7 @@ export const calculateTax = (sourceProvince: string, destinationProvice: string,
             taxCost = shippingCost * 0.05;
         }
     } else if (shippingCost >= 5.00 && shippingType === 'regular') {
-        const gstOnlyProvinces = ['ON', 'NB', 'PEI', 'NS', 'NL', 'QC', 'MB', 'SK', 'AB', 'BC', 'NWT', 'NWT,NU', 'YT'];
+        const gstOnlyProvinces = ['ON', 'NB', 'PEI', 'NS', 'NL', 'QC', 'MB', 'SK', 'AB', 'BC', 'NWT', 'NU', 'NWT,NU', 'YT'];
         if (gstOnlyProvinces.includes(sourceProvince)) {
             taxCost = shippingCost * 0.05;
         }
@@ -253,8 +253,8 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
             const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
             // IF this api call gets too slow; these two calls can be replaced with postal code mappings
 
-            const sourceProvince = await getProvince(sourcePostalCode);
-            const destinationProvice = await getProvince(destinationPostalCode);
+            const sourceProvince = extractProvince(sourcePostalCode); //await getProvince(sourcePostalCode);
+            const destinationProvice = extractProvince(destinationPostalCode); // await getProvince(destinationPostalCode);
 
             // calculate tax
             const tax = calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
@@ -385,4 +385,36 @@ export const getLatestFuelSurcharge = (country: string, deliverySpeed): Promise<
 // math utility function
 function round(num: number): number {
     return Math.round(num * 100 + Number.EPSILON) / 100
+}
+
+function extractProvince(postalCode: string): string {
+    const postalCodeToProvCodeMapping = {
+        "T": "AB",
+        "V": "BC",
+        "R": "MB",
+        "E": "NB",
+        "A": "NL",
+        "X": "NWT,NU",
+        "B": "NS",
+        "K": "ON",
+        "L": "ON",
+        "M": "ON",
+        "N": "ON",
+        "P": "ON",
+        "C": "PE",
+        "J": "QC",
+        "H": "QC",
+        "G": "QC",
+        "S": "SK",
+        "Y": "YT"
+    };
+    if (!postalCode || postalCode.trim().length == 0) {
+        throw new Error("Postal Code must have at least one letter character");
+    }
+    const firstChar = postalCode.trim().charAt(0).toUpperCase();
+    const province = postalCodeToProvCodeMapping[firstChar];
+    if (!province) {
+        throw new Error("Invalid first character of postal code");
+    }
+    return province;
 }

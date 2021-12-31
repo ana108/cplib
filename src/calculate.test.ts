@@ -111,58 +111,45 @@ describe('Calculate Shipping Cost By Postal Code', () => {
   let getRateStb;
   let getMaxRateStb;
   let getFuelSurchargeStb;
-  let getProvinceStb;
   beforeEach(() => {
     getRateCodeStb = sinon.stub(db, 'getRateCode').resolves('A5');
     getRateStb = sinon.stub(db, 'getRate');
     getMaxRateStb = sinon.stub(db, 'getMaxRate');
     getFuelSurchargeStb = sinon.stub(calculate, 'getLatestFuelSurcharge').resolves(0.09);
-    getProvinceStb = sinon.stub(db, 'getProvince');
   });
   afterEach(() => {
     getRateCodeStb.restore();
     getRateStb.restore();
     getMaxRateStb.restore();
     getFuelSurchargeStb.restore();
-    getProvinceStb.restore();
   });
 
   it('A5 - Regular - 0.7kg - 10.89', async () => {
     getRateStb.resolves(10.89);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.70);
     expect(cost).to.equal(12.46);
   });
 
   it('A5 - Regular - 1.0kg - 11.45', async () => {
     getRateStb.resolves(11.45);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0);
     expect(cost).to.equal(13.1);
   });
 
   it('A5 - Regular - 1.3kg - 11.99', async () => {
     getRateStb.resolves(11.99);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3);
     expect(cost).to.equal(13.72);
   });
 
   it('A5 - Regular - 30.0kg - 34.39', async () => {
     getRateStb.resolves(34.39);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30);
     expect(cost).to.equal(39.36);
   });
 
   it('A5 - Regular - 30+kg - 34.39', async () => {
     getMaxRateStb.resolves({ incrementalRate: 0.34, maxRate: 10.0 });
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 33);
     expect(cost).to.equal(13.78);
 
@@ -170,102 +157,76 @@ describe('Calculate Shipping Cost By Postal Code', () => {
 
   it('A5 - Express - 0.7kg - 11.51', async () => {
     getRateStb.resolves(11.51);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'express');
     expect(cost).to.equal(13.17);
   });
 
   it('A5 - Express - 1.0kg - 13.39', async () => {
     getRateStb.resolves(13.39);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express');
     expect(cost).to.equal(15.32);
   });
 
   it('A5 - Express - 1.3kg - 15.68', async () => {
     getRateStb.resolves(15.68);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3, 'express');
     expect(cost).to.equal(17.95);
   });
 
   it('A5 - Express - 30.0kg - 40.32', async () => {
     getRateStb.resolves(40.32);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'express');
     expect(cost).to.equal(46.15);
   });
 
   it('A5 - Priority - 0.7kg - 23.74', async () => {
     getRateStb.resolves(23.74);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'priority');
     expect(cost).to.equal(27.17);
   });
 
   it('A5 - Priority - 1.0kg - 24.47', async () => {
     getRateStb.resolves(24.47);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
     expect(cost).to.equal(28.01);
   });
 
   it('A5 - Priority - 1.3kg - 24.96', async () => {
     getRateStb.resolves(24.96);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
     expect(cost).to.equal(28.57);
   });
 
   it('A5 - Priority - 30,0kg - 59.60', async () => {
     getRateStb.resolves(59.60);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'priority');
     expect(cost).to.equal(68.21);
   });
   it('SB - Regular - 30.0kg - 59.60', async () => {
     getRateStb.resolves(59.60);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'regular', 'small_business');
     expect(cost).to.equal(68.21);
   });
   it('SB - Regular -  1.3kg - 24.96', async () => {
     getRateStb.resolves(24.96);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'regular', 'small_business');
     expect(cost).to.equal(28.57);
   });
 
   it('SB - Priority -  1.3kg - 24.96', async () => {
     getRateStb.resolves(24.96);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority', 'small_business');
     expect(cost).to.equal(28.57);
   });
 
   it('SB - Express -  1.3kg - 24.96', async () => {
     getRateStb.resolves(24.96);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express', 'small_business');
     expect(cost).to.equal(28.57);
   });
 
   it('SB - Expedited -  1.3kg - 24.96', async () => {
     getRateStb.resolves(24.96);
-    getProvinceStb.onCall(0).resolves('ON');
-    getProvinceStb.onCall(1).resolves('QC');
     const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'expedited', 'small_business');
     expect(cost).to.equal(27.21);
   });
@@ -277,7 +238,6 @@ describe('Calculate Shipping Cost to USA', () => {
   let getRateStb;
   let getMaxRateStb;
   let getFuelSurchargeStb;
-  let getProvinceStb;
   const maxRates: maxRates = {
     maxRate: 10.89,
     incrementalRate: 1.06
@@ -287,14 +247,12 @@ describe('Calculate Shipping Cost to USA', () => {
     getRateStb = sinon.stub(db, 'getRate');
     getMaxRateStb = sinon.stub(db, 'getMaxRate').resolves(maxRates);
     getFuelSurchargeStb = sinon.stub(calculate, 'getLatestFuelSurcharge').resolves(0.09);
-    getProvinceStb = sinon.stub(db, 'getProvince');
   });
   afterEach(() => {
     getRateCodeStb.restore();
     getRateStb.restore();
     getMaxRateStb.restore();
     getFuelSurchargeStb.restore();
-    getProvinceStb.restore();
   });
 
   it('2 - Priority - 0.7kg - 10.89 - Regular', async () => {
@@ -381,7 +339,6 @@ describe('Calculate Shipping Cost Internationally', () => {
   let getRateStb;
   let getMaxRateStb;
   let getFuelSurchargeStb;
-  let getProvinceStb;
   const maxRates: maxRates = {
     maxRate: 10.89,
     incrementalRate: 1.06
@@ -391,14 +348,12 @@ describe('Calculate Shipping Cost Internationally', () => {
     getRateStb = sinon.stub(db, 'getRate');
     getMaxRateStb = sinon.stub(db, 'getMaxRate').resolves(maxRates);
     getFuelSurchargeStb = sinon.stub(calculate, 'getLatestFuelSurcharge').resolves(0.09);
-    getProvinceStb = sinon.stub(db, 'getProvince');
   });
   afterEach(() => {
     getRateCodeStb.restore();
     getRateStb.restore();
     getMaxRateStb.restore();
     getFuelSurchargeStb.restore();
-    getProvinceStb.restore();
   });
 
   it('Ukraine - Priority - 0.7kg - 10.89 - Regular', async () => {
