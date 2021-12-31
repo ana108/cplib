@@ -302,7 +302,15 @@ export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
     return new Promise<any>((resolve, reject) => {
         pdfParser.on("pdfParser_dataError", errData => reject(errData.parserError));
         pdfParser.on("pdfParser_dataReady", pdfData => {
-            let pdfPages = pdfData['formImage']['Pages'];
+            let pdfPages = [];
+            if (pdfData['formImage'] && pdfData['formImage']['Pages']) {
+                pdfPages = pdfData['formImage']['Pages'];
+            } else if (pdfData['Pages']) {
+                pdfPages = pdfData['Pages'];
+            } else {
+                console.log('Faulty Data: ', pdfData);
+                reject('Failed to find the correct format of data');
+            }
             resolve(pdfPages); // an array of texts
         });
         pdfParser.loadPDF(pdfFileLoc);

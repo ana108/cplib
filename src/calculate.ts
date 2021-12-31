@@ -1,6 +1,13 @@
 import { getRateCode, getRate, getProvince, getFuelSurcharge, maxRates, getMaxRate, FuelSurcharge } from './db/sqlite3';
 import { updateAllFuelSurcharges } from './autoload';
-import { checkAndUpdate } from './source';
+import { fork } from 'child_process';
+
+// internal. for integration tests only.
+export let locationOfSource = __dirname + '/source.js';
+export const setLocation = (val: string): void => {
+    locationOfSource = val;
+}
+
 export interface Address {
     streetAddress: string, // full street address, number + apartment
     city: string,
@@ -131,11 +138,16 @@ export const validateAddress = (address: Address): Address => {
     }
     return cleanAddress;
 }
-export const calculateShipping = async (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType: string = 'regular', customerType: string = 'regular'): Promise<number> => {
+export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType: string = 'regular', customerType: string = 'regular'): Promise<number> => {
     const deliverySpeed = deliveryType.trim().toLowerCase();
-    return new Promise<number>(async (resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
         try {
-            checkAndUpdate();
+            const child = fork(locationOfSource, { silent: false })
+            child.on('exit', (err) => {
+                if (err) {
+                    console.log('Error: ', err);
+                }
+            });
             if (!weightInKg || weightInKg <= 0) {
                 throw new Error('Weight must be present and be a non-negative number');
             }

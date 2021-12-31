@@ -15,7 +15,7 @@
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "Anastasiya Andrushchak",
   "license": "ISC",
   "devDependencies": {
     "@types/chai": "^4.2.13",
@@ -39,7 +39,7 @@
     "axios": "^0.21.1",
     "chai-as-promised": "^7.1.1",
     "events": "^3.2.0",
-    "pdf2json": "^1.2.1",
+    "pdf2json": "1.2.1",
     "sinon": "^9.2.0",
     "sqlite3": "^5.0.0"
   }

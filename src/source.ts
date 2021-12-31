@@ -3,9 +3,8 @@ import fsPromises from 'fs/promises';
 import { copyFile } from 'fs/promises';
 import { https } from 'follow-redirects';
 import { loadPDF, extractYear, updateAllFuelSurcharges, REGULAR, SMALL_BUSINESS, e2eProcess } from './autoload';
-import { setDB, getHighestYear, updateFuelSurcharge, resetDB, deleteRatesByYear } from './db/sqlite3';
-// this will check if update needs to happen and call 
-// all the functions below
+import { getHighestYear, resetDB, deleteRatesByYear, setWriteDB } from './db/sqlite3';
+
 export interface updateresults {
     regular: boolean,
     smallBusiness: boolean
@@ -14,28 +13,36 @@ export const checkAndUpdate = async () => {
     const currentYear = new Date().getFullYear();
     let datacheck: updateresults;
     let dataLoadDbPath: string;
+    let state: any;
     try {
-        const currentHighestYear = await getHighestYear();
-        if (currentYear === currentHighestYear) {
-            // console.log(`Current year ${currentYear} matches current highest year ${currentHighestYear}, therefore not updating`);
+        const fileReading = fs.readFileSync(__dirname + '/resources/isUpdating.json');
+        state = JSON.parse(fileReading.toString());
+        let isUpdating = state.isUpdating;
+        if (isUpdating) {
+            console.log('Not updating the database because it is currently updating');
             return Promise.resolve();
         }
+
+        const currentHighestYear = await getHighestYear();
+        if (currentYear === currentHighestYear) {
+            console.log(`Current year ${currentYear} matches current highest year ${currentHighestYear}, therefore not updating`);
+            return Promise.resolve();
+        }
+        await setUpdating(state, true);
         datacheck = await savePDFS(currentYear, currentHighestYear);
-        console.log('Datacheck ', datacheck);
         if (!datacheck.regular && !datacheck.smallBusiness) {
             console.log('Nothing updated, because data check came back as not needed');
             return Promise.resolve(); // all good
         }
+
         dataLoadDbPath = `${__dirname}/cplib_interim.db`;
-        // step one - take a copy of the current cplib
+        console.log('Updating the fuel surcharge on the source db');
+        await updateAllFuelSurcharges();
         await copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
         console.log('Copied the db file');
-        // close all db connections, and open to copied db file
-        await setDB(dataLoadDbPath);
-        console.log('Set the db');
-        // update all fuel surcharge
-        await updateAllFuelSurcharges();
-        console.log('Updated the fuel surcharge on the interim db');
+        // close all write only db connections, and open to copied db file
+        console.log('Set the writing db to be temp db');
+        await setWriteDB(dataLoadDbPath);
     } catch (e) {
         console.log('Error occurred during preparatory processing ', e);
         Promise.reject(e);
@@ -44,20 +51,22 @@ export const checkAndUpdate = async () => {
         try {
             if (datacheck.regular) {
                 const numberDeletedRows = await deleteRatesByYear(currentYear, 'regular');
-                console.log(`While deleting year ${currentYear} of type regular: `, numberDeletedRows);
+                console.log(`Number of rows deleted for year ${currentYear} type regular: `, numberDeletedRows);
                 await e2eProcess(currentYear, REGULAR);
             }
             if (datacheck.smallBusiness) {
                 const numberDeletedRows = await deleteRatesByYear(currentYear, 'small_business');
-                console.log(`While deleting year ${currentYear} of type small business: `, numberDeletedRows);
+                console.log(`Number of rows deleted for year ${currentYear} type small business: `, numberDeletedRows);
                 await e2eProcess(currentYear, SMALL_BUSINESS);
             }
+            console.log('Done e2e process');
             console.log(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
             await copyFile(dataLoadDbPath, `${__dirname}/resources/cplib.db`);
             console.log('Closing db');
             await resetDB();
             console.log('Delete temp db');
             await fsPromises.unlink(dataLoadDbPath);
+            await setUpdating(state, false);
             resolve();
         } catch (err) {
             reject(err);
@@ -95,12 +104,13 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
             });
         });
         req.on('error', (error) => {
+            console.log(`Failed with error ${error}`);
             reject(error);
         });
         req.end();
     });
 
-    const smallBusinessPDF = `${tmpDir}/SmallBusiness_Rates_${year}.pdf`;
+    const smallBusinessPDF = `${tmpDir}/Rates_${year}.pdf`;
     const smallBusinessOptions = {
         followAllRedirects: true,
         hostname: 'www.canadapost-postescanada.ca',
@@ -151,7 +161,11 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
             fs.mkdirSync(regularPdfDest);
         }
         regularPdfDest = regularPdfDest + `/Rates_${yearOfRegular}.pdf`;
-        await copyFile(regularPDF, regularPdfDest);
+        try {
+            await copyFile(regularPDF, regularPdfDest);
+        } catch (e) {
+            console.log('Error on copy ', e);
+        }
     } else {
         console.log(`failing here currentHighestYear ${currentHighestYear} and year of regular ${yearOfRegular}`);
     }
@@ -185,3 +199,25 @@ export const cleanUp = async () => {
         })
     });
 }
+const setUpdating = async (currentlValue: any, newValue: boolean) => {
+    if (newValue) {
+        currentlValue.isUpdating = true;
+    } else {
+        currentlValue.isUpdating = false;
+    }
+    return new Promise<void>((resolve, reject) => {
+        fs.writeFile(__dirname + '/resources/isUpdating.json', JSON.stringify(currentlValue, null, 4), err => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+checkAndUpdate().catch(err => {
+    if (err && err.indexOf('409') >= 0) {
+        (<any>process).send({ isError: '409' });
+    }
+})

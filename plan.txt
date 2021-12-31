@@ -1,10 +1,10 @@
 To DO:
 1. Add a variable so that a second data update doesn't get kicked off when current one is running
 2. Remove unnecessary calls to database to extract provinces from postal codes
-Figure out how to manually update province sales taxes (https://www.retailcouncil.org/resources/quick-facts/sales-tax-rates-by-province/)
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
 (small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
 3. Add licensing
+4. Convert console.log to winston logs for future debugging (add morgan to detail api calls also)
 
 4. Documentation
  - get shipping cost
@@ -15,3 +15,4 @@ Figure out how to manually update province sales taxes (https://www.retailcounci
 
 5. Update package.json and publish package
 6. Manually configure and test installing package through npm on both ubuntu and windows
+7. Verify that everything works as expected when user has no internet access; ie go back to using old data

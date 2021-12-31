@@ -25,12 +25,6 @@ npm run recalibrate
 Every month, fuel surcharge changes. This updates the integration tests to have the new values. 
 
 `bash
-npm run load
-`
-This deletes the rates from the tables and re-loads them again from PDF. This is called separately from the next 
-command because it takes too long to run both the data load and the tests for the data load functionality.
-
-`bash
 npm run auto
 `
 This is int/unit tests that specifically test the functionality that extracts data from the pdf files and loads it into the database.

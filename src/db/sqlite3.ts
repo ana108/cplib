@@ -1,6 +1,3 @@
-import { rejects } from 'assert';
-import { write } from 'fs';
-import { join } from 'path';
 import sqlite3 from 'sqlite3';
 import { FuelTable } from '../autoload';
 
@@ -12,10 +9,27 @@ export const setDB = async (dbLocation: string) => {
   return new Promise<void>((resolve, reject) => {
     db.close(err => {
       if (err) {
-        console.log(`Error closing DB ${dbname}`);
+        console.log(`Error closing DB ${dbname}: Error: ${err}`);
       }
       dbToOpen = dbLocation;
       db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
+      writedb.close(error => {
+        if (error) {
+          console.log(`Error closing writing DB ${dbname}: Error: ${err}`);
+        }
+        writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
+      });
+      resolve();
+    });
+  });
+}
+export const setWriteDB = async (dbLocation: string) => {
+  return new Promise<void>((resolve, reject) => {
+    writedb.close(err => {
+      if (err) {
+        console.log(`Error closing written DB ${dbname}: Error: ${err}`);
+      }
+      dbToOpen = dbLocation;
       writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
       resolve();
     });
@@ -26,15 +40,14 @@ export const resetDB = async () => {
     dbToOpen = dbname;
     db.close(err => {
       if (err) {
-        console.log(`Error closing DB on reset ${dbname}`);
+        console.log(`Error closing DB on reset ${dbname} error: ${err}`);
       }
       db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
-      writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
       resolve(true);
     });
     writedb.close(err => {
       if (err) {
-        console.log(`Error closing write DB on reset ${dbname}`);
+        console.log(`Error closing write DB on reset ${dbname} : ${err}`);
       }
       writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
     })
@@ -365,7 +378,6 @@ export const getHighestYear = (): Promise<number> => {
     const stmt = db.prepare(sql);
     stmt.get([], (err, row) => {
       if (err) {
-        console.log('ERROR ', err);
         reject(err);
       } else if (!row) {
         reject(new Error('Failed to find any year in rates table'));
