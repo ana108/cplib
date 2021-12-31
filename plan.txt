@@ -1,5 +1,4 @@
 To DO:
-1. Add a variable so that a second data update doesn't get kicked off when current one is running
 2. Remove unnecessary calls to database to extract provinces from postal codes
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
 (small business link: https://www.canadapost-postescanada.ca/tools/pg/prices/SBPrices-e.pdf)
