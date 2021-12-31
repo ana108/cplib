@@ -1,7 +1,7 @@
 {
   "name": "cplib",
   "version": "1.0.0",
-  "description": "",
+  "description": "It calculates the price of shipping a parcel using canada post",
   "main": "build/index.js",
   "scripts": {
     "start:dev": "nodemon",
@@ -14,9 +14,14 @@
     "sourcetest": "mocha --timeout 0 -r ts-node/register src/source.test.ts",
     "lint": "eslint . --ext .ts --fix"
   },
-  "keywords": [],
+  "keywords": [
+    "canada post",
+    "cplib",
+    "shipping cost",
+    "parcel cost"
+  ],
   "author": "Anastasiya Andrushchak",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/chai": "^4.2.13",
     "@types/mocha": "^8.0.3",
@@ -41,7 +46,6 @@
     "events": "^3.2.0",
     "pdf2json": "1.2.1",
     "sinon": "^9.2.0",
-    "sqlite3": "^5.0.0",
-    "ts-jest": "^27.1.2"
+    "sqlite3": "^5.0.0"
   }
 }

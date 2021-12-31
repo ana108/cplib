@@ -81,6 +81,9 @@ International:
 
 Please note that all packets must weigh 2kg or less.
 
+### Customer Type
+The default is regular, the other option is small_business, which comes with a 5% discount
+
 # Developing on cplib
 ## Scripts explained
 
