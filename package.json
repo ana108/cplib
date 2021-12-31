@@ -5,14 +5,14 @@
   "main": "build/index.js",
   "scripts": {
     "start:dev": "nodemon",
-    "test": "mocha -r ts-node/register src/calculate.test.ts src/index.test.ts src/db/sqlite3.test.ts",
+    "test": "mocha -r ts-node/register src/calculate.test.ts src/db/sqlite3.test.ts",
     "int": "mocha -r ts-node/register src/integration/integration.test.ts",
     "recalibrate": "mocha -r ts-node/register src/integration/recalibrate.test.ts",
     "auto": "mocha --timeout 0 -r ts-node/register src/autoload.test.ts",
     "build": "rimraf ./build && tsc && cp -rf src/resources/ build/",
     "start": "npm run build && node build/index.js",
     "sourcetest": "mocha --timeout 0 -r ts-node/register src/source.test.ts",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts --fix"
   },
   "keywords": [],
   "author": "Anastasiya Andrushchak",
@@ -39,8 +39,11 @@
     "axios": "^0.21.1",
     "chai-as-promised": "^7.1.1",
     "events": "^3.2.0",
+    "jest": "^27.4.5",
+    "mock-require": "^3.0.3",
     "pdf2json": "1.2.1",
     "sinon": "^9.2.0",
-    "sqlite3": "^5.0.0"
+    "sqlite3": "^5.0.0",
+    "ts-jest": "^27.1.2"
   }
 }

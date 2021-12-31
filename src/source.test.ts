@@ -1,4 +1,3 @@
-import * as sinon from 'sinon';
 import * as fs from 'fs';
 import 'mocha';
 import * as chai from 'chai';

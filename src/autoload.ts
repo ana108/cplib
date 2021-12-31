@@ -18,7 +18,7 @@ export const updateAllFuelSurcharges = async (): Promise<any> => {
         return Promise.reject('Missing values returned from HTML. Please investigate ' + JSON.stringify(newFuelTable, null, 4));
     }
     if (!newFuelTable['Expiry_Date']) {
-        let defaultExpiryDate = new Date();
+        const defaultExpiryDate = new Date();
         defaultExpiryDate.setDate(defaultExpiryDate.getDate() + 21);
         newFuelTable['Expiry_Date'] = defaultExpiryDate;
     }
@@ -37,11 +37,11 @@ export const getFuelSurchargeTable = async (): Promise<FuelTable> => {
 }
 
 export const extractFuelTable = (data: string): FuelTable => {
-    let dt = JSON.stringify(data);
-    let lines = dt.split('\\n');
-    let r = 11;
-    let st = 'The Fuel Surcharges are as follows:';
-    let ed = 'How we calculate fuel surcharges';
+    const dt = JSON.stringify(data);
+    const lines = dt.split('\\n');
+    const r = 11;
+    const st = 'The Fuel Surcharges are as follows:';
+    const ed = 'How we calculate fuel surcharges';
 
     let start = 0;
     let end = 0;
@@ -54,15 +54,15 @@ export const extractFuelTable = (data: string): FuelTable => {
         }
     }
     // first line: extract the end date
-    let endDateRaw = lines[start + 1];
-    let endDate = endDateRaw.replace(/&nbsp;/g, ' ').split('through')[1].replace('</h4>', '').replace(':', '');
+    const endDateRaw = lines[start + 1];
+    const endDate = endDateRaw.replace(/&nbsp;/g, ' ').split('through')[1].replace('</h4>', '').replace(':', '');
     const validUntilDate = new Date(endDate);
-    let serviceCharges: FuelTable = <FuelTable>{};
+    const serviceCharges: FuelTable = <FuelTable>{};
     for (let i = start + 2; i < end; i++) {
         lines[i] = lines[i].replace(/&nbsp;/g, '');
         if (lines[i].indexOf('<tr>') >= 0 && !serviceCharges['Priority Worldwide']) {
-            let header = lines[i + 1].replace('</td>', '').replace('<td>', '').replace('<em>', '').replace('</em>', '').replace('<sup>TM</sup>', '');
-            let value = parseFloat(lines[i + 2].replace(/&nbsp;/g, '').replace('</td>', '').replace('<td>', '').trimLeft().replace('%', ''));
+            const header = lines[i + 1].replace('</td>', '').replace('<td>', '').replace('<em>', '').replace('</em>', '').replace('<sup>TM</sup>', '');
+            const value = parseFloat(lines[i + 2].replace(/&nbsp;/g, '').replace('</td>', '').replace('<td>', '').trimLeft().replace('%', ''));
             serviceCharges[header] = value;
         }
     }
@@ -114,9 +114,9 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
         'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
         'small_business': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
     };
-    let pdfData = await loadPDF(dataSources[type]);
-    let pageTables: RatesPages = pageHeaders(pdfData);
-    let rateTables = <RateTables>{
+    const pdfData = await loadPDF(dataSources[type]);
+    const pageTables: RatesPages = pageHeaders(pdfData);
+    const rateTables = <RateTables>{
         'PriorityCanada1': [],
         'PriorityCanada2': [],
         'ExpressCanada1': [],
@@ -184,7 +184,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     const usaRateCodes: string = (rateTables[expeditedUSALabel] && rateTables[expeditedUSALabel][0]) || '';
     const trackedPacketUSALabel = 'TrackedPacketUSA';
     if (pageTables[trackedPacketUSALabel] !== 0) {
-        let trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 0);
+        const trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 0);
         rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
     } else {
         console.error('Failed to populate Tracked Packet USA tables');
@@ -192,7 +192,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const smallPacketUSALabel = 'SmallPacketUSA';
     if (pageTables[smallPacketUSALabel] !== 0) {
-        let smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 0);
+        const smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 0);
         rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
     } else {
         console.error('Failed to populate Small Packet USA tables');
@@ -220,21 +220,21 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
     if (pageTables[worldwideTrackedPacketLabel] !== 0) {
-        let worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 1);
+        const worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 1);
         rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, worldwideTrackedPacket[0].split(' '));
     } else {
         console.error('Failed to populate worldwide tracked packet tables');
     }
     const worldwideSmallPacketLabel = 'SmallPacketInternational';
     if (pageTables[worldwideSmallPacketLabel] !== 0) {
-        let worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 1); // working, beware that it can be split up into two air and surface, air comes first
+        const worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 1); // working, beware that it can be split up into two air and surface, air comes first
         const knownRateCodes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
         const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
         const splitOfSmallPackets = splitMultiTablePage(worldwideSmallPacket, knownRateCodes.join(' '));
-        let worldwideSmallAirPacket = splitOfSmallPackets[0];
+        const worldwideSmallAirPacket = splitOfSmallPackets[0];
         rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, knownRateCodes);
         const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
-        let worldwideSmallSurfacePacket = splitOfSmallPackets[1];
+        const worldwideSmallSurfacePacket = splitOfSmallPackets[1];
         rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, knownRateCodes);
     } else {
         console.error('Failed to populate worldwide small packet (air/surface) tables');
@@ -279,10 +279,10 @@ export const splitMultiTablePage = (page: string[], rateCodes?: string): string[
     /* conclusions: the "headers" ie ratecodes will always be either one or two characters
     so any token that is length 2 or less can be assumed to be part of the header row
     */
-    let subpages: string[][] = [];
+    const subpages: string[][] = [];
     let subpage: string[] = [];
     for (let i = 0; i < page.length; i++) {
-        let line = page[i].split(' ');
+        const line = page[i].split(' ');
         if (line[0] && (line[0].trim().length <= 2 || (rateCodes && page[i].indexOf(rateCodes) >= 0))) {
             // rate code line found
             if (subpage.length != 0) { // first page
@@ -298,7 +298,7 @@ export const splitMultiTablePage = (page: string[], rateCodes?: string): string[
     return subpages;
 }
 export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
-    let pdfParser = new PDFParser();
+    const pdfParser = new PDFParser();
     return new Promise<any>((resolve, reject) => {
         pdfParser.on("pdfParser_dataError", errData => reject(errData.parserError));
         pdfParser.on("pdfParser_dataReady", pdfData => {
@@ -317,8 +317,8 @@ export const loadPDF = async (pdfFileLoc: string): Promise<any> => {
     });
 }
 export const extractYear = (pdfData: string): any => {
-    let titlePage = pdfData[0]['Texts'];
-    let dataByLine = {};
+    const titlePage = pdfData[0]['Texts'];
+    const dataByLine = {};
     titlePage.forEach(entry => {
         if (dataByLine[entry.y]) {
             dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, ' ').replace(/TM/g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/&nbsp;/g, ' ').replace(/%20/g, ' ').replace(/%2C/g, ' ');
@@ -327,10 +327,10 @@ export const extractYear = (pdfData: string): any => {
         }
         dataByLine[entry.y] = dataByLine[entry.y].replace(/  +/g, ' ');
     });
-    let keys = Object.keys(dataByLine).sort(function (a, b) {
+    const keys = Object.keys(dataByLine).sort(function (a, b) {
         return parseFloat(a) - parseFloat(b);
     });
-    let textsArray: any[] = [];
+    const textsArray: any[] = [];
     keys.forEach(key => {
         if (dataByLine[key].indexOf('Prices') >= 0 || dataByLine[key].indexOf('Effective') >= 0 || dataByLine[key].indexOf('Updated') >= 0) {
             textsArray.push(dataByLine[key]);
@@ -338,7 +338,7 @@ export const extractYear = (pdfData: string): any => {
     });
     let overlappingStr = '';
     for (let i = 1; i < textsArray.length; i++) {
-        let tokens = textsArray[i].trim().split(' ');
+        const tokens = textsArray[i].trim().split(' ');
         tokens.forEach(token => {
             if (token.trim().length == 4 && !isNaN(token.trim())) {
                 overlappingStr = token.trim();
@@ -349,7 +349,7 @@ export const extractYear = (pdfData: string): any => {
 }
 
 export const extractPages = (pdfData: any): RatesPages => {
-    let pages: RatesPages = {
+    const pages: RatesPages = {
         'PriorityCanada': 0,
         'ExpressCanada': 0,
         'ExpeditedCanada': 0,
@@ -365,7 +365,7 @@ export const extractPages = (pdfData: any): RatesPages => {
         'TrackedPacketInternational': 0,
         'SmallPacketInternational': 0
     };
-    let pageTitleMapping = {
+    const pageTitleMapping = {
         'Priority Prices': 'PriorityCanada',
         'Xpresspost Prices': 'ExpressCanada',
         'Regular Parcel Prices': 'RegularCanada',
@@ -381,7 +381,7 @@ export const extractPages = (pdfData: any): RatesPages => {
         'Tracked Packet International Prices': 'TrackedPacketInternational',
         'Small Packet International Prices': 'SmallPacketInternational'
     }
-    let pageTextLength = pdfData[1]['Texts'].length;
+    const pageTextLength = pdfData[1]['Texts'].length;
     let title = '';
     // Reading the table of contents page:
     // Explanation: the ... gets broken up into random number of units, however, those units are always between the name of the page and the page number
@@ -390,13 +390,13 @@ export const extractPages = (pdfData: any): RatesPages => {
     // once we see a token that is not ... and the title is not empty, then we know its the page number, so we grab the page number
     // and set the title back to blank for the next line
     for (let j = 1; j < pageTextLength; j++) {
-        let searchText = pdfData[1]['Texts'][j]['R'][0]['T'];
+        const searchText = pdfData[1]['Texts'][j]['R'][0]['T'];
         if (searchText.indexOf('..') >= 0 && title.length == 0) {
             title = pdfData[1]['Texts'][j - 1]['R'][0]['T'];
         } else if (searchText.indexOf('..') >= 0 && title.length > 0) {
-
+            // do nothing
         } else if (title.length > 0) {
-            let massagedTitle = title.replace(/%20/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/%E2%80%93/g, ' ').replace(/%2C/g, ' ').replace(/  /g, ' ').trim();
+            let massagedTitle = title.replace(/%20/g, ' ').replace(/%E2%84%A2/g, ' ').replace(/%E2%80%93/g, ' ').replace(/%2C/g, ' ').replace(/ {2}/g, ' ').trim();
             massagedTitle = massagedTitle.replace(/  +/g, ' ');
             const pageNumber = pdfData[1]['Texts'][j]['R'][0]['T'];
             if (pageTitleMapping[massagedTitle] && pages[pageTitleMapping[massagedTitle]] === 0) {
@@ -414,7 +414,7 @@ export const extractPages = (pdfData: any): RatesPages => {
     return pages;
 }
 export const pageHeaders = (pdfData: any): RatesPages => {
-    let pages: RatesPages = {
+    const pages: RatesPages = {
         'PriorityCanada': 0,
         'ExpressCanada': 0,
         'ExpeditedCanada': 0,
@@ -432,16 +432,16 @@ export const pageHeaders = (pdfData: any): RatesPages => {
     };
     let pageNum = 0;
     pdfData.forEach(page => {
-        let dataByLine = {};
+        const dataByLine = {};
         page['Texts'].forEach(entry => {
             if (dataByLine[entry.y]) {
-                dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, '').replace(/TM/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+                dataByLine[entry.y] = dataByLine[entry.y] + entry['R'][0]['T'].replace(/Over/g, '').replace(/TM/g, '').replace(/ {2}/g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
             } else {
-                dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/TM/g, '').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+                dataByLine[entry.y] = entry['R'][0]['T'].replace(/Over/g, '').replace(/ {2}/g, ' ').replace(/%24/g, '$').replace(/TM/g, '').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
             }
             dataByLine[entry.y] = dataByLine[entry.y].replace(/  +/g, ' ');
         });
-        let keys = Object.keys(dataByLine).sort(function (a, b) {
+        const keys = Object.keys(dataByLine).sort(function (a, b) {
             return parseFloat(a) - parseFloat(b);
         });
         if (keys.length >= 3) {
@@ -455,7 +455,7 @@ export const pageHeaders = (pdfData: any): RatesPages => {
     return pages;
 }
 export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, pageNum: number): void => {
-    let pageTitleMapping = {
+    const pageTitleMapping = {
         'PriorityPrices': 'PriorityCanada',
         'XpresspostPrices': 'ExpressCanada',
         'ExpeditedParcelPrices': 'ExpeditedCanada',
@@ -474,7 +474,7 @@ export const handlePageTitleEntry = (rawText: string, ptrRateTable: RatesPages, 
         'TrackedPacketInternationalPrices': 'TrackedPacketInternational',
         'SmallPacketInternationalPrices': 'SmallPacketInternational'
     };
-    let overwriteEligible = ['ExpressUSA', 'ExpeditedUSA', 'PriorityWorldwide', 'ExpressInternational',
+    const overwriteEligible = ['ExpressUSA', 'ExpeditedUSA', 'PriorityWorldwide', 'ExpressInternational',
         'AirInternational', 'SurfaceInternational', 'SmallPacketInternational'];
     let pageFound = -1;
     let matchingTitle = '';
@@ -513,16 +513,16 @@ export const isAllNum = (values: any[]): boolean => {
 // final row of overweight
 export const extractRateTables = (pdfPages: any, page: number, numRateCodes: number, decimalPoint: number): string[] => {
     let wholeText = pdfPages[page - 1]['Texts'];
-    let wholeTextLength = wholeText.length;
+    const wholeTextLength = wholeText.length;
     let line = '';
     /* suggestion: if a new "y" is found append it to an existing y in a map, then list over all the ys*/
-    let allText = {};
+    const allText = {};
     wholeText = wholeText.sort(function (a, b) {
         return parseFloat(a.y) - parseFloat(b.y);
     });
 
     for (let i = 0; i < wholeTextLength; i++) {
-        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
+        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/ {2}/g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '').replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').trim();
         if (allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)]) {
             if (allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)].indexOf('$') >= 0) { // canada post apparently doesn't know how to draw straight lines. this is a bandaid
                 allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)] = line + ' ' + allText[parseFloat(wholeText[i].y).toFixed(decimalPoint)].trim();
@@ -539,7 +539,7 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
     });
     let prevKey = '';
     keys.forEach(key => {
-        let tokens = allText[key].split(' ');
+        const tokens = allText[key].split(' ');
         // if allText[key] tokens is 2 and both those tokens are number; attach the previous key's values to this one and delete previous key
         if (prevKey != '' && isAllNum(allText[prevKey].split(' ')) && allText[prevKey].split(' ').length === (numRateCodes + 2)) {
             // dont do anything leave well enough alone
@@ -562,17 +562,17 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
         return parseFloat(a) - parseFloat(b);
     });
     keys = Object.keys(allText);
-    let cleanArray: string[] = [];
+    const cleanArray: string[] = [];
     for (let i = 0; i < keys.length; i++) {
         if (allText[keys[i]]) {
-            let totalTokens = allText[keys[i]].trim().split(' ').length;
+            const totalTokens = allText[keys[i]].trim().split(' ').length;
             if (totalTokens >= numRateCodes) {
                 let lineOfRates = allText[keys[i]].trim();
                 // this is for cases where upTo token is last in line
-                let idxOfUpTo = allText[keys[i]].toLowerCase().indexOf('upto');
+                const idxOfUpTo = allText[keys[i]].toLowerCase().indexOf('upto');
                 if (idxOfUpTo > 6) { // we know now that the index is last
                     const tokens = allText[keys[i]].split(' ');
-                    let uptoStmt = tokens.pop();
+                    const uptoStmt = tokens.pop();
                     tokens.unshift(uptoStmt);
                     lineOfRates = tokens.join(' ');
                 }
@@ -584,17 +584,17 @@ export const extractRateTables = (pdfPages: any, page: number, numRateCodes: num
 }
 
 export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): string[] => {
-    let fullPage = extractRateTables(pdfPages, pageNumber, 7, 3);
+    const fullPage = extractRateTables(pdfPages, pageNumber, 7, 3);
     // convert text of the page to be in a line by line format
-    let wholeText = pdfPages[pageNumber - 1]['Texts'];
-    let wholeTextLength = wholeText.length;
+    const wholeText = pdfPages[pageNumber - 1]['Texts'];
+    const wholeTextLength = wholeText.length;
     let line = '';
-    let allText: any = {};
+    const allText: any = {};
     // hard code this because it is unlikely to change
     const header = '1 2 3 4 5 6 7';
     fullPage[0] = header;
     for (let i = 0; i < wholeTextLength; i++) {
-        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/  /g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '')
+        line = wholeText[i]['R'][0]['T'].replace(/Over/g, '').replace(/ {2}/g, ' ').replace(/%24/g, '$').replace(/%E2%80%93/g, '')
             .replace(/%E2%84%A2/g, '').replace(/&nbsp;/g, '').replace(/%20/g, '').replace(/%2C/g, '').replace('%C3', '')
             .replace('%89', '').replace('%E2', '').replace('%80', '').replace('%A0', '').replace('%E2', '').replace('%80', '').replace('%A0', '').trim(); // %E2%80%A0%E2%80%A0
         if (line.trim().length == 0) {
@@ -608,14 +608,14 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
         }
     }
     // sort all values by row
-    let keys = Object.keys(allText).sort(function (a, b) {
+    const keys = Object.keys(allText).sort(function (a, b) {
         return parseFloat(a) - parseFloat(b);
     });
     let rates = '';
 
     let indexWhereSearchStarts = 0;
     for (let i = 0; i < keys.length; i++) {
-        let value = allText[keys[i]].replace(/\s/g, '');
+        const value = allText[keys[i]].replace(/\s/g, '');
         // to find the row with all the weights, we find the row that has 2x tokens, where x is the number of rate codes
         if (value.indexOf('ENVELOPE(MAXIMUM500G)PAK(MAXIMUM1.5KG)') >= 0) {
             indexWhereSearchStarts = i;
@@ -624,7 +624,7 @@ export const extractPriorityWorldwide = (pdfPages: any, pageNumber: number): str
             const ratesTokens = allText[keys[i]].split(' ');
             if (ratesTokens.length === 14) {
                 const ratesHalfPoint = ratesTokens.length / 2;
-                let kiloAndAHalfPakRates = ratesTokens.splice(ratesHalfPoint).join(' ');
+                const kiloAndAHalfPakRates = ratesTokens.splice(ratesHalfPoint).join(' ');
                 rates = '1.5 3.3 ' + kiloAndAHalfPakRates;
             }
         }
@@ -684,7 +684,7 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
         pageArray.splice(0, realBeginning);
     }
     // first line shouldn't have anything other than rate codes
-    pageArray[0] = pageArray[0].replace('(USA)', '').replace(/  /g, ' ');
+    pageArray[0] = pageArray[0].replace('(USA)', '').replace(/ {2}/g, ' ');
 
     // clean from the bottom up.... if line has anything non numeric, just delete it
     for (let i = pageArray.length - 1; i > 0; i--) {
@@ -724,12 +724,12 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
     }
     pageArray = pageArray.slice(firstValidLine);
     // convert all g/kg tokens to be kg and remove 
-    let finalTableRow: any[] = [];
-    let rateCodes = rcs.join(' ').toUpperCase().replace('INKG ', '').replace('INLB', '').trim().split(' ');
+    const finalTableRow: any[] = [];
+    const rateCodes = rcs.join(' ').toUpperCase().replace('INKG ', '').replace('INLB', '').trim().split(' ');
     // console.log('Rate Codes ', rateCodes);
     pageArray.forEach(row => {
         row = row.replace('$', '');
-        let tokens: any = row.split(' ');
+        const tokens: any = row.split(' ');
         let maxToken: any = tokens[1].toLowerCase();
         let maxTokenInKg: number = tokens[0];
         let maxTokenInLb: number = tokens[1];
@@ -776,7 +776,7 @@ export const loadByType = (rates: RateTables, year: number, type: string): Promi
 export const saveTableEntries = (ratesPage: RateTables, year: number, customerType: string): Promise<any> => {
     return new Promise<any>((resolve, reject) => {
         const inputsAll: string[] = [];
-        let mapToDeliveryType = {
+        const mapToDeliveryType = {
             'PriorityCanada1': {
                 type: 'priority',
                 country: 'Canada',
@@ -877,7 +877,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
             if (!ratesPage[deliveryType] || ratesPage[deliveryType].length === 0) {
                 return;
             }
-            let labels: string[] = ratesPage[deliveryType][0].split(' ');
+            const labels: string[] = ratesPage[deliveryType][0].split(' ');
             const type = mapToDeliveryType[deliveryType].type;
             const country = mapToDeliveryType[deliveryType].country;
 
@@ -886,7 +886,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                 lineLength = lineLength - 1;
             }
             for (let i = 1; i < lineLength; i++) {
-                let input = ratesPage[deliveryType][i];
+                const input = ratesPage[deliveryType][i];
                 const tokens = input.split(' ');
                 const maxWeight = tokens[0];
 

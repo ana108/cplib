@@ -8,17 +8,16 @@ import { getHighestYear, resetDB, deleteRatesByYear, setWriteDB } from './db/sql
 export interface updateresults {
     regular: boolean,
     smallBusiness: boolean
-};
-export const checkAndUpdate = async () => {
+}
+export const checkAndUpdate = async (): Promise<void> => {
     const currentYear = new Date().getFullYear();
     let datacheck: updateresults;
     let dataLoadDbPath: string;
-    let state: any;
+    let state: { isUpdating: boolean };
     try {
         const fileReading = fs.readFileSync(__dirname + '/resources/isUpdating.json');
         state = JSON.parse(fileReading.toString());
-        let isUpdating = state.isUpdating;
-        if (isUpdating) {
+        if (state.isUpdating) {
             console.log('Not updating the database because it is currently updating');
             return Promise.resolve();
         }
@@ -45,36 +44,34 @@ export const checkAndUpdate = async () => {
         await setWriteDB(dataLoadDbPath);
     } catch (e) {
         console.log('Error occurred during preparatory processing ', e);
-        Promise.reject(e);
+        return Promise.reject(e);
     }
-    return new Promise<void>(async (resolve, reject) => {
-        try {
-            if (datacheck.regular) {
-                const numberDeletedRows = await deleteRatesByYear(currentYear, 'regular');
-                console.log(`Number of rows deleted for year ${currentYear} type regular: `, numberDeletedRows);
-                await e2eProcess(currentYear, REGULAR);
-            }
-            if (datacheck.smallBusiness) {
-                const numberDeletedRows = await deleteRatesByYear(currentYear, 'small_business');
-                console.log(`Number of rows deleted for year ${currentYear} type small business: `, numberDeletedRows);
-                await e2eProcess(currentYear, SMALL_BUSINESS);
-            }
-            console.log('Done e2e process');
-            console.log(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
-            await copyFile(dataLoadDbPath, `${__dirname}/resources/cplib.db`);
-            console.log('Closing db');
-            await resetDB();
-            console.log('Delete temp db');
-            await fsPromises.unlink(dataLoadDbPath);
-            await setUpdating(state, false);
-            resolve();
-        } catch (err) {
-            reject(err);
+    try {
+        if (datacheck.regular) {
+            const numberDeletedRows = await deleteRatesByYear(currentYear, 'regular');
+            console.log(`Number of rows deleted for year ${currentYear} type regular: `, numberDeletedRows);
+            await e2eProcess(currentYear, REGULAR);
         }
-    });
+        if (datacheck.smallBusiness) {
+            const numberDeletedRows = await deleteRatesByYear(currentYear, 'small_business');
+            console.log(`Number of rows deleted for year ${currentYear} type small business: `, numberDeletedRows);
+            await e2eProcess(currentYear, SMALL_BUSINESS);
+        }
+        console.log('Done e2e process');
+        console.log(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
+        await copyFile(dataLoadDbPath, `${__dirname}/resources/cplib.db`);
+        console.log('Closing db');
+        await resetDB();
+        console.log('Delete temp db');
+        await fsPromises.unlink(dataLoadDbPath);
+        await setUpdating(state, false);
+        return Promise.resolve();
+    } catch (err) {
+        return Promise.reject(err);
+    }
 }
 
-export const savePDFS = async (year, currentHighestYear): Promise<updateresults> => {
+export const savePDFS = async (year: number, currentHighestYear: number): Promise<updateresults> => {
     const tmpDir = __dirname + '/resources/tmp';
     // tmp directory to load the pdf into so we can check if new pdf has been posted
     if (!fs.existsSync(tmpDir)) {
@@ -92,7 +89,7 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
             Accept: 'application/pdf',
         },
     };
-    const regularRatesAPI = new Promise<any>((resolve, reject) => {
+    const regularRatesAPI = new Promise<boolean>((resolve, reject) => {
         const req = https.request(regularOptions, res => {
             res.on('error', (e) => {
                 reject(e);
@@ -122,7 +119,7 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
             Accept: 'application/pdf',
         },
     };
-    const smallBusinessRatesAPI = new Promise<any>((resolve, reject) => {
+    const smallBusinessRatesAPI = new Promise<boolean>((resolve, reject) => {
         const req = https.request(smallBusinessOptions, res => {
             res.pipe(fs.createWriteStream(smallBusinessPDF).on('finish', () => {
                 resolve(true);
@@ -132,6 +129,7 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
         });
 
         req.on('error', (error) => {
+            console.log('Error on download of small')
             reject(error);
         });
         req.end();
@@ -139,14 +137,14 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
     try {
         await Promise.all([regularRatesAPI, smallBusinessRatesAPI]);
     } catch (error) {
-        return Promise.reject('Failed to download the files, ending the data load process now');
-    };
+        return Promise.reject('Failed to download the files, ending the data load process now')
+    }
 
     // check the year of the pdf returned for regular customers.
     // this is done by extracting the first page and seeing the year displayed there
     const regularPDFFirstPage = await loadPDF(regularPDF);
     const yearOfRegular = extractYear(regularPDFFirstPage);
-    let updateRates: updateresults = {
+    const updateRates: updateresults = {
         regular: false,
         smallBusiness: false
     };
@@ -167,7 +165,7 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
             console.log('Error on copy ', e);
         }
     } else {
-        console.log(`failing here currentHighestYear ${currentHighestYear} and year of regular ${yearOfRegular}`);
+        console.log(`The year in PDF is not higher than currentHighestYear ${currentHighestYear} Year found in pdf: ${yearOfRegular}`);
     }
     const smallBusinessPDFFirstPage = await loadPDF(smallBusinessPDF);
     const yearOfSmallBusiness = extractYear(smallBusinessPDFFirstPage);
@@ -181,15 +179,19 @@ export const savePDFS = async (year, currentHighestYear): Promise<updateresults>
             fs.mkdirSync(smallBusinessPdfDest);
         }
         smallBusinessPdfDest = smallBusinessPdfDest + `/Rates_${yearOfRegular}.pdf`;
-        await copyFile(smallBusinessPDF, smallBusinessPdfDest);
+        try {
+            await copyFile(smallBusinessPDF, smallBusinessPdfDest);
+        } catch (e) {
+            console.log('Small Business Copy Error ', e);
+        }
     }
     await cleanUp();
     return Promise.resolve(updateRates);
 }
 
-export const cleanUp = async () => {
+export const cleanUp = async (): Promise<boolean> => {
     const tmpDir = __dirname + '/resources/tmp';
-    return new Promise<any>((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
         fs.rmdir(tmpDir, { recursive: true }, (err) => {
             if (err) {
                 reject(err);
@@ -199,14 +201,14 @@ export const cleanUp = async () => {
         })
     });
 }
-const setUpdating = async (currentlValue: any, newValue: boolean) => {
+const setUpdating = async (currentValue: { isUpdating: boolean }, newValue: boolean): Promise<void> => {
     if (newValue) {
-        currentlValue.isUpdating = true;
+        currentValue.isUpdating = true;
     } else {
-        currentlValue.isUpdating = false;
+        currentValue.isUpdating = false;
     }
     return new Promise<void>((resolve, reject) => {
-        fs.writeFile(__dirname + '/resources/isUpdating.json', JSON.stringify(currentlValue, null, 4), err => {
+        fs.writeFile(__dirname + '/resources/isUpdating.json', JSON.stringify(currentValue, null, 4), err => {
             if (err) {
                 reject(err);
             } else {

@@ -10,7 +10,19 @@ import * as db from './db/sqlite3';
 import * as chai from 'chai';
 import { fail } from 'assert';
 import { maxRates } from './db/sqlite3';
+const child_process = require('child_process');
 
+const message_handler = {
+  on: (event: any, cb) => {
+    cb()
+  }
+}
+
+const mockprocess = {
+  fork: function (path) {
+    return message_handler;
+  }
+};
 const expect = chai.expect;
 /*
 Calculate Tax Unit Tests:
@@ -41,6 +53,7 @@ sourceProvince, destinationProvice, shippingCost (5.00), shippingType = express
 PEI              PEI
 
 */
+
 describe('    Source Dest Shipping Speed', () => {
 
   it('ON     NB   1.00     regular', () => {
@@ -118,7 +131,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(10.89);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.70);
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.70);
     expect(cost).to.equal(12.46);
   });
 
@@ -126,7 +139,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(11.45);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0);
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0);
     expect(cost).to.equal(13.1);
   });
 
@@ -134,7 +147,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(11.99);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3);
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3);
     expect(cost).to.equal(13.72);
   });
 
@@ -142,7 +155,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(34.39);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30);
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30);
     expect(cost).to.equal(39.36);
   });
 
@@ -150,7 +163,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getMaxRateStb.resolves({ incrementalRate: 0.34, maxRate: 10.0 });
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 33);
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 33);
     expect(cost).to.equal(13.78);
 
   });
@@ -159,7 +172,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(11.51);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'express');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'express');
     expect(cost).to.equal(13.17);
   });
 
@@ -167,7 +180,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(13.39);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express');
     expect(cost).to.equal(15.32);
   });
 
@@ -175,7 +188,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(15.68);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3, 'express');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.3, 'express');
     expect(cost).to.equal(17.95);
   });
 
@@ -183,7 +196,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(40.32);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'express');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'express');
     expect(cost).to.equal(46.15);
   });
 
@@ -191,7 +204,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(23.74);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'priority');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 0.7, 'priority');
     expect(cost).to.equal(27.17);
   });
 
@@ -199,7 +212,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(24.47);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
     expect(cost).to.equal(28.01);
   });
 
@@ -207,7 +220,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(24.96);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority');
     expect(cost).to.equal(28.57);
   });
 
@@ -215,21 +228,21 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(59.60);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'priority');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'priority');
     expect(cost).to.equal(68.21);
   });
   it('SB - Regular - 30.0kg - 59.60', async () => {
     getRateStb.resolves(59.60);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'regular', 'small_business');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 30.0, 'regular', 'small_business');
     expect(cost).to.equal(68.21);
   });
   it('SB - Regular -  1.3kg - 24.96', async () => {
     getRateStb.resolves(24.96);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'regular', 'small_business');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'regular', 'small_business');
     expect(cost).to.equal(28.57);
   });
 
@@ -237,7 +250,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(24.96);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority', 'small_business');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'priority', 'small_business');
     expect(cost).to.equal(28.57);
   });
 
@@ -245,7 +258,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(24.96);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express', 'small_business');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'express', 'small_business');
     expect(cost).to.equal(28.57);
   });
 
@@ -253,7 +266,7 @@ describe('Calculate Shipping Cost By Postal Code', () => {
     getRateStb.resolves(24.96);
     getProvinceStb.onCall(0).resolves('ON');
     getProvinceStb.onCall(1).resolves('QC');
-    let cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'expedited', 'small_business');
+    const cost = await calculateShippingCanada('K1V2R9', 'J9H5V8', 1.0, 'expedited', 'small_business');
     expect(cost).to.equal(27.21);
   });
 });
@@ -265,7 +278,7 @@ describe('Calculate Shipping Cost to USA', () => {
   let getMaxRateStb;
   let getFuelSurchargeStb;
   let getProvinceStb;
-  let maxRates: maxRates = {
+  const maxRates: maxRates = {
     maxRate: 10.89,
     incrementalRate: 1.06
   };
@@ -286,52 +299,52 @@ describe('Calculate Shipping Cost to USA', () => {
 
   it('2 - Priority - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'regular');
+    const cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'regular');
     expect(cost).to.equal(11.87);
   });
 
   it('2 - Priority - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'small_business');
+    const cost = await calculateShippingUSA('ON', 'NY', 0.70, 'priority', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
   it('2 - Priority - 30.7kg - 10.89 - Regular', async () => {
-    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'regular');
+    const cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'regular');
     expect(cost).to.equal(13.49);
   });
 
   it('2 - Priority - 30.7kg - 10.89 - Small Business', async () => {
-    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'small_business');
+    const cost = await calculateShippingUSA('ON', 'NY', 30.70, 'priority', 'small_business');
     expect(cost).to.equal(13.49);
   });
 
   it('ALASKA - Priority - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'regular');
+    const cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'regular');
     expect(cost).to.equal(20.37);
   });
 
   it('ALASKA - Priority - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'small_business');
+    const cost = await calculateShippingUSA('ON', 'AK', 0.70, 'priority', 'small_business');
     expect(cost).to.equal(20.37);
   });
 
   it('ALASKA - Priority - 30.7kg - 10.89 - Regular', async () => {
-    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'regular');
+    const cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'regular');
     expect(cost).to.equal(21.99);
   });
 
   it('ALASKA - Priority - 30.7kg - 10.89 - Small Business', async () => {
-    let cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'small_business');
+    const cost = await calculateShippingUSA('ON', 'AK', 30.70, 'priority', 'small_business');
     expect(cost).to.equal(21.99);
   });
 
 
   it('2 - Tracked Packet - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'tracked_packet', 'small_business');
+    const cost = await calculateShippingUSA('ON', 'NY', 0.70, 'tracked_packet', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
@@ -341,7 +354,7 @@ describe('Calculate Shipping Cost to USA', () => {
 
   it('2 - Small Packet - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'small_packet', 'small_business');
+    const cost = await calculateShippingUSA('ON', 'NY', 0.70, 'small_packet', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
@@ -350,14 +363,14 @@ describe('Calculate Shipping Cost to USA', () => {
   });
 
   it('2 - Expedited - 30.7kg - 10.89 - Small Business', async () => {
-    let cost = await calculateShippingUSA('ON', 'NY', 30.70, 'expedited', 'small_business');
+    const cost = await calculateShippingUSA('ON', 'NY', 30.70, 'expedited', 'small_business');
     expect(cost).to.equal(13.49);
   });
 
 
   it('2 - Expedited - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingUSA('ON', 'NY', 0.70, 'expedited', 'regular');
+    const cost = await calculateShippingUSA('ON', 'NY', 0.70, 'expedited', 'regular');
     expect(cost).to.equal(11.87);
   });
 });
@@ -369,7 +382,7 @@ describe('Calculate Shipping Cost Internationally', () => {
   let getMaxRateStb;
   let getFuelSurchargeStb;
   let getProvinceStb;
-  let maxRates: maxRates = {
+  const maxRates: maxRates = {
     maxRate: 10.89,
     incrementalRate: 1.06
   };
@@ -390,63 +403,63 @@ describe('Calculate Shipping Cost Internationally', () => {
 
   it('Ukraine - Priority - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'priority', 'regular');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'priority', 'regular');
     expect(cost).to.equal(11.87);
   });
 
   it('Ukraine - Priority - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'priority', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'priority', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
   it('Ukraine - Priority - 30.7kg - 10.89 - Regular', async () => {
-    let cost = await calculateShippingInternational('Ukraine', 30.70, 'priority', 'regular');
+    const cost = await calculateShippingInternational('Ukraine', 30.70, 'priority', 'regular');
     expect(cost).to.equal(13.49);
   });
 
   it('Ukraine - Priority - 30.7kg - 10.89 - Small Business', async () => {
-    let cost = await calculateShippingInternational('Ukraine', 30.70, 'priority', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 30.70, 'priority', 'small_business');
     expect(cost).to.equal(13.49);
   });
 
   it('Ukraine - Express - 0.7kg - 10.89 - Regular', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'express', 'regular');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'express', 'regular');
     expect(cost).to.equal(11.87);
   });
 
   it('Ukraine - Express - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'express', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'express', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
   it('Ukraine - air - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'air', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'air', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
   it('Ukraine - air - 30.7kg - 10.89 - Regular', async () => {
-    let cost = await calculateShippingInternational('Ukraine', 30.70, 'air', 'regular');
+    const cost = await calculateShippingInternational('Ukraine', 30.70, 'air', 'regular');
     expect(cost).to.equal(13.49);
   });
 
   it('Ukraine - surface - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'surface', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'surface', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
   it('Ukraine - surface - 30.7kg - 10.89 - Regular', async () => {
-    let cost = await calculateShippingInternational('Ukraine', 30.70, 'surface', 'regular');
+    const cost = await calculateShippingInternational('Ukraine', 30.70, 'surface', 'regular');
     expect(cost).to.equal(13.49);
   });
 
   it('Ukraine - Tracked Packet - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'tracked_packet', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'tracked_packet', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
@@ -456,7 +469,7 @@ describe('Calculate Shipping Cost Internationally', () => {
 
   it('Ukraine - Small Packet Air - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'small_packet_air', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'small_packet_air', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
@@ -466,7 +479,7 @@ describe('Calculate Shipping Cost Internationally', () => {
 
   it('Ukraine - Small Packet Surface - 0.7kg - 10.89 - Small Business', async () => {
     getRateStb.resolves(10.89);
-    let cost = await calculateShippingInternational('Ukraine', 0.70, 'small_packet_surface', 'small_business');
+    const cost = await calculateShippingInternational('Ukraine', 0.70, 'small_packet_surface', 'small_business');
     expect(cost).to.equal(11.87);
   });
 
@@ -492,12 +505,13 @@ describe('Calculate shipping cost for american addresses', () => {
   }
 
   let calculateShippingUSAStb;
-
+  let forkStb;
   beforeEach(() => {
-
+    forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
     calculateShippingUSAStb = sinon.stub(calculate, 'calculateShippingUSA');
   });
   afterEach(() => {
+    forkStb.restore();
     calculateShippingUSAStb.restore();
   });
   it('Throws an error for invalid type: 0.7 - regular', () => {
@@ -529,11 +543,14 @@ describe('Calculate shipping cost for international addresses', () => {
   }
 
   let calculateShippingIntlStb;
+  let forkStb;
 
   beforeEach(() => {
+    forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
     calculateShippingIntlStb = sinon.stub(calculate, 'calculateShippingInternational');
   });
   afterEach(() => {
+    forkStb.restore();
     calculateShippingIntlStb.restore();
   });
   it('Throws an error for invalid type: 0.7 - regular', () => {
@@ -554,11 +571,11 @@ describe('Validate the address for calculation', () => {
       //@ts-ignore
       validateAddress(null);
     } catch (e) {
-      expect(e.message).to.equal('Missing value or missing country property of the address')
+      expect((<any>e).message).to.equal('Missing value or missing country property of the address')
     }
   });
   it('Throws error if address didn\'t specify a country', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '',
       city: '',
       region: '',
@@ -568,31 +585,31 @@ describe('Validate the address for calculation', () => {
     try {
       validateAddress(address);
     } catch (e) {
-      expect(e.message).to.equal('Missing value or missing country property of the address');
+      expect((<any>e).message).to.equal('Missing value or missing country property of the address');
     }
   });
 
   it('Updates address country typed as cAnada', () => {
-    let anyType: Address = {
+    const anyType: Address = {
       streetAddress: '',
       city: 'City',
       region: 'BC',
       postalCode: 'A1A1A1',
       country: 'cAnada'
     };
-    let expectedAddress: Address = {
+    const expectedAddress: Address = {
       streetAddress: '',
       city: 'City',
       region: 'BC',
       postalCode: 'A1A1A1',
       country: 'Canada'
     };
-    let cleanAddress = validateAddress(anyType);
+    const cleanAddress = validateAddress(anyType);
     expect(cleanAddress).to.deep.equal(expectedAddress);
   });
 
   it('Country is canada but is missing province', () => {
-    let anyType: Address = {
+    const anyType: Address = {
       streetAddress: '',
       city: 'City',
       region: '',
@@ -602,12 +619,12 @@ describe('Validate the address for calculation', () => {
     try {
       validateAddress(anyType);
     } catch (e) {
-      expect(e.message).to.deep.equal('For north american shipments, region and zip code must be provided.');
+      expect((<any>e).message).to.deep.equal('For north american shipments, region and zip code must be provided.');
     }
   });
 
   it('Country is united states but is missing region', () => {
-    let anyType: Address = {
+    const anyType: Address = {
       streetAddress: '',
       city: 'City',
       region: '',
@@ -617,12 +634,12 @@ describe('Validate the address for calculation', () => {
     try {
       validateAddress(anyType);
     } catch (e) {
-      expect(e.message).to.deep.equal('For north american shipments, region and zip code must be provided.');
+      expect((<any>e).message).to.deep.equal('For north american shipments, region and zip code must be provided.');
     }
   });
 
   it('Country is NOT canada OR USA but is missing region and province', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '',
       city: 'City',
       region: '',
@@ -630,19 +647,19 @@ describe('Validate the address for calculation', () => {
       country: 'Ukraine'
     };
 
-    let expectedAddress: Address = {
+    const expectedAddress: Address = {
       streetAddress: '',
       city: 'City',
       region: '',
       postalCode: '',
       country: 'UKRAINE'
     };
-    let cleanAddress = validateAddress(address);
+    const cleanAddress = validateAddress(address);
     expect(cleanAddress).to.deep.equal(expectedAddress);
   });
 
   it('Country is canada but the province is NWT', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '',
       city: 'City',
       region: 'Northwest Territories',
@@ -650,19 +667,19 @@ describe('Validate the address for calculation', () => {
       country: 'CA'
     };
 
-    let expectedAddress: Address = {
+    const expectedAddress: Address = {
       streetAddress: '',
       city: 'City',
       region: 'NWT',
       postalCode: 'Y1Y1Y1',
       country: 'Canada'
     };
-    let cleanAddress = validateAddress(address);
+    const cleanAddress = validateAddress(address);
     expect(cleanAddress).to.deep.equal(expectedAddress);
   });
 
   it('Country is canada but the province is NWT', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '',
       city: 'City',
       region: 'Northwest Territories',
@@ -670,19 +687,19 @@ describe('Validate the address for calculation', () => {
       country: 'CA'
     };
 
-    let expectedAddress: Address = {
+    const expectedAddress: Address = {
       streetAddress: '',
       city: 'City',
       region: 'NWT',
       postalCode: 'Y1Y1Y1',
       country: 'Canada'
     };
-    let cleanAddress = validateAddress(address);
+    const cleanAddress = validateAddress(address);
     expect(cleanAddress).to.deep.equal(expectedAddress);
   });
 
   it('Country is cananda but province is not', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '',
       city: 'City',
       region: 'North Territories',
@@ -693,12 +710,12 @@ describe('Validate the address for calculation', () => {
     try {
       validateAddress(address);
     } catch (e) {
-      expect(e.message).to.deep.equal('The region provided is not a valid region');
+      expect((<any>e).message).to.deep.equal('The region provided is not a valid region');
     }
   });
 
   it('Country is canada province works but postal code fails RegEx', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '',
       city: 'City',
       region: 'British Columbia',
@@ -709,12 +726,12 @@ describe('Validate the address for calculation', () => {
     try {
       validateAddress(address);
     } catch (e) {
-      expect(e.message).to.deep.equal('Invalid postal code. Please make sure its in format of A1A1A1');
+      expect((<any>e).message).to.deep.equal('Invalid postal code. Please make sure its in format of A1A1A1');
     }
   });
 
   it('Country is united states but is missing zip code', () => {
-    let anyType: Address = {
+    const anyType: Address = {
       streetAddress: '',
       city: 'City',
       region: 'Washington',
@@ -724,12 +741,12 @@ describe('Validate the address for calculation', () => {
     try {
       validateAddress(anyType);
     } catch (e) {
-      expect(e.message).to.deep.equal('For north american shipments, region and zip code must be provided.');
+      expect((<any>e).message).to.deep.equal('For north american shipments, region and zip code must be provided.');
     }
   });
 
   it('Validates a canadian address', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '111 Random St.',
       city: 'Ottawa',
       region: 'Ontario',
@@ -737,19 +754,19 @@ describe('Validate the address for calculation', () => {
       country: 'CA'
     };
 
-    let expectedAddress: Address = {
+    const expectedAddress: Address = {
       streetAddress: '111 Random St.',
       city: 'Ottawa',
       region: 'ON',
       postalCode: 'K1V1R1',
       country: 'Canada'
     };
-    let cleanAddress = validateAddress(address);
+    const cleanAddress = validateAddress(address);
     expect(cleanAddress).to.deep.equal(expectedAddress);
   });
 
   it('Validates an american address', () => {
-    let address: Address = {
+    const address: Address = {
       streetAddress: '111 Random St.',
       city: 'New York',
       region: 'New York',
@@ -757,14 +774,14 @@ describe('Validate the address for calculation', () => {
       country: 'United States'
     };
 
-    let expectedAddress: Address = {
+    const expectedAddress: Address = {
       streetAddress: '111 Random St.',
       city: 'New York',
       region: 'NY',
       postalCode: '10002',
       country: 'USA'
     };
-    let cleanAddress = validateAddress(address);
+    const cleanAddress = validateAddress(address);
     expect(cleanAddress).to.deep.equal(expectedAddress);
   });
 });
@@ -786,12 +803,13 @@ describe('Calculate Shipping Using Addresses (Canada)', () => {
   }
 
   let calculateShippingCanadaStb;
-
+  let forkStb;
   beforeEach(() => {
-
+    forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
     calculateShippingCanadaStb = sinon.stub(calculate, 'calculateShippingCanada');
   });
   afterEach(() => {
+    forkStb.restore();
     calculateShippingCanadaStb.restore();
   });
 
@@ -833,7 +851,7 @@ describe('Calculate Shipping Using Addresses (Canada)', () => {
       const total = await calculateShipping(sourceAddress, destinationAddress, 30);
       expect(total).to.equal(68.21);
     } catch (e) {
-      fail(e);
+      fail(<any>e);
     }
   })
 
@@ -843,7 +861,7 @@ describe('Calculate Shipping Using Addresses (Canada)', () => {
       const total = await calculateShipping(sourceAddress, destinationAddress, 0.7, 'priority');
       expect(total).to.equal(27.17);
     } catch (e) {
-      fail(e);
+      fail(<any>e);
     }
   })
 
@@ -853,7 +871,7 @@ describe('Calculate Shipping Using Addresses (Canada)', () => {
       const total = await calculateShipping(sourceAddress, destinationAddress, 1.0, 'express');
       expect(total).to.equal(15.32);
     } catch (e) {
-      fail(e);
+      fail(<any>e);
     }
   })
 
@@ -863,7 +881,7 @@ describe('Calculate Shipping Using Addresses (Canada)', () => {
       const total = await calculateShipping(sourceAddress, destinationAddress, 1.0, 'expedited', 'small_business');
       expect(total).to.equal(15.32);
     } catch (e) {
-      fail(e);
+      fail(<any>e);
     }
   })
 
@@ -914,7 +932,7 @@ describe('Calculate Shipping Using Addresses (Canada)', () => {
       const total = await calculateShipping(sourceAddress, destinationAddress, 1.0, 'expedited', 'small_business');
       expect(total).to.equal(15.33);
     } catch (e) {
-      fail(e);
+      fail(<any>e);
     }
   })
 });
@@ -934,7 +952,7 @@ describe('Map province to code and vice versa', () => {
       mapProvinceToCode('ABC');
       fail('Did not throw an expected error');
     } catch (e) {
-      expect(e.message).to.equal('The region provided is not a valid region');
+      expect((<any>e).message).to.equal('The region provided is not a valid region');
     }
   });
 

@@ -37,7 +37,7 @@ describe('GetRateCode from db', () => {
     it('Returns rate code from db', async () => {
         dbGetStb.yields(null, { rate_code: 'A5' });
         try {
-            let rateCode = await getRateCode('K1V2R9', 'J9H5V8');
+            const rateCode = await getRateCode('K1V2R9', 'J9H5V8');
             expect(rateCode).to.equal('A5');
         } catch (e) {
             fail();

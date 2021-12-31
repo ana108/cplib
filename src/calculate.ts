@@ -138,7 +138,7 @@ export const validateAddress = (address: Address): Address => {
     }
     return cleanAddress;
 }
-export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType: string = 'regular', customerType: string = 'regular'): Promise<number> => {
+export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType = 'regular', customerType = 'regular'): Promise<number> => {
     const deliverySpeed = deliveryType.trim().toLowerCase();
     return new Promise<number>((resolve, reject) => {
         try {
@@ -162,8 +162,8 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
             }
             const americanDeliverySpeeds = ['express', 'priority', 'tracked_packet', 'small_packet', 'expedited'];
             const internationalDeliverySpeeds = ['priority', 'express', 'air', 'surface', 'tracked_packet', 'small_packet_air', 'small_packet_surface'];
-            let source = validateAddress(sourceAddress);
-            let destination = validateAddress(destinationAddress);
+            const source = validateAddress(sourceAddress);
+            const destination = validateAddress(destinationAddress);
             if (destination.country === 'Canada' && canadaDeliverySpeeds.includes(deliverySpeed)) {
                 calculateShippingCanada(source.postalCode, destination.postalCode, weightInKg, deliverySpeed, customerType).then(data => {
                     resolve(data);
@@ -226,14 +226,14 @@ export const calculateTax = (sourceProvince: string, destinationProvice: string,
     return taxCost;
 }
 export const calculateShippingCanada = (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
-    deliverySpeed: string = 'regular', customerType: string = 'regular'): Promise<number> => {
+    deliverySpeed = 'regular', customerType = 'regular'): Promise<number> => {
     return new Promise<number>(async (resolve, reject) => {
         try {
             // for package dimensions make sure to convert it into a type
 
             // get rate code
-            let source = sourcePostalCode.substr(0, 3);
-            let destination = destinationPostalCode.substr(0, 3);
+            const source = sourcePostalCode.substr(0, 3);
+            const destination = destinationPostalCode.substr(0, 3);
             const rateCode = await getRateCode(source, destination);
 
             // get cost for regular/priority/express
@@ -241,9 +241,9 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
             if (weightInKg <= 30.0) {
                 shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, customerType });
             } else {
-                let rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, customerType });
+                const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, customerType });
 
-                let difference = weightInKg - 30.0;
+                const difference = weightInKg - 30.0;
                 shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
             }
             // get fuel rate
@@ -267,7 +267,7 @@ export const calculateShippingCanada = (sourcePostalCode: string, destinationPos
     });
 }
 export const calculateShippingUSA = (sourceProvince: string, destState: string, weightInKg: number,
-    deliverySpeed: string = 'expedited', customerType: string = 'regular'): Promise<number> => {
+    deliverySpeed = 'expedited', customerType = 'regular'): Promise<number> => {
     return new Promise<number>(async (resolve, reject) => {
         try {
             let rateCode;
@@ -295,9 +295,9 @@ export const calculateShippingUSA = (sourceProvince: string, destState: string, 
             if (weightInKg <= 30.0) {
                 shippingCost = await getRate(rateCode, weightInKg, { country: countryDeliveringTo, type: deliverySpeed, customerType });
             } else {
-                let rates: maxRates = await getMaxRate(rateCode, { country: countryDeliveringTo, type: deliverySpeed, customerType });
+                const rates: maxRates = await getMaxRate(rateCode, { country: countryDeliveringTo, type: deliverySpeed, customerType });
 
-                let difference = weightInKg - 30.0;
+                const difference = weightInKg - 30.0;
                 shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
             }
 
@@ -317,7 +317,7 @@ export const calculateShippingUSA = (sourceProvince: string, destState: string, 
     });
 }
 export const calculateShippingInternational = (destinationCountry: string, weightInKg: number,
-    deliverySpeed: string = 'surface', customerType: string = 'regular'): Promise<number> => {
+    deliverySpeed = 'surface', customerType = 'regular'): Promise<number> => {
     return new Promise<number>(async (resolve, reject) => {
         try {
 
@@ -341,9 +341,9 @@ export const calculateShippingInternational = (destinationCountry: string, weigh
             if (weightInKg <= 30.0) {
                 shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
             } else {
-                let rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
+                const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
 
-                let difference = weightInKg - 30.0;
+                const difference = weightInKg - 30.0;
                 shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
             }
 
@@ -364,7 +364,7 @@ export const getLatestFuelSurcharge = (country: string, deliverySpeed): Promise<
         getFuelSurcharge(country, deliverySpeed).then((data: FuelSurcharge) => {
             // calculate if the expiry date is less than 24 hours from now
             // if so, call autoload
-            let tomorrowsTimestamp = new Date().valueOf() + 24 * 60 * 60 * 1000;
+            const tomorrowsTimestamp = new Date().valueOf() + 24 * 60 * 60 * 1000;
             if (data.expiryUnixTimestamp <= tomorrowsTimestamp) {
                 updateAllFuelSurcharges().then(() => {
                     getFuelSurcharge(country, deliverySpeed).then((updatedData: FuelSurcharge) => {

@@ -54,10 +54,9 @@ export const resetDB = async () => {
   });
 }
 
-export const openForWrite = async (): Promise<any> => { // sqlite3.Database
-  return new Promise<any>((resolve, reject) => { // sqlite3.Database
-    let readWriteDB: sqlite3.Database;
-    readWriteDB = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE, err => {
+export const openForWrite = async (): Promise<sqlite3.Database> => {
+  return new Promise<sqlite3.Database>((resolve, reject) => {
+    const readWriteDB: sqlite3.Database = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE, err => {
       if (!err) {
         resolve(readWriteDB);
       } else {
@@ -88,7 +87,7 @@ export const getRateCode = (source: string, destination: string, delivery_type?:
 }
 
 export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promise<void> => {
-  let expiryDate = fuelSurchargeRates['Expiry_Date'].valueOf();
+  const expiryDate = fuelSurchargeRates['Expiry_Date'].valueOf();
   const fuelSurcharge = `insert into fuel_surcharge(percentage, date, country, delivery_type) VALUES($percentage, ${expiryDate}, $country, $delivery_type)`;
   const DOMESTIC = fuelSurchargeRates['Domestic Services'] / 100;
   const USA_INTL_PARCEL = fuelSurchargeRates['USA and International Parcel Services'] / 100;
@@ -108,7 +107,7 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
   const AIR = 'air';
   const SURFACE = 'surface';
 
-  let values = [{
+  const values = [{
     $percentage: DOMESTIC,
     $country: CANADA,
     $delivery_type: PRIORITY,
@@ -188,7 +187,7 @@ export const updateFuelSurcharge = async (fuelSurchargeRates: FuelTable): Promis
 }
 
 export const saveToDb = async (sqlStmt: string): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const stmt = writedb.prepare(sqlStmt, err => {
       if (err) {
         reject(err);
@@ -214,11 +213,11 @@ export interface options {
 }
 export const getRate = (rateCode: string, weight: number,
   opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' }): Promise<number> => {
-  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' };
-  let options = { ...defaults, ...opts };
+  const defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' };
+  const options = { ...defaults, ...opts };
   let getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = $year ' +
     'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
-  let getPriceParams = {
+  const getPriceParams = {
     $country: options.country,
     $rateCode: rateCode,
     $weight: weight,
@@ -251,14 +250,14 @@ export const getRate = (rateCode: string, weight: number,
 export interface maxRates {
   maxRate: number,
   incrementalRate: number
-};
+}
 export const getMaxRate = (rateCode: string,
   opts: options = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' }): Promise<maxRates> => {
-  let defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' };
-  let options = { ...defaults, ...opts };
+  const defaults = { country: 'CANADA', weight_type: 'kg', type: 'regular', customerType: 'regular' };
+  const options = { ...defaults, ...opts };
   let getPrice = 'select price from rates where country = $country and rate_code = $rateCode and year = $year and type = $deliverySpeed ' +
     ' and customer_type = $customerType  order by max_weight desc limit 2';
-  let getMaxRateParams = {
+  const getMaxRateParams = {
     $country: options.country,
     $rateCode: rateCode,
     $year: options.year,
@@ -279,7 +278,7 @@ export const getMaxRate = (rateCode: string,
       } else if (!rows || rows.length < 2) {
         reject(new Error('Failed to find price for those parameters'));
       } else {
-        let maxRates: maxRates = {
+        const maxRates: maxRates = {
           maxRate: parseFloat(rows[1].price),
           incrementalRate: parseFloat(rows[0].price)
         };

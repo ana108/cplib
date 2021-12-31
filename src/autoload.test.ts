@@ -237,17 +237,15 @@ describe('Extract rate tables - 2020 - int', () => {
         pageData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
         pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/Rates_2020.pdf");
     });
-    afterEach(() => {
-    });
     it('Test Page number extraction - 2020 - Canada', async () => {
-        let ratesPages: RatesPages = pageHeaders(pageData);
+        const ratesPages: RatesPages = pageHeaders(pageData);
         expect(ratesPages['PriorityCanada']).to.equal(10);
         expect(ratesPages['ExpressCanada']).to.equal(12);
         expect(ratesPages['RegularCanada']).to.equal(14);
     });
 
     it('Test Page number extraction - 2020 -Small Business -  Canada', async () => {
-        let ratesPages: RatesPages = pageHeaders(pageDataSmallBusiness);
+        const ratesPages: RatesPages = pageHeaders(pageDataSmallBusiness);
         expect(ratesPages['PriorityCanada']).to.equal(12);
         expect(ratesPages['ExpressCanada']).to.equal(14);
         expect(ratesPages['RegularCanada']).to.equal(18);
@@ -255,7 +253,7 @@ describe('Extract rate tables - 2020 - int', () => {
     });
 
     it('Test Page number extraction - 2020 - USA', () => {
-        let ratesPages: RatesPages = pageHeaders(pageData);
+        const ratesPages: RatesPages = pageHeaders(pageData);
         expect(ratesPages['ExpressUSA']).to.equal(20);
         expect(ratesPages['ExpeditedUSA']).to.equal(22);
         expect(ratesPages['TrackedPacketUSA']).to.equal(24);
@@ -263,7 +261,7 @@ describe('Extract rate tables - 2020 - int', () => {
     });
 
     it('Test Page number extraction - 2020 - International', async () => {
-        let ratesPages: RatesPages = pageHeaders(pageData);
+        const ratesPages: RatesPages = pageHeaders(pageData);
         expect(ratesPages['ExpressInternational']).to.equal(31);
         expect(ratesPages['AirInternational']).to.equal(33);
         expect(ratesPages['SurfaceInternational']).to.equal(35);
@@ -282,54 +280,54 @@ describe('Load data into rates table for the year', async () => {
 
     it('Verify that the right number of rows was loaded for canada (regular) ', async () => {
         let result: any;
-        let canadaRegularRegular = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'regular'`;
+        const canadaRegularRegular = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'regular'`;
         result = await db.executeCustomSQL(canadaRegularRegular);
         expect(result[0].count).to.equal(2790);
 
-        let canadaRegularExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'express'`;
+        const canadaRegularExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'express'`;
         result = await db.executeCustomSQL(canadaRegularExpress);
         expect(result[0].count).to.equal(2790);
 
-        let canadaRegularPriority = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'priority'`;
+        const canadaRegularPriority = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'regular' and type = 'priority'`;
         result = await db.executeCustomSQL(canadaRegularPriority);
         expect(result[0].count).to.equal(2666);
     });
     it('Verify that the right number of rows was loaded for canada (small business) ', async () => {
         let result: any;
-        let canadaSmallBusinessRegular = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'regular'`;
+        const canadaSmallBusinessRegular = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'regular'`;
         result = await db.executeCustomSQL(canadaSmallBusinessRegular);
         expect(result[0].count).to.equal(2745);
 
-        let canadaSmallBusinessExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'express'`;
+        const canadaSmallBusinessExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'express'`;
         result = await db.executeCustomSQL(canadaSmallBusinessExpress);
         expect(result[0].count).to.equal(2745);
 
-        let canadaSmallBusinessPriority = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'priority'`;
+        const canadaSmallBusinessPriority = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'priority'`;
         result = await db.executeCustomSQL(canadaSmallBusinessPriority);
         expect(result[0].count).to.equal(2623);
 
-        let canadaSmallBusinessExpedited = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'expedited'`;
+        const canadaSmallBusinessExpedited = `select count(*) as count from rates where year = ${YEAR} and country = 'Canada' and customer_type = 'small_business' and type = 'expedited'`;
         result = await db.executeCustomSQL(canadaSmallBusinessExpedited);
         expect(result[0].count).to.equal(2745);
     });
     it('Verify that the right number of rows was loaded for USA (regular)', async () => {
         let result: any;
-        let regularExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'regular' and type = 'express'`;
+        const regularExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'regular' and type = 'express'`;
         result = await db.executeCustomSQL(regularExpress);
         expect(result[0].count).to.equal(427);
 
-        let regularExpedited = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'regular' and type = 'expedited'`;
+        const regularExpedited = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'regular' and type = 'expedited'`;
         result = await db.executeCustomSQL(regularExpedited);
         expect(result[0].count).to.equal(427);
     });
 
     it('Verify that the right number of rows was loaded for USA (small business)', async () => {
         let result: any;
-        let smallBusinessExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'small_business' and type = 'express'`;
+        const smallBusinessExpress = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'small_business' and type = 'express'`;
         result = await db.executeCustomSQL(smallBusinessExpress);
         expect(result[0].count).to.equal(427);
 
-        let smallBusinessExpedited = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'small_business' and type = 'expedited'`;
+        const smallBusinessExpedited = `select count(*) as count from rates where year = ${YEAR} and country = 'USA' and customer_type = 'small_business' and type = 'expedited'`;
         result = await db.executeCustomSQL(smallBusinessExpedited);
         expect(result[0].count).to.equal(427);
     });
@@ -337,19 +335,19 @@ describe('Load data into rates table for the year', async () => {
     it('Verify that the right number of rows was loaded for International', async () => {
         let result: any;
 
-        let regularPriority = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'priority'`;
+        const regularPriority = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'priority'`;
         result = await db.executeCustomSQL(regularPriority);
         expect(result[0].count).to.equal(413);
 
-        let regularExpress = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'express'`;
+        const regularExpress = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'express'`;
         result = await db.executeCustomSQL(regularExpress);
         expect(result[0].count).to.equal(610);
 
-        let regularSurface = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'surface'`;
+        const regularSurface = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'surface'`;
         result = await db.executeCustomSQL(regularSurface);
         expect(result[0].count).to.equal(610);
 
-        let regularAir = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'air'`;
+        const regularAir = `select count(*) as count from rates where year = 2021 and country = 'INTERNATIONAL' and customer_type = 'regular' and type = 'air'`;
         result = await db.executeCustomSQL(regularAir);
         expect(result[0].count).to.equal(610);
 
@@ -366,11 +364,11 @@ describe('Extract worldwide priority table', () => {
     let regularRateTables: RateTables;
     before(async () => {
         pageData = await loadPDF(__dirname + "/resources/regular/2020/Rates_2020.pdf");
-        let pageNumbers: RatesPages = pageHeaders(pageData);
+        const pageNumbers: RatesPages = pageHeaders(pageData);
         priorityWorldwideNumber = pageNumbers['PriorityWorldwide'];
 
         pageDataSmallBusiness = await loadPDF(__dirname + "/resources/small_business/2020/Rates_2020.pdf");
-        let pageNumbersSB: RatesPages = pageHeaders(pageDataSmallBusiness);
+        const pageNumbersSB: RatesPages = pageHeaders(pageDataSmallBusiness);
         priorityWorldwideNumberSB = pageNumbersSB['PriorityWorldwide'];
         await db.setDB(__dirname + "/integration/cplib_int.db");
         await db.deleteRatesByYear(2021);
@@ -381,14 +379,14 @@ describe('Extract worldwide priority table', () => {
         await db.resetDB();
     });
     it('Extract envelope and pak tables at the bottom of the page', async () => {
-        let priorityWorldwideTableOldMethod = extractRateTables(pageData, priorityWorldwideNumber, 7, 9);
-        let priorityWorldwideTable = extractPriorityWorldwide(pageData, priorityWorldwideNumber);
+        const priorityWorldwideTableOldMethod = extractRateTables(pageData, priorityWorldwideNumber, 7, 9);
+        const priorityWorldwideTable = extractPriorityWorldwide(pageData, priorityWorldwideNumber);
         expect(priorityWorldwideTable.length).to.be.above(53);
         expect(priorityWorldwideTable.length).to.be.below(priorityWorldwideTableOldMethod.length);
     });
     it('Extract envelope and pak tables at the bottom of the page (small business)', async () => {
-        let priorityWorldwideTableOldMethod = extractRateTables(pageDataSmallBusiness, priorityWorldwideNumberSB, 7, 9);
-        let priorityWorldwideTable = extractPriorityWorldwide(pageDataSmallBusiness, priorityWorldwideNumberSB);
+        const priorityWorldwideTableOldMethod = extractRateTables(pageDataSmallBusiness, priorityWorldwideNumberSB, 7, 9);
+        const priorityWorldwideTable = extractPriorityWorldwide(pageDataSmallBusiness, priorityWorldwideNumberSB);
         expect(priorityWorldwideTable.length).to.be.above(53);
         expect(priorityWorldwideTable.length).to.be.below(priorityWorldwideTableOldMethod.length);
     });
@@ -410,29 +408,29 @@ describe('Extract worldwide priority table', () => {
     });
     it('Verify International Tracked Packet tables get converted in the standard format', async () => {
         expect(regularRateTables['TrackedPacketInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
-        let lastElement: number = regularRateTables['TrackedPacketInternational'].length - 1;
-        let numElements: number = regularRateTables['TrackedPacketInternational'][0].split(' ').length + 1;
+        const lastElement: number = regularRateTables['TrackedPacketInternational'].length - 1;
+        const numElements: number = regularRateTables['TrackedPacketInternational'][0].split(' ').length + 1;
         expect(regularRateTables['TrackedPacketInternational'][lastElement].split(' ').length).to.equal(numElements + 1);
     });
     it('Verify International Small Packet (air) tables get converted in the standard format', async () => {
         expect(regularRateTables['SmallPacketAirInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
 
         expect(regularRateTables['SmallPacketAirInternational'][1].split(' ')[0]).to.equal('0.1');
-        let lastIndex = regularRateTables['SmallPacketAirInternational'].length - 1;
+        const lastIndex = regularRateTables['SmallPacketAirInternational'].length - 1;
         expect(parseInt(regularRateTables['SmallPacketAirInternational'][lastIndex].split(' ')[0])).to.equal(2);
     });
     it('Verify International Small Packet (surface) tables get converted in the standard format', async () => {
         // let regularRateTables = await e2eProcess(YEAR, REGULAR);
         expect(regularRateTables['SmallPacketSurfaceInternational'][0]).to.equal('1 2 3 4 5 6 7 8 9 10');
         expect(regularRateTables['SmallPacketSurfaceInternational'][1].split(' ')[0]).to.equal('0.25');
-        let lastIndex = regularRateTables['SmallPacketSurfaceInternational'].length - 1;
+        const lastIndex = regularRateTables['SmallPacketSurfaceInternational'].length - 1;
         expect(parseInt(regularRateTables['SmallPacketSurfaceInternational'][lastIndex].split(' ')[0])).to.equal(2);
     });
 });
 
 describe.skip('Temp Test', () => {
     it('Debugging - convert packet to test', async () => {
-        let pageArray = [
+        const pageArray = [
             'TrackedPacket USA',
             '(UPTOANDINCLUDING) WEIGHT',
             'INKG INLB',
@@ -443,12 +441,12 @@ describe.skip('Temp Test', () => {
             '1.5 3.3',
             '2.0 4.4'
         ];
-        let rateCodes = [
+        const rateCodes = [
             '1', '2', '3',
             '4', '5', '6',
             '7'
         ];
-        let results = convertPacketToTable(pageArray, rateCodes);
+        const results = convertPacketToTable(pageArray, rateCodes);
         console.log('Results: ', results);
         expect(true).to.equal(true);
     });
