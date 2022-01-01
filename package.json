@@ -1,9 +1,10 @@
 {
   "name": "cplib",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "It calculates the price of shipping a parcel using canada post",
   "main": "build/index.js",
   "scripts": {
+    "prepublishOnly": "npm run build && cp ./package.json build/ && npm pack",
     "start:dev": "nodemon",
     "test": "mocha -r ts-node/register src/calculate.test.ts src/db/sqlite3.test.ts",
     "int": "mocha -r ts-node/register src/integration/integration.test.ts",
@@ -14,6 +15,9 @@
     "sourcetest": "mocha --timeout 0 -r ts-node/register src/source.test.ts",
     "lint": "eslint . --ext .ts --fix"
   },
+  "files": [
+    "build/*.js"
+  ],
   "keywords": [
     "canada post",
     "cplib",
@@ -22,6 +26,10 @@
   ],
   "author": "Anastasiya Andrushchak",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ana108/cplib.git"
+  },
   "devDependencies": {
     "@types/chai": "^4.2.13",
     "@types/mocha": "^8.0.3",
