@@ -1,6 +1,6 @@
 {
   "name": "cplib",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "It calculates the price of shipping a parcel using canada post",
   "main": "build/index.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "shipping cost",
     "parcel cost"
   ],
-  "author": "Anastasiya Andrushchak",
+  "author": "ana108",
   "license": "MIT",
   "repository": {
     "type": "git",

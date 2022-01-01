@@ -21,7 +21,7 @@ Create address objects; source address example:
     streetAddress: '10 Wellington', // optional for calculating cost
     city: 'Ottawa', // optional
     region: 'ON', // required; for Canadian addressees this is province; for USA its state. For international, its optional
-    postalCode: 'K1V2R9', // required for canadian addresses
+    postalCode: 'K1A 0B1', // required for canadian addresses
     country: 'CA' // country code or full country name: Canada, or CA USA or United States are all valid
   };
 ```
