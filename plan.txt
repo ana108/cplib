@@ -1,7 +1,5 @@
 To DO:
 1. Convert console.log to winston logs for future debugging (add morgan to detail api calls also)
-5. Update package.json and publish package
-6. Manually configure and test installing package through npm on both ubuntu and windows
 
 References Info:
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)

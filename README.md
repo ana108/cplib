@@ -12,7 +12,7 @@ npm i cplib
 # Using CPLib
   
 ```javascript
-var shippingCalculation = require('../../cplib/build/calculate');
+var shippingCalculate = require('cplib');
 ```
 Create address objects; source address example:  
   

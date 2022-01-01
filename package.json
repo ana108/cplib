@@ -1,10 +1,10 @@
 {
   "name": "cplib",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "It calculates the price of shipping a parcel using canada post",
   "main": "build/index.js",
   "scripts": {
-    "prepublishOnly": "npm run build && cp ./package.json build/ && npm pack",
+    "prepublishOnly": "npm run build && npm pack",
     "start:dev": "nodemon",
     "test": "mocha -r ts-node/register src/calculate.test.ts src/db/sqlite3.test.ts",
     "int": "mocha -r ts-node/register src/integration/integration.test.ts",
@@ -15,9 +15,6 @@
     "sourcetest": "mocha --timeout 0 -r ts-node/register src/source.test.ts",
     "lint": "eslint . --ext .ts --fix"
   },
-  "files": [
-    "build/*.js"
-  ],
   "keywords": [
     "canada post",
     "cplib",
