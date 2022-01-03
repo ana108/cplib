@@ -144,7 +144,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
     // check the year of the pdf returned for regular customers.
     // this is done by extracting the first page and seeing the year displayed there
     const regularPDFFirstPage = await loadPDF(regularPDF);
-    let yearOfRegular = extractYear(regularPDFFirstPage);
+    const yearOfRegular = extractYear(regularPDFFirstPage);
     const updateRates: updateresults = {
         regular: {
             update: false,
@@ -175,7 +175,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
         logger.info(`The year in PDF is not higher than currentHighestYear ${currentHighestYear} Year found in pdf: ${yearOfRegular}`);
     }
     const smallBusinessPDFFirstPage = await loadPDF(smallBusinessPDF);
-    let yearOfSmallBusiness = extractYear(smallBusinessPDFFirstPage);
+    const yearOfSmallBusiness = extractYear(smallBusinessPDFFirstPage);
     if (isNaN(yearOfSmallBusiness)) {
         return Promise.reject('Failed to extract year from the title page of the small business rates pdf from canada post');
     }

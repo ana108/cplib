@@ -1,4 +1,4 @@
-export let allTestCases = {
+export const allTestCases = {
     "A1": {
         "postalCodes": {
             "src": "M9N0A1",
@@ -559,7 +559,7 @@ export let allTestCases = {
         }
     }
 }
-export let americanTestCases = {
+export const americanTestCases = {
     "ALL": {
         "region": {
             "src": "ON",
@@ -644,7 +644,7 @@ export let americanTestCases = {
         }
     }
 }
-export let internationalTestCases = {
+export const internationalTestCases = {
     "401": {
         "country": {
             "src": "Canada",

@@ -1,5 +1,7 @@
-const axios = require('axios').default;
-const PDFParser = require("pdf2json");
+//const axios = require('axios').default;
+import axios from 'axios';
+// const PDFParser = require("pdf2json");
+import PDFParser from 'pdf2json';
 
 import { updateFuelSurcharge } from './db/sqlite3';
 import { saveToDb } from './db/sqlite3';

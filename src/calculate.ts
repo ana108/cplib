@@ -4,7 +4,7 @@ import { fork } from 'child_process';
 import { logger } from './log';
 import _ from 'lodash';
 
-export let locationOfSource = __dirname + '/source.js';
+export const locationOfSource = __dirname + '/source.js';
 
 export interface Address {
     streetAddress: string, // full street address, number + apartment
@@ -230,138 +230,115 @@ export const calculateTax = (sourceProvince: string, destinationProvice: string,
 }
 export const calculateShippingCanada = async (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
     deliverySpeed = 'regular', customerType = 'regular'): Promise<number> => {
-    //return new Promise<number>((resolve, reject) => {
-    try {
-        // for package dimensions make sure to convert it into a type
+    // for package dimensions make sure to convert it into a type
 
-        // get rate code
-        const source = sourcePostalCode.substr(0, 3);
-        const destination = destinationPostalCode.substr(0, 3);
-        const rateCode = await getRateCode(source, destination);
+    // get rate code
+    const source = sourcePostalCode.substr(0, 3);
+    const destination = destinationPostalCode.substr(0, 3);
+    const rateCode = await getRateCode(source, destination);
 
-        // get cost for regular/priority/express
-        let shippingCost;
-        if (weightInKg <= 30.0) {
-            shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, customerType });
-        } else {
-            const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, customerType });
+    // get cost for regular/priority/express
+    let shippingCost;
+    if (weightInKg <= 30.0) {
+        shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, customerType });
+    } else {
+        const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, customerType });
 
-            const difference = weightInKg - 30.0;
-            shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
+        const difference = weightInKg - 30.0;
+        shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
+    }
+    // get fuel rate
+
+    const fuelSurchargePercentage = await getLatestFuelSurcharge('Canada', deliverySpeed);
+    // add fuel rate to final cost
+    const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+
+    const sourceProvince = extractProvince(sourcePostalCode);
+    const destinationProvice = extractProvince(destinationPostalCode);
+
+    // calculate tax
+    const tax = calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
+    const finalPrice = pretaxCost + tax;
+    // resolve(round(finalPrice));
+    return round(finalPrice);
+}
+export const calculateShippingUSA = async (sourceProvince: string, destState: string, weightInKg: number,
+    deliverySpeed = 'expedited', customerType = 'regular'): Promise<number> => {
+    let rateCode;
+    let shippingCost;
+    // for package dimensions make sure to convert it into a type
+    if (deliverySpeed === 'priority') {
+        rateCode = await getRateCode('Canada', 'USA', deliverySpeed);
+    } else if (deliverySpeed === 'express' || deliverySpeed === 'expedited') {
+        rateCode = await getRateCode(sourceProvince, destState, deliverySpeed);
+    } else if (deliverySpeed === 'tracked_packet' || deliverySpeed === 'small_packet') {
+        if (weightInKg > 2.0) {
+            throw new Error('The maximum weight of a package for a packet is 2.0 kg');
         }
-        // get fuel rate
-
-        const fuelSurchargePercentage = await getLatestFuelSurcharge('Canada', deliverySpeed);
-        // add fuel rate to final cost
-        const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
-
-        const sourceProvince = extractProvince(sourcePostalCode);
-        const destinationProvice = extractProvince(destinationPostalCode);
-
-        // calculate tax
-        const tax = calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
-        const finalPrice = pretaxCost + tax;
-        // resolve(round(finalPrice));
-        return round(finalPrice);
-    } catch (e) {
-        throw e;
-        // reject(e);
+        rateCode = '1';
+        // skip the rate code, and go straight to getting rate
+        // pick any rate between 1 and 7; they all have the same values
+    }
+    // priority is the same as international
+    // all other have USA specific rates
+    let countryDeliveringTo = 'USA';
+    if (deliverySpeed === 'priority') {
+        countryDeliveringTo = 'INTERNATIONAL';
     }
 
-    //});
+    if (weightInKg <= 30.0) {
+        shippingCost = await getRate(rateCode, weightInKg, { country: countryDeliveringTo, type: deliverySpeed, customerType });
+    } else {
+        const rates: maxRates = await getMaxRate(rateCode, { country: countryDeliveringTo, type: deliverySpeed, customerType });
+
+        const difference = weightInKg - 30.0;
+        shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
+    }
+
+    // get fuel rate
+    const fuelSurchargePercentage = await getLatestFuelSurcharge('USA', deliverySpeed);
+    // add fuel rate to final cost
+    let pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+    if (deliverySpeed === 'priority' && (destState === 'HI' || destState === 'AK')) {
+        pretaxCost += 8.50;
+    }
+
+    return round(pretaxCost);
 }
-export const calculateShippingUSA = (sourceProvince: string, destState: string, weightInKg: number,
-    deliverySpeed = 'expedited', customerType = 'regular'): Promise<number> => {
-    return new Promise<number>(async (resolve, reject) => {
-        try {
-            let rateCode;
-            let shippingCost;
-            // for package dimensions make sure to convert it into a type
-            if (deliverySpeed === 'priority') {
-                rateCode = await getRateCode('Canada', 'USA', deliverySpeed);
-            } else if (deliverySpeed === 'express' || deliverySpeed === 'expedited') {
-                rateCode = await getRateCode(sourceProvince, destState, deliverySpeed);
-            } else if (deliverySpeed === 'tracked_packet' || deliverySpeed === 'small_packet') {
-                if (weightInKg > 2.0) {
-                    reject('The maximum weight of a package for a packet is 2.0 kg');
-                }
-                rateCode = '1';
-                // skip the rate code, and go straight to getting rate
-                // pick any rate between 1 and 7; they all have the same values
-            }
-            // priority is the same as international
-            // all other have USA specific rates
-            let countryDeliveringTo = 'USA';
-            if (deliverySpeed === 'priority') {
-                countryDeliveringTo = 'INTERNATIONAL';
-            }
-
-            if (weightInKg <= 30.0) {
-                shippingCost = await getRate(rateCode, weightInKg, { country: countryDeliveringTo, type: deliverySpeed, customerType });
-            } else {
-                const rates: maxRates = await getMaxRate(rateCode, { country: countryDeliveringTo, type: deliverySpeed, customerType });
-
-                const difference = weightInKg - 30.0;
-                shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
-            }
-
-            // get fuel rate
-            const fuelSurchargePercentage = await getLatestFuelSurcharge('USA', deliverySpeed);
-            // add fuel rate to final cost
-            let pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
-            if (deliverySpeed === 'priority' && (destState === 'HI' || destState === 'AK')) {
-                pretaxCost += 8.50;
-            }
-
-            resolve(round(pretaxCost));
-        } catch (e) {
-            reject(e);
-        }
-
-    });
-}
-export const calculateShippingInternational = (destinationCountry: string, weightInKg: number,
+export const calculateShippingInternational = async (destinationCountry: string, weightInKg: number,
     deliverySpeed = 'surface', customerType = 'regular'): Promise<number> => {
-    return new Promise<number>(async (resolve, reject) => {
-        try {
-
-            if (deliverySpeed === 'tracked_packet' || deliverySpeed === 'small_packet_air' || deliverySpeed === 'small_packet_surface') {
-                if (weightInKg > 2.0) {
-                    reject('The maximum weight of a package for a packet is 2.0 kg');
-                }
-            }
-            let deliveryTypeRateCode = deliverySpeed;
-            if (deliverySpeed === 'small_packet_air' || deliverySpeed === 'small_packet_surface') {
-                deliveryTypeRateCode = 'small_packet';
-            }
-            // get rate code
-            const rateCode = await getRateCode('Canada', destinationCountry, deliveryTypeRateCode);
-            // handle no rate code returned
-            if (!rateCode) {
-                throw new Error(`No shipping is available to ${destinationCountry} using ${deliverySpeed}  Try using a different shipping type`);
-            }
-            // get cost for regular/priority/express
-            let shippingCost;
-            if (weightInKg <= 30.0) {
-                shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
-            } else {
-                const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
-
-                const difference = weightInKg - 30.0;
-                shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
-            }
-
-            // get fuel rate
-            const fuelSurchargePercentage = await getLatestFuelSurcharge('INTERNATIONAL', deliveryTypeRateCode);
-            // add fuel rate to final cost
-            const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
-
-            resolve(round(pretaxCost));
-        } catch (e) {
-            reject(e);
+    if (deliverySpeed === 'tracked_packet' || deliverySpeed === 'small_packet_air' || deliverySpeed === 'small_packet_surface') {
+        if (weightInKg > 2.0) {
+            throw new Error('The maximum weight of a package for a packet is 2.0 kg');
         }
+    }
+    let deliveryTypeRateCode = deliverySpeed;
+    if (deliverySpeed === 'small_packet_air' || deliverySpeed === 'small_packet_surface') {
+        deliveryTypeRateCode = 'small_packet';
+    }
+    // get rate code
+    const rateCode = await getRateCode('Canada', destinationCountry, deliveryTypeRateCode);
+    // handle no rate code returned
+    if (!rateCode) {
+        throw new Error(`No shipping is available to ${destinationCountry} using ${deliverySpeed}  Try using a different shipping type`);
+    }
+    // get cost for regular/priority/express
+    let shippingCost;
+    if (weightInKg <= 30.0) {
+        shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
+    } else {
+        const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, country: 'INTERNATIONAL', customerType });
 
-    });
+        const difference = weightInKg - 30.0;
+        shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
+    }
+
+    // get fuel rate
+    const fuelSurchargePercentage = await getLatestFuelSurcharge('INTERNATIONAL', deliveryTypeRateCode);
+    // add fuel rate to final cost
+    const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+
+    return round(pretaxCost);
 }
 export const getLatestFuelSurcharge = (country: string, deliverySpeed): Promise<number> => {
     return new Promise((resolve, reject) => {
