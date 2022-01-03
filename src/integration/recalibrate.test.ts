@@ -3,17 +3,29 @@ import { calculateShipping } from '../calculate';
 import * as db from '../db/sqlite3';
 import fs from 'fs';
 import * as tc from './testcases';
+import * as sinon from 'sinon';
+const child_process = require('child_process');
+
+const message_handler = {
+    on: (event: any, cb) => {
+        cb()
+    }
+}
 
 let allRecalibrations = "";
 
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
     const newTestCases = tc.allTestCases;
+    let forkStb;
     before(async () => {
+        forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
         await db.setDB(__dirname + "/cplib_int.db");
     });
-    after(() => {
+    after(async () => {
+        forkStb.restore();
         const recalibratedCanada = "export let allTestCases = " + JSON.stringify(newTestCases, null, 4);
         allRecalibrations = recalibratedCanada;
+        await db.resetDB();
     });
     const totalCases = Object.keys(tc.allTestCases).length;
     const sourceAddr = {
@@ -44,9 +56,16 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
 });
 
 describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () => {
-    after(() => {
+    let forkStb;
+    before(async () => {
+        forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
+        await db.setDB(__dirname + "/cplib_int.db");
+    });
+    after(async () => {
+        forkStb.restore();
         const recalibratedAmerican = "export let americanTestCases = " + JSON.stringify(tc.americanTestCases, null, 4);
         allRecalibrations = allRecalibrations + "\n" + recalibratedAmerican;
+        await db.resetDB();
     });
     const totalCases = Object.keys(tc.americanTestCases).length;
     const sourceAddr = {
@@ -77,8 +96,13 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
 });
 
 describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5kg', () => {
-
+    let forkStb;
+    before(async () => {
+        forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
+        await db.setDB(__dirname + "/cplib_int.db");
+    });
     after(async () => {
+        forkStb.restore();
         const recalibratedInternational = "export let internationalTestCases = " + JSON.stringify(tc.internationalTestCases, null, 4);
         allRecalibrations = allRecalibrations + "\n" + recalibratedInternational;
         fs.writeFile(__dirname + "/testcases.ts", allRecalibrations, function (err) {

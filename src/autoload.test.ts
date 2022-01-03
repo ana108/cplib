@@ -5,7 +5,7 @@ import 'mocha';
 import { RateTables, RatesPages, extractPriorityWorldwide } from './autoload';
 import * as chai from 'chai';
 const expect = chai.expect;
-const YEAR = new Date().getFullYear();
+const YEAR = 2021; // new Date().getFullYear();
 
 describe('Extract rate tables', () => {
     let regularRateTables: RateTables;

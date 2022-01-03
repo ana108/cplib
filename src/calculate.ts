@@ -1,12 +1,10 @@
-import { getRateCode, getRate, getProvince, getFuelSurcharge, maxRates, getMaxRate, FuelSurcharge } from './db/sqlite3';
+import { getRateCode, getRate, getFuelSurcharge, maxRates, getMaxRate, FuelSurcharge } from './db/sqlite3';
 import { updateAllFuelSurcharges } from './autoload';
 import { fork } from 'child_process';
+import { logger } from './log';
+import _ from 'lodash';
 
-// internal. for integration tests only.
 export let locationOfSource = __dirname + '/source.js';
-export const setLocation = (val: string): void => {
-    locationOfSource = val;
-}
 
 export interface Address {
     streetAddress: string, // full street address, number + apartment
@@ -139,13 +137,14 @@ export const validateAddress = (address: Address): Address => {
     return cleanAddress;
 }
 export const calculateShipping = (sourceAddress: Address, destinationAddress: Address, weightInKg: number, deliveryType = 'regular', customerType = 'regular'): Promise<number> => {
+    logger.info(`Calculate shipping source: ${_.get(sourceAddress, 'postalCode', '')} dest: ${_.get(destinationAddress, 'postalCode', '') + " " + _.get(destinationAddress, 'region', '') + " " + _.get(destinationAddress, 'country', '')} weight: ${weightInKg} deliveryType: ${deliveryType} customerType: ${customerType}`);
     const deliverySpeed = deliveryType.trim().toLowerCase();
     return new Promise<number>((resolve, reject) => {
         try {
             const child = fork(locationOfSource, { silent: false })
             child.on('exit', (err) => {
                 if (err) {
-                    console.log('Error: ', err);
+                    logger.error(`Update service exited with message: ${err}`);
                 }
             });
             if (!weightInKg || weightInKg <= 0) {
@@ -165,6 +164,7 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
             const source = validateAddress(sourceAddress);
             const destination = validateAddress(destinationAddress);
             if (destination.country === 'Canada' && canadaDeliverySpeeds.includes(deliverySpeed)) {
+                logger.debug(`Calculate shipping canada`);
                 calculateShippingCanada(source.postalCode, destination.postalCode, weightInKg, deliverySpeed, customerType).then(data => {
                     resolve(data);
                 }).catch(e => {
@@ -173,6 +173,7 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
             } else if (destination.country === 'Canada' && !canadaDeliverySpeeds.includes(deliverySpeed)) {
                 throw new Error('Delivery type must be one of the following: regular, priority, express or expedited');
             } else if (destination.country === 'USA' && americanDeliverySpeeds.includes(deliverySpeed)) {
+                logger.debug(`Calculate shipping USA`);
                 calculateShippingUSA(source.region, destination.region, weightInKg, deliverySpeed, customerType).then(data => {
                     resolve(data);
                 }).catch(e => {
@@ -183,6 +184,7 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
             } else if (!internationalDeliverySpeeds.includes(deliverySpeed)) {
                 throw new Error('Delivery type must be one of the following: priority,express,air,surface,tracked_packet,small_packet_air,small_packet_surface');
             } else {
+                logger.debug(`Calculate shipping international`);
                 calculateShippingInternational(destination.country, weightInKg, deliverySpeed, customerType).then(data => {
                     resolve(data);
                 }).catch(e => {
@@ -223,48 +225,50 @@ export const calculateTax = (sourceProvince: string, destinationProvice: string,
             taxCost = shippingCost * 0.05;
         }
     }
+    logger.info(`Taxes calculated for shipping cost ${shippingCost} are ${taxCost}`);
     return taxCost;
 }
-export const calculateShippingCanada = (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
+export const calculateShippingCanada = async (sourcePostalCode: string, destinationPostalCode: string, weightInKg: number,
     deliverySpeed = 'regular', customerType = 'regular'): Promise<number> => {
-    return new Promise<number>(async (resolve, reject) => {
-        try {
-            // for package dimensions make sure to convert it into a type
+    //return new Promise<number>((resolve, reject) => {
+    try {
+        // for package dimensions make sure to convert it into a type
 
-            // get rate code
-            const source = sourcePostalCode.substr(0, 3);
-            const destination = destinationPostalCode.substr(0, 3);
-            const rateCode = await getRateCode(source, destination);
+        // get rate code
+        const source = sourcePostalCode.substr(0, 3);
+        const destination = destinationPostalCode.substr(0, 3);
+        const rateCode = await getRateCode(source, destination);
 
-            // get cost for regular/priority/express
-            let shippingCost;
-            if (weightInKg <= 30.0) {
-                shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, customerType });
-            } else {
-                const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, customerType });
+        // get cost for regular/priority/express
+        let shippingCost;
+        if (weightInKg <= 30.0) {
+            shippingCost = await getRate(rateCode, weightInKg, { type: deliverySpeed, customerType });
+        } else {
+            const rates: maxRates = await getMaxRate(rateCode, { type: deliverySpeed, customerType });
 
-                const difference = weightInKg - 30.0;
-                shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
-            }
-            // get fuel rate
-
-            const fuelSurchargePercentage = await getLatestFuelSurcharge('Canada', deliverySpeed);
-            // add fuel rate to final cost
-            const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
-            // IF this api call gets too slow; these two calls can be replaced with postal code mappings
-
-            const sourceProvince = extractProvince(sourcePostalCode); //await getProvince(sourcePostalCode);
-            const destinationProvice = extractProvince(destinationPostalCode); // await getProvince(destinationPostalCode);
-
-            // calculate tax
-            const tax = calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
-            const finalPrice = pretaxCost + tax;
-            resolve(round(finalPrice));
-        } catch (e) {
-            reject(e);
+            const difference = weightInKg - 30.0;
+            shippingCost = rates.maxRate + (difference / 0.5) * rates.incrementalRate;
         }
+        // get fuel rate
 
-    });
+        const fuelSurchargePercentage = await getLatestFuelSurcharge('Canada', deliverySpeed);
+        // add fuel rate to final cost
+        const pretaxCost = shippingCost * (1 + fuelSurchargePercentage);
+
+        const sourceProvince = extractProvince(sourcePostalCode);
+        const destinationProvice = extractProvince(destinationPostalCode);
+
+        // calculate tax
+        const tax = calculateTax(sourceProvince, destinationProvice, pretaxCost, deliverySpeed);
+        const finalPrice = pretaxCost + tax;
+        // resolve(round(finalPrice));
+        return round(finalPrice);
+    } catch (e) {
+        throw e;
+        // reject(e);
+    }
+
+    //});
 }
 export const calculateShippingUSA = (sourceProvince: string, destState: string, weightInKg: number,
     deliverySpeed = 'expedited', customerType = 'regular'): Promise<number> => {
@@ -371,7 +375,7 @@ export const getLatestFuelSurcharge = (country: string, deliverySpeed): Promise<
                         resolve(updatedData.percentage);
                     })
                 }).catch(err => {
-                    console.log('Error on updating table, returning old values', err);
+                    logger.error(`Failed to update fuel surcharges. Fuel surcharge may be out of date. Error: ${err}`);
                     resolve(data.percentage);
                 })
             } else {

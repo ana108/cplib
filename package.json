@@ -13,7 +13,8 @@
     "build": "rimraf ./build && tsc && cp -rf src/resources/ build/",
     "start": "npm run build && node build/index.js",
     "sourcetest": "mocha --timeout 0 -r ts-node/register src/source.test.ts",
-    "lint": "eslint . --ext .ts --fix"
+    "lint": "eslint . --ext .ts --fix",
+    "update-data": "npm run sourcetest && cp src/resources/cplib.db src/integration/cplib_int.db && npm run build"
   },
   "keywords": [
     "canada post",
@@ -51,6 +52,7 @@
     "events": "^3.2.0",
     "pdf2json": "1.2.1",
     "sinon": "^9.2.0",
-    "sqlite3": "^5.0.0"
+    "sqlite3": "^5.0.0",
+    "winston": "^3.3.3"
   }
 }

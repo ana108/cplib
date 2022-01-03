@@ -12,22 +12,22 @@ describe('Download and save pdfs - integration', () => {
         const currentHighestYear = await getHighestYear();
         const result = await savePDFS(YEAR, currentHighestYear);
         let pdfFound = false;
-        if (result.regular) { // if regular was found, then check if new year was created
-            const regularDir = __dirname + `/resources/regular/${YEAR}`;
+        if (result.regular.update) { // if regular was found, then check if new year was created
+            const regularDir = __dirname + `/resources/regular/${result.regular.year}`;
             if (!fs.existsSync(regularDir)) {
                 fail('Failed to find the regular directory that was supposed to be created');
             }
 
             fs.readdirSync(regularDir).forEach(file => {
-                if (file === `Rates_${YEAR}.pdf`) pdfFound = true;
+                if (file === `Rates_${result.regular.year}.pdf`) pdfFound = true;
             });
             expect(pdfFound).to.equal(true);
             pdfFound = false;
         } else {
             expect(true, "Years match, no data will be updated for regular customers").to.equal(true);
         }
-        if (result.smallBusiness) {
-            const smallBusinessDir = __dirname + `/resources/small_business/${YEAR}`;
+        if (result.smallBusiness.update) {
+            const smallBusinessDir = __dirname + `/resources/small_business/${result.smallBusiness.year}`;
             if (!fs.existsSync(smallBusinessDir)) {
                 fail('Failed to find the small business directory that was supposed to be created');
             }

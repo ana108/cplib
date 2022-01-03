@@ -4,65 +4,67 @@ import { copyFile } from 'fs/promises';
 import { https } from 'follow-redirects';
 import { loadPDF, extractYear, updateAllFuelSurcharges, REGULAR, SMALL_BUSINESS, e2eProcess } from './autoload';
 import { getHighestYear, resetDB, deleteRatesByYear, setWriteDB } from './db/sqlite3';
+import { logger } from './log';
 
 export interface updateresults {
-    regular: boolean,
-    smallBusiness: boolean
+    regular: { update: boolean, year: number },
+    smallBusiness: { update: boolean, year: number }
 }
 export const checkAndUpdate = async (): Promise<void> => {
     const currentYear = new Date().getFullYear();
+    let currentHighestYear;
     let datacheck: updateresults;
     let dataLoadDbPath: string;
     const fileReading = fs.readFileSync(__dirname + '/resources/isUpdating.json');
-    let state = JSON.parse(fileReading.toString());
+    const state = JSON.parse(fileReading.toString());
     try {
         if (state.isUpdating) {
-            console.log('Not updating the database because it is currently updating');
+            logger.info('Not updating the database because it is currently updating');
             return Promise.resolve();
         }
 
-        const currentHighestYear = await getHighestYear();
+        currentHighestYear = await getHighestYear();
         if (currentYear === currentHighestYear) {
-            console.log(`Current year ${currentYear} matches current highest year ${currentHighestYear}, therefore not updating`);
+            logger.info(`Current year ${currentYear} matches current highest year ${currentHighestYear}, therefore not updating`);
             return Promise.resolve();
         }
         await setUpdating(state, true);
         datacheck = await savePDFS(currentYear, currentHighestYear);
         if (!datacheck.regular && !datacheck.smallBusiness) {
-            console.log('Nothing updated, because data check came back as not needed');
+            logger.info('Nothing updated, because data check came back as not needed');
             return Promise.resolve(); // all good
         }
 
         dataLoadDbPath = `${__dirname}/cplib_interim.db`;
-        console.log('Updating the fuel surcharge on the source db');
+        logger.info('Updating the fuel surcharge on the source db');
         await updateAllFuelSurcharges();
         await copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
-        console.log('Copied the db file');
+        logger.info('Copied the db file');
         // close all write only db connections, and open to copied db file
-        console.log('Set the writing db to be temp db');
+        logger.info('Make all writes go to the temporary db');
         await setWriteDB(dataLoadDbPath);
     } catch (e) {
-        console.log('Error occurred during preparatory processing ', e);
+        logger.error('Error occurred during preparatory processing ', e);
         await setUpdating(state, false);
         return Promise.reject(e);
     }
     try {
-        if (datacheck.regular) {
-            const numberDeletedRows = await deleteRatesByYear(currentYear, 'regular');
-            console.log(`Number of rows deleted for year ${currentYear} type regular: `, numberDeletedRows);
-            await e2eProcess(currentYear, REGULAR);
+        if (datacheck.regular.update) {
+            const numberDeletedRows = await deleteRatesByYear(datacheck.regular.year, 'regular');
+            logger.debug(`Number of rows deleted for year ${datacheck.regular.year} type regular: `, numberDeletedRows);
+            await e2eProcess(datacheck.regular.year, REGULAR);
         }
-        if (datacheck.smallBusiness) {
-            const numberDeletedRows = await deleteRatesByYear(currentYear, 'small_business');
-            console.log(`Number of rows deleted for year ${currentYear} type small business: `, numberDeletedRows);
-            await e2eProcess(currentYear, SMALL_BUSINESS);
+        if (datacheck.smallBusiness.update) {
+            const numberDeletedRows = await deleteRatesByYear(datacheck.smallBusiness.year, 'small_business');
+            logger.debug(`Number of rows deleted for year ${datacheck.smallBusiness.year} type small business: `, numberDeletedRows);
+            await e2eProcess(datacheck.smallBusiness.year, SMALL_BUSINESS);
         }
-        console.log('Done e2e process');
-        console.log(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
+        logger.info('Done e2e process');
+        logger.info(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
         await copyFile(dataLoadDbPath, `${__dirname}/resources/cplib.db`);
-        console.log('Closing db');
+        logger.info('Closing db');
         await resetDB();
-        console.log('Delete temp db');
+        logger.info('Delete temp db');
         await fsPromises.unlink(dataLoadDbPath);
         await setUpdating(state, false);
         return Promise.resolve();
@@ -75,7 +77,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
     const tmpDir = __dirname + '/resources/tmp';
     // tmp directory to load the pdf into so we can check if new pdf has been posted
     if (!fs.existsSync(tmpDir)) {
-        fs.mkdirSync(tmpDir);
+        const newPath = fs.mkdirSync(tmpDir, { recursive: true });
     }
     const regularPDF = `${tmpDir}/Regular_Rates_${year}.pdf`;
     const regularOptions = {
@@ -101,7 +103,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
             });
         });
         req.on('error', (error) => {
-            console.log(`Failed with error ${error}`);
+            logger.error(`Failed to download regular rates pdf with ${error}`);
             reject(error);
         });
         req.end();
@@ -142,17 +144,23 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
     // check the year of the pdf returned for regular customers.
     // this is done by extracting the first page and seeing the year displayed there
     const regularPDFFirstPage = await loadPDF(regularPDF);
-    const yearOfRegular = extractYear(regularPDFFirstPage);
+    let yearOfRegular = extractYear(regularPDFFirstPage);
     const updateRates: updateresults = {
-        regular: false,
-        smallBusiness: false
+        regular: {
+            update: false,
+            year: yearOfRegular
+        },
+        smallBusiness: {
+            update: false,
+            year
+        }
     };
     if (isNaN(yearOfRegular)) {
         return Promise.reject('Failed to extract year from the title page of the regular rates pdf from canada post');
     }
     if (currentHighestYear !== yearOfRegular && yearOfRegular > currentHighestYear) {
         // copy the regular pdf, rename it to its final destination
-        updateRates.regular = true;
+        updateRates.regular.update = true;
         let regularPdfDest = __dirname + `/resources/regular/${yearOfRegular}`;
         if (!fs.existsSync(regularPdfDest)) {
             fs.mkdirSync(regularPdfDest);
@@ -161,18 +169,19 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
         try {
             await copyFile(regularPDF, regularPdfDest);
         } catch (e) {
-            console.log('Error on copy ', e);
+            logger.error(`Error when copying from ${regularPDF} to ${regularPdfDest} Error:  ${e}`);
         }
     } else {
-        console.log(`The year in PDF is not higher than currentHighestYear ${currentHighestYear} Year found in pdf: ${yearOfRegular}`);
+        logger.info(`The year in PDF is not higher than currentHighestYear ${currentHighestYear} Year found in pdf: ${yearOfRegular}`);
     }
     const smallBusinessPDFFirstPage = await loadPDF(smallBusinessPDF);
-    const yearOfSmallBusiness = extractYear(smallBusinessPDFFirstPage);
+    let yearOfSmallBusiness = extractYear(smallBusinessPDFFirstPage);
     if (isNaN(yearOfSmallBusiness)) {
         return Promise.reject('Failed to extract year from the title page of the small business rates pdf from canada post');
     }
     if (currentHighestYear !== yearOfSmallBusiness && yearOfSmallBusiness > currentHighestYear) {
-        updateRates.smallBusiness = true;
+        updateRates.smallBusiness.update = true;
+        updateRates.smallBusiness.year = yearOfSmallBusiness;
         let smallBusinessPdfDest = __dirname + `/resources/small_business/${yearOfRegular}`;
         if (!fs.existsSync(smallBusinessPdfDest)) {
             fs.mkdirSync(smallBusinessPdfDest);
@@ -181,7 +190,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
         try {
             await copyFile(smallBusinessPDF, smallBusinessPdfDest);
         } catch (e) {
-            console.log('Small Business Copy Error ', e);
+            logger.error(`Error when copying from ${smallBusinessPDF} to ${smallBusinessPdfDest} Error:  ${e}`);
         }
     }
     await cleanUp();
@@ -218,7 +227,7 @@ const setUpdating = async (currentValue: { isUpdating: boolean }, newValue: bool
 }
 
 checkAndUpdate().catch(err => {
-    if (err && err.indexOf('409') >= 0) {
+    if (err && err.length > 0 && err.indexOf('409') >= 0) {
         (<any>process).send({ isError: '409' });
     }
 })

@@ -18,11 +18,6 @@ const message_handler = {
   }
 }
 
-const mockprocess = {
-  fork: function (path) {
-    return message_handler;
-  }
-};
 const expect = chai.expect;
 /*
 Calculate Tax Unit Tests:

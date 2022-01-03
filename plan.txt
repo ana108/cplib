@@ -1,5 +1,5 @@
 To DO:
-1. Convert console.log to winston logs for future debugging (add morgan to detail api calls also)
+1. Convert all instances of __dirname to be compatible with windows
 
 References Info:
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)

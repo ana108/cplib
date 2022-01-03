@@ -1,19 +1,29 @@
-import { calculateShipping, setLocation } from '../calculate';
+import { calculateShipping } from '../calculate';
 
 import * as db from '../db/sqlite3';
 import * as chai from 'chai';
 import { allTestCases, americanTestCases, internationalTestCases } from './testcases';
+import * as sinon from 'sinon';
+const child_process = require('child_process');
+
+const message_handler = {
+    on: (event: any, cb) => {
+        cb()
+    }
+}
 
 const expect = chai.expect;
 const compiledSrcLocation: string = __dirname + '/../../build/source.js';
 
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
-
+    let forkStb;
     before(async () => {
-        setLocation(compiledSrcLocation);
+        // setLocation(compiledSrcLocation);
+        forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
         await db.setDB(__dirname + "/cplib_int.db");
     });
     after(async () => {
+        forkStb.restore();
         await db.resetDB();
     });
     const totalCases = Object.keys(allTestCases).length;
@@ -45,12 +55,14 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
 });
 
 describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () => {
-
+    let forkStb;
     before(async () => {
-        setLocation(compiledSrcLocation);
+        forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
+        // setLocation(compiledSrcLocation);
         await db.setDB(__dirname + "/cplib_int.db");
     });
     after(async () => {
+        forkStb.restore();
         await db.resetDB();
     });
     const totalCases = Object.keys(americanTestCases).length;
@@ -82,12 +94,13 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
 });
 
 describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5kg', () => {
-
+    let forkStb;
     before(async () => {
-        setLocation(compiledSrcLocation);
+        forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
         await db.setDB(__dirname + "/cplib_int.db");
     });
     after(async () => {
+        forkStb.restore();
         await db.resetDB();
     });
     const totalCases = Object.keys(internationalTestCases).length;

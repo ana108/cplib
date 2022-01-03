@@ -1,5 +1,6 @@
 import sqlite3 from 'sqlite3';
 import { FuelTable } from '../autoload';
+import { logger } from '../log';
 
 const dbname = __dirname + "/../resources/cplib.db";
 let dbToOpen = dbname;
@@ -9,13 +10,13 @@ export const setDB = async (dbLocation: string) => {
   return new Promise<void>((resolve, reject) => {
     db.close(err => {
       if (err) {
-        console.log(`Error closing DB ${dbname}: Error: ${err}`);
+        logger.error(`Error closing DB ${dbname}: Error: ${err}`);
       }
       dbToOpen = dbLocation;
       db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
       writedb.close(error => {
         if (error) {
-          console.log(`Error closing writing DB ${dbname}: Error: ${err}`);
+          logger.error(`Error closing writing DB ${dbname}: Error: ${err}`);
         }
         writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
       });
@@ -27,7 +28,7 @@ export const setWriteDB = async (dbLocation: string) => {
   return new Promise<void>((resolve, reject) => {
     writedb.close(err => {
       if (err) {
-        console.log(`Error closing written DB ${dbname}: Error: ${err}`);
+        logger.error(`Error closing written DB ${dbname}: Error: ${err}`);
       }
       dbToOpen = dbLocation;
       writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
@@ -40,14 +41,14 @@ export const resetDB = async () => {
     dbToOpen = dbname;
     db.close(err => {
       if (err) {
-        console.log(`Error closing DB on reset ${dbname} error: ${err}`);
+        logger.error(`Error closing DB on reset ${dbname} error: ${err}`);
       }
       db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
       resolve(true);
     });
     writedb.close(err => {
       if (err) {
-        console.log(`Error closing write DB on reset ${dbname} : ${err}`);
+        logger.error(`Error closing write DB on reset ${dbname} : ${err}`);
       }
       writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
     })
@@ -60,7 +61,7 @@ export const openForWrite = async (): Promise<sqlite3.Database> => {
       if (!err) {
         resolve(readWriteDB);
       } else {
-        console.log('Error opening db for write ', err);
+        logger.error('Error opening db for write ', err);
         reject(err);
       }
     });
@@ -342,7 +343,7 @@ export const deleteRatesByYear = async (year: number, customerType?: string): Pr
   return new Promise<number>((resolve, reject) => {
 
     if (!writeDB) {
-      console.log('Could not open a connection to db');
+      logger.error('Could not open a connection to db');
     }
     writeDB.run(deleteSql, [], function (this: any, err) {
       if (err) {
@@ -352,7 +353,7 @@ export const deleteRatesByYear = async (year: number, customerType?: string): Pr
       }
       writeDB.close(err => {
         if (err) {
-          console.log('Error closing connection to db after deleting year data ', err);
+          logger.warn('Error closing connection to db after deleting year data ', err);
         }
       })
     });
