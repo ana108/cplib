@@ -1,0 +1,30 @@
+CREATE TABLE POSTAL_CODES (
+	postal_code text,
+	province text
+);
+
+CREATE TABLE RATE_CODE_MAPPING (
+	source text NOT NULL,
+   	destination text NOT NULL,
+	rate_code text NOT NULL,
+	country text,
+	delivery_type text
+);
+
+CREATE TABLE RATES (
+	year integer NOT NULL,
+   	max_weight decimal(10,3) NOT NULL,
+	weight_type text DEFAULT 'kg' NOT NULL,
+	rate_code text NOT NULL,
+	price decimal(10, 3) NOT NULL,
+	type text DEFAULT 'regular' NOT NULL,
+	country text,
+        customer_type text DEFAULT 'regular'
+);
+
+CREATE TABLE FUEL_SURCHARGE (
+	percentage decimal(2, 0),
+	date text,
+	country text,
+	delivery_type text
+);
