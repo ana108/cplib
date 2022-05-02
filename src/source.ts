@@ -39,9 +39,9 @@ export const checkAndUpdate = async (): Promise<void> => {
         logger.info('Updating the fuel surcharge on the source db');
         await updateAllFuelSurcharges();
         await copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
-        logger.info('Copied the db file');
+        logger.info('Copied the current db file to use for updating (interim)');
         // close all write only db connections, and open to copied db file
-        logger.info('Make all writes go to the temporary db');
+        logger.info('Make all writes go to the new temporary db');
         await setWriteDB(dataLoadDbPath);
     } catch (e) {
         logger.error('Error occurred during preparatory processing ', e);
@@ -50,13 +50,16 @@ export const checkAndUpdate = async (): Promise<void> => {
     }
     try {
         if (datacheck.regular.update) {
+            logger.debug("Data check regular update");
             const numberDeletedRows = await deleteRatesByYear(datacheck.regular.year, 'regular');
-            logger.debug(`Number of rows deleted for year ${datacheck.regular.year} type regular: `, numberDeletedRows);
+            logger.debug(`Number of rows deleted for year ${datacheck.regular.year} type regular: ${numberDeletedRows}`);
             await e2eProcess(datacheck.regular.year, REGULAR);
+            logger.debug(`Done e2e process for regular`);
         }
         if (datacheck.smallBusiness.update) {
+            logger.info("Data check small business update");
             const numberDeletedRows = await deleteRatesByYear(datacheck.smallBusiness.year, 'small_business');
-            logger.debug(`Number of rows deleted for year ${datacheck.smallBusiness.year} type small business: `, numberDeletedRows);
+            logger.debug(`Number of rows deleted for year ${datacheck.smallBusiness.year} type small business: ${numberDeletedRows}`);
             await e2eProcess(datacheck.smallBusiness.year, SMALL_BUSINESS);
         }
         logger.info('Done e2e process');
@@ -79,7 +82,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
     if (!fs.existsSync(tmpDir)) {
         const newPath = fs.mkdirSync(tmpDir, { recursive: true });
     }
-    const regularPDF = `${tmpDir}/Regular_Rates_${year}.pdf`;
+    const regularPDF = `${tmpDir}/RegularRates_${year}.pdf`;
     const regularOptions = {
         followAllRedirects: true,
         hostname: 'www.canadapost-postescanada.ca',
@@ -109,7 +112,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
         req.end();
     });
 
-    const smallBusinessPDF = `${tmpDir}/Rates_${year}.pdf`;
+    const smallBusinessPDF = `${tmpDir}/SmallBusiness_Rates_${year}.pdf`;
     const smallBusinessOptions = {
         followAllRedirects: true,
         hostname: 'www.canadapost-postescanada.ca',

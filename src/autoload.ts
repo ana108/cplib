@@ -60,14 +60,17 @@ export const extractFuelTable = (data: string): FuelTable => {
     }
     // first line: extract the end date
     const endDateRaw = lines[start + 1];
-    const endDate = endDateRaw.replace(/&nbsp;/g, ' ').split('through')[1].replace('</h4>', '').replace(':', '');
-    const validUntilDate = new Date(endDate);
+    const endDate = endDateRaw.replace(/&nbsp;/g, ' ').split('through')[1].replace('<span>', '').replace('</span>', '').replace('</h4>', '').replace(':', '');
+    let validUntilDate = new Date(endDate);
+    if (validUntilDate == null) {
+        validUntilDate = new Date();
+    }
     const serviceCharges: FuelTable = <FuelTable>{};
     for (let i = start + 2; i < end; i++) {
         lines[i] = lines[i].replace(/&nbsp;/g, '');
         if (lines[i].indexOf('<tr>') >= 0 && !serviceCharges['Priority Worldwide']) {
             const header = lines[i + 1].replace('</td>', '').replace('<td>', '').replace('<em>', '').replace('</em>', '').replace('<sup>TM</sup>', '');
-            const value = parseFloat(lines[i + 2].replace(/&nbsp;/g, '').replace('</td>', '').replace('<td>', '').trimLeft().replace('%', ''));
+            const value = parseFloat(lines[i + 2].replace('<span>', '').replace('</span>', '').replace(/&nbsp;/g, '').replace('</td>', '').replace('<td>', '').trimLeft().replace('%', ''));
             serviceCharges[header] = value;
         }
     }
@@ -119,7 +122,9 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
         'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
         'small_business': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
     };
+    logger.debug('Start loading pdf ');
     const pdfData = await loadPDF(dataSources[type]);
+    logger.debug('Done loading pdf data');
     const pageTables: RatesPages = pageHeaders(pdfData);
     const rateTables = <RateTables>{
         'PriorityCanada1': [],
@@ -152,8 +157,10 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const canadianExpress = 'ExpressCanada';
     if (pageTables[canadianExpress] !== 0) {
+        logger.debug("Starting extracting express canada");
         rateTables['ExpressCanada1'] = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20, 3);
         rateTables['ExpressCanada2'] = extractRateTables(pdfData, pageTables[canadianExpress], 20, 3);
+        logger.debug("Successfully express ");
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Canadian Express tables`);
     }
@@ -162,6 +169,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     if (pageTables[canadianRegularParcel] !== 0) {
         rateTables['RegularCanada1'] = extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20, 3);
         rateTables['RegularCanada2'] = extractRateTables(pdfData, pageTables[canadianRegularParcel], 20, 2);
+        logger.debug("Successfully regular canada ");
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Regular canadian parcel tables`);
     }
@@ -169,6 +177,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     const internationalPriority = 'PriorityWorldwide';
     if (pageTables[internationalPriority] !== 0) {
         rateTables[internationalPriority] = extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
+        logger.debug("Successfully priority worldwide ");
     } else {
         logger.warn(`${type} - ${year}: Failed to populate worldwide priority tables`);
     }
@@ -176,12 +185,14 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     const expressUSALabel = 'ExpressUSA';
     if (pageTables[expressUSALabel] !== 0) {
         rateTables[expressUSALabel] = extractRateTables(pdfData, pageTables[expressUSALabel], 3, 7);
+        logger.debug("Successfully express usa ");
     } else {
         logger.warn(`${type} - ${year}: Failed to populate express USA tables`);
     }
     const expeditedUSALabel = 'ExpeditedUSA';
     if (pageTables[expeditedUSALabel] !== 0) {
         rateTables[expeditedUSALabel] = cleanExtraLines(extractRateTables(pdfData, pageTables[expeditedUSALabel], 3, 7));
+        logger.debug("Successfully cleaned extra lines from expedited usa");
     } else {
         logger.warn(`${type} - ${year}: Failed to populate USA Expedited tables`);
     }
@@ -189,8 +200,10 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     const usaRateCodes: string = (rateTables[expeditedUSALabel] && rateTables[expeditedUSALabel][0]) || '';
     const trackedPacketUSALabel = 'TrackedPacketUSA';
     if (pageTables[trackedPacketUSALabel] !== 0) {
-        const trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 0);
+        const trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 1);
+        logger.debug("Rate Tables tracked packet usa ");
         rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
+        logger.debug("Rate Tables tracked packet usa - converted to table");
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Tracked Packet USA tables`);
     }
@@ -198,12 +211,14 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     const smallPacketUSALabel = 'SmallPacketUSA';
     if (pageTables[smallPacketUSALabel] !== 0) {
         const smallPacketUSA = extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 0);
+        logger.debug("Starting extracting small packet usa");
         rateTables[smallPacketUSALabel] = convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Small Packet USA tables`);
     }
     const worldwideExpressLabel = 'ExpressInternational';
     if (pageTables[worldwideExpressLabel] !== 0) {
+        logger.debug("Starting extracting express international");
         rateTables[worldwideExpressLabel] = extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10, 3);
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Express International tables`);
@@ -211,6 +226,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const worldwideAirLabel = 'AirInternational';
     if (pageTables[worldwideAirLabel] !== 0) {
+        logger.debug("Starting extracting air international");
         rateTables[worldwideAirLabel] = extractRateTables(pdfData, pageTables[worldwideAirLabel], 10, 4);
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Air International tables`);
@@ -218,6 +234,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const worldwideSurfaceLabel = 'SurfaceInternational';
     if (pageTables[worldwideSurfaceLabel] !== 0) {
+        logger.debug("Starting extracting surface international");
         rateTables[worldwideSurfaceLabel] = extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10, 3);
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Air Surface tables`);
@@ -225,6 +242,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
     if (pageTables[worldwideTrackedPacketLabel] !== 0) {
+        logger.debug("Starting extracting tracked packet international");
         const worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 1);
         rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, worldwideTrackedPacket[0].split(' '));
     } else {
@@ -232,18 +250,25 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     }
     const worldwideSmallPacketLabel = 'SmallPacketInternational';
     if (pageTables[worldwideSmallPacketLabel] !== 0) {
+        logger.debug("Starting extracting small packet international");
         const worldwideSmallPacket = extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 1); // working, beware that it can be split up into two air and surface, air comes first
+        logger.debug("WorldwideSmallPacket " + JSON.stringify(worldwideSmallPacket));
         const knownRateCodes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
         const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
         const splitOfSmallPackets = splitMultiTablePage(worldwideSmallPacket, knownRateCodes.join(' '));
+        logger.debug("Split Multi Page Table " + JSON.stringify(splitOfSmallPackets));
         const worldwideSmallAirPacket = splitOfSmallPackets[0];
         rateTables[worldwideSmallPacketAirLabel] = convertPacketToTable(worldwideSmallAirPacket, knownRateCodes);
+        logger.debug("First page after split " + JSON.stringify(rateTables[worldwideSmallPacketAirLabel]));
         const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
         const worldwideSmallSurfacePacket = splitOfSmallPackets[1];
+        logger.debug("Second page after split " + JSON.stringify(worldwideSmallSurfacePacket));
         rateTables[worldwideSmallPacketSurfaceLabel] = convertPacketToTable(worldwideSmallSurfacePacket, knownRateCodes);
+        logger.debug("Packet converted to table " + JSON.stringify(rateTables[worldwideSmallPacketSurfaceLabel]));
     } else {
         logger.warn(`${type} - ${year}: Failed to populate worldwide small packet (air/surface) tables`);
     }
+    logger.debug("Starting small business checks...");
     if (type === SMALL_BUSINESS) {
         const canadianExpeditedParcel = 'ExpeditedCanada';
         if (pageTables[canadianExpeditedParcel] !== 0) {
@@ -253,7 +278,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
             logger.warn(`${type} - ${year}: Failed to populate canada expedited parcel tables`);
         }
     }
-
+    logger.debug('Starting to clean extra lines');
     rateTables['ExpressUSA'] = cleanExtraLines(rateTables['ExpressUSA']);
     rateTables['ExpeditedUSA'] = cleanExtraLines(rateTables['ExpeditedUSA']);
     rateTables['PriorityWorldwide'] = cleanExtraLines(rateTables['PriorityWorldwide']);
@@ -262,7 +287,6 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     rateTables['SurfaceInternational'] = cleanExtraLines(rateTables['SurfaceInternational']);
     rateTables['SmallPacketUSA'] = cleanExtraLines(rateTables['SmallPacketUSA']);
     rateTables['TrackedPacketUSA'] = cleanExtraLines(rateTables['TrackedPacketUSA']);
-
     rateTables['RegularCanada1'] = cleanExtraLines(rateTables['RegularCanada1']);
     rateTables['RegularCanada2'] = cleanExtraLines(rateTables['RegularCanada2']);
 
@@ -277,7 +301,11 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     rateTables['TrackedPacketInternational'] = cleanExtraLines(rateTables['TrackedPacketInternational']);
     rateTables['SmallPacketAirInternational'] = cleanExtraLines(rateTables['SmallPacketAirInternational']);
     rateTables['SmallPacketSurfaceInternational'] = cleanExtraLines(rateTables['SmallPacketSurfaceInternational']);
+    logger.debug("International small packet AIR after cleaning " + JSON.stringify(rateTables['SmallPacketAirInternational']));
+    logger.debug("International small packet surface after cleaning " + JSON.stringify(rateTables['SmallPacketSurfaceInternational']));
+    logger.debug('Starting loading by type ');
     await loadByType(rateTables, year, type);
+    logger.debug(`Done loading by type, returning ${rateTables}`);
     return rateTables;
 }
 export const splitMultiTablePage = (page: string[], rateCodes?: string): string[][] => {
@@ -707,27 +735,45 @@ export const cleanExtraLines = (pageArray: string[]): string[] => {
     if (invalidTokens.length > 0) {
         pageArray.shift();
     }
+    // remove duplicate rows
+    let prevRow;
+    for (let i = pageArray.length-1; i >= 1; i--) {
+        prevRow = pageArray[i-1];
+        if (pageArray[i].trim() == prevRow.trim()) {
+            delete pageArray[i-1];
+        }
+    }
     return pageArray;
 }
 
 export const convertPacketToTable = (pageArray: string[], rcs: string[]): string[] => {
     let firstValidLine = -1;
+    logger.debug("Page Array Raw " + JSON.stringify(pageArray));
+    logger.debug("RCS! " + rcs);
     for (let i = 0; i < pageArray.length; i++) {
         if ((pageArray[i].toUpperCase().indexOf('UPTO') >= 0 || pageArray[i].toUpperCase().indexOf('INKG') >= 0) && firstValidLine < 0) {
             firstValidLine = i;
             // pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ');
         } else if (pageArray[i].toUpperCase().indexOf('INKG') >= 0 && firstValidLine < 0) {
             firstValidLine = i + 1;
-            pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '');
-        } else {
-            pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '');
         }
+        pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '').trim();
+
         if (pageArray[i].trim().length == 0) {
             delete pageArray[i];
+            firstValidLine++; // since replacing inkg and inlb resulted in blank line it means real values dont start till next line
+            continue;
         }
-        pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ');
+        pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ').trim();
+        // since we know the rate codes, if a row matches the rate codes exactly 
+        // we can more accurately assume that the greater value is the correct first row of data (rather than headers)
+        if (pageArray[i].trim() == rcs.join(" ")) {
+            if (i+1 > firstValidLine) firstValidLine = i+1;
+        }
     }
     pageArray = pageArray.slice(firstValidLine);
+    logger.debug("Page Array After Slicing" + JSON.stringify(pageArray));
+
     // convert all g/kg tokens to be kg and remove 
     const finalTableRow: any[] = [];
     const rateCodes = rcs.join(' ').toUpperCase().replace('INKG ', '').replace('INLB', '').trim().split(' ');
@@ -735,6 +781,7 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
         row = row.replace('$', '');
         const tokens: any = row.split(' ');
         let maxToken: any = tokens[1].toLowerCase();
+        logger.debug("Max Token prior to cleaning: " + maxToken + " in row " + row);
         let maxTokenInKg: number = tokens[0];
         let maxTokenInLb: number = tokens[1];
         if (maxToken.indexOf('kg') >= 0) {
@@ -746,9 +793,11 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
         }
 
         tokens[1] = maxTokenInKg;
+        logger.debug("Converting KG to LB " + tokens[1]);
         maxTokenInLb = Number((maxTokenInKg * 2.2).toFixed(2));
         tokens.splice(2, 0, maxTokenInLb);
         tokens.shift();
+        logger.debug("After all the shift " + JSON.stringify(tokens));
         if (tokens.length === 3 || tokens.length === 2) {
             for (let i = 0; i < rateCodes.length - 1; i++) {
                 tokens.push(tokens[tokens.length - 1]);
@@ -763,6 +812,7 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
         ratesCodeIndx = 0;
     }
     finalTableRow.splice(ratesCodeIndx, 0, rateCodes.join(' '));
+    logger.debug("Final Table Row returning " + JSON.stringify(finalTableRow));
     return finalTableRow;
 }
 
@@ -906,6 +956,7 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
                     const price = tokens[i];
                     const rate_code = labels[i];
                     const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, 30.1, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
+                    logger.debug("Insert data OVERLOAD" + insertDataSQL);
                     inputsAll.push(insertDataSQL);
                 }
             }
@@ -913,8 +964,10 @@ export const saveTableEntries = (ratesPage: RateTables, year: number, customerTy
         return Promise.all(inputsAll.map(entry => {
             return saveToDb(entry)
         })).then(data => {
+            logger.debug("Data has been successfully loaded");
             resolve(data);
         }).catch(e => {
+            logger.debug("Data loading failed " + JSON.stringify(e));
             reject(e);
         });
     });
