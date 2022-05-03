@@ -55,14 +55,17 @@ exports.extractFuelTable = (data) => {
     }
     // first line: extract the end date
     const endDateRaw = lines[start + 1];
-    const endDate = endDateRaw.replace(/&nbsp;/g, ' ').split('through')[1].replace('</h4>', '').replace(':', '');
-    const validUntilDate = new Date(endDate);
+    const endDate = endDateRaw.replace(/&nbsp;/g, ' ').split('through')[1].replace('<span>', '').replace('</span>', '').replace('</h4>', '').replace(':', '');
+    let validUntilDate = new Date(endDate);
+    if (validUntilDate == null) {
+        validUntilDate = new Date();
+    }
     const serviceCharges = {};
     for (let i = start + 2; i < end; i++) {
         lines[i] = lines[i].replace(/&nbsp;/g, '');
         if (lines[i].indexOf('<tr>') >= 0 && !serviceCharges['Priority Worldwide']) {
             const header = lines[i + 1].replace('</td>', '').replace('<td>', '').replace('<em>', '').replace('</em>', '').replace('<sup>TM</sup>', '');
-            const value = parseFloat(lines[i + 2].replace(/&nbsp;/g, '').replace('</td>', '').replace('<td>', '').trimLeft().replace('%', ''));
+            const value = parseFloat(lines[i + 2].replace('<span>', '').replace('</span>', '').replace(/&nbsp;/g, '').replace('</td>', '').replace('<td>', '').trimLeft().replace('%', ''));
             serviceCharges[header] = value;
         }
     }
@@ -75,7 +78,9 @@ exports.e2eProcess = async (year, type) => {
         'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
         'small_business': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
     };
+    log_1.logger.debug('Start loading pdf ');
     const pdfData = await exports.loadPDF(dataSources[type]);
+    log_1.logger.debug('Done loading pdf data');
     const pageTables = exports.pageHeaders(pdfData);
     const rateTables = {
         'PriorityCanada1': [],
@@ -108,8 +113,10 @@ exports.e2eProcess = async (year, type) => {
     }
     const canadianExpress = 'ExpressCanada';
     if (pageTables[canadianExpress] !== 0) {
+        log_1.logger.debug("Starting extracting express canada");
         rateTables['ExpressCanada1'] = exports.extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20, 3);
         rateTables['ExpressCanada2'] = exports.extractRateTables(pdfData, pageTables[canadianExpress], 20, 3);
+        log_1.logger.debug("Successfully express ");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Canadian Express tables`);
@@ -118,6 +125,7 @@ exports.e2eProcess = async (year, type) => {
     if (pageTables[canadianRegularParcel] !== 0) {
         rateTables['RegularCanada1'] = exports.extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20, 3);
         rateTables['RegularCanada2'] = exports.extractRateTables(pdfData, pageTables[canadianRegularParcel], 20, 2);
+        log_1.logger.debug("Successfully regular canada ");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Regular canadian parcel tables`);
@@ -125,6 +133,7 @@ exports.e2eProcess = async (year, type) => {
     const internationalPriority = 'PriorityWorldwide';
     if (pageTables[internationalPriority] !== 0) {
         rateTables[internationalPriority] = exports.extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
+        log_1.logger.debug("Successfully priority worldwide ");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate worldwide priority tables`);
@@ -132,6 +141,7 @@ exports.e2eProcess = async (year, type) => {
     const expressUSALabel = 'ExpressUSA';
     if (pageTables[expressUSALabel] !== 0) {
         rateTables[expressUSALabel] = exports.extractRateTables(pdfData, pageTables[expressUSALabel], 3, 7);
+        log_1.logger.debug("Successfully express usa ");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate express USA tables`);
@@ -139,6 +149,7 @@ exports.e2eProcess = async (year, type) => {
     const expeditedUSALabel = 'ExpeditedUSA';
     if (pageTables[expeditedUSALabel] !== 0) {
         rateTables[expeditedUSALabel] = exports.cleanExtraLines(exports.extractRateTables(pdfData, pageTables[expeditedUSALabel], 3, 7));
+        log_1.logger.debug("Successfully cleaned extra lines from expedited usa");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate USA Expedited tables`);
@@ -146,8 +157,10 @@ exports.e2eProcess = async (year, type) => {
     const usaRateCodes = (rateTables[expeditedUSALabel] && rateTables[expeditedUSALabel][0]) || '';
     const trackedPacketUSALabel = 'TrackedPacketUSA';
     if (pageTables[trackedPacketUSALabel] !== 0) {
-        const trackedPacketUSA = exports.extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 0);
+        const trackedPacketUSA = exports.extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 1);
+        log_1.logger.debug("Rate Tables tracked packet usa ");
         rateTables[trackedPacketUSALabel] = exports.convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
+        log_1.logger.debug("Rate Tables tracked packet usa - converted to table");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Tracked Packet USA tables`);
@@ -155,6 +168,7 @@ exports.e2eProcess = async (year, type) => {
     const smallPacketUSALabel = 'SmallPacketUSA';
     if (pageTables[smallPacketUSALabel] !== 0) {
         const smallPacketUSA = exports.extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 0);
+        log_1.logger.debug("Starting extracting small packet usa");
         rateTables[smallPacketUSALabel] = exports.convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
     }
     else {
@@ -162,6 +176,7 @@ exports.e2eProcess = async (year, type) => {
     }
     const worldwideExpressLabel = 'ExpressInternational';
     if (pageTables[worldwideExpressLabel] !== 0) {
+        log_1.logger.debug("Starting extracting express international");
         rateTables[worldwideExpressLabel] = exports.extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10, 3);
     }
     else {
@@ -169,6 +184,7 @@ exports.e2eProcess = async (year, type) => {
     }
     const worldwideAirLabel = 'AirInternational';
     if (pageTables[worldwideAirLabel] !== 0) {
+        log_1.logger.debug("Starting extracting air international");
         rateTables[worldwideAirLabel] = exports.extractRateTables(pdfData, pageTables[worldwideAirLabel], 10, 4);
     }
     else {
@@ -176,6 +192,7 @@ exports.e2eProcess = async (year, type) => {
     }
     const worldwideSurfaceLabel = 'SurfaceInternational';
     if (pageTables[worldwideSurfaceLabel] !== 0) {
+        log_1.logger.debug("Starting extracting surface international");
         rateTables[worldwideSurfaceLabel] = exports.extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10, 3);
     }
     else {
@@ -183,6 +200,7 @@ exports.e2eProcess = async (year, type) => {
     }
     const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
     if (pageTables[worldwideTrackedPacketLabel] !== 0) {
+        log_1.logger.debug("Starting extracting tracked packet international");
         const worldwideTrackedPacket = exports.extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 1);
         rateTables[worldwideTrackedPacketLabel] = exports.convertPacketToTable(worldwideTrackedPacket, worldwideTrackedPacket[0].split(' '));
     }
@@ -191,19 +209,26 @@ exports.e2eProcess = async (year, type) => {
     }
     const worldwideSmallPacketLabel = 'SmallPacketInternational';
     if (pageTables[worldwideSmallPacketLabel] !== 0) {
+        log_1.logger.debug("Starting extracting small packet international");
         const worldwideSmallPacket = exports.extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 1); // working, beware that it can be split up into two air and surface, air comes first
+        log_1.logger.debug("WorldwideSmallPacket " + JSON.stringify(worldwideSmallPacket));
         const knownRateCodes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
         const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
         const splitOfSmallPackets = exports.splitMultiTablePage(worldwideSmallPacket, knownRateCodes.join(' '));
+        log_1.logger.debug("Split Multi Page Table " + JSON.stringify(splitOfSmallPackets));
         const worldwideSmallAirPacket = splitOfSmallPackets[0];
         rateTables[worldwideSmallPacketAirLabel] = exports.convertPacketToTable(worldwideSmallAirPacket, knownRateCodes);
+        log_1.logger.debug("First page after split " + JSON.stringify(rateTables[worldwideSmallPacketAirLabel]));
         const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
         const worldwideSmallSurfacePacket = splitOfSmallPackets[1];
+        log_1.logger.debug("Second page after split " + JSON.stringify(worldwideSmallSurfacePacket));
         rateTables[worldwideSmallPacketSurfaceLabel] = exports.convertPacketToTable(worldwideSmallSurfacePacket, knownRateCodes);
+        log_1.logger.debug("Packet converted to table " + JSON.stringify(rateTables[worldwideSmallPacketSurfaceLabel]));
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate worldwide small packet (air/surface) tables`);
     }
+    log_1.logger.debug("Starting small business checks...");
     if (type === exports.SMALL_BUSINESS) {
         const canadianExpeditedParcel = 'ExpeditedCanada';
         if (pageTables[canadianExpeditedParcel] !== 0) {
@@ -214,6 +239,7 @@ exports.e2eProcess = async (year, type) => {
             log_1.logger.warn(`${type} - ${year}: Failed to populate canada expedited parcel tables`);
         }
     }
+    log_1.logger.debug('Starting to clean extra lines');
     rateTables['ExpressUSA'] = exports.cleanExtraLines(rateTables['ExpressUSA']);
     rateTables['ExpeditedUSA'] = exports.cleanExtraLines(rateTables['ExpeditedUSA']);
     rateTables['PriorityWorldwide'] = exports.cleanExtraLines(rateTables['PriorityWorldwide']);
@@ -231,9 +257,12 @@ exports.e2eProcess = async (year, type) => {
     rateTables['ExpeditedCanada1'] = exports.cleanExtraLines(rateTables['ExpeditedCanada1']);
     rateTables['ExpeditedCanada2'] = exports.cleanExtraLines(rateTables['ExpeditedCanada2']);
     rateTables['TrackedPacketInternational'] = exports.cleanExtraLines(rateTables['TrackedPacketInternational']);
+    log_1.logger.debug("International tracked packet after cleaning " + JSON.stringify(rateTables['TrackedPacketInternational']));
     rateTables['SmallPacketAirInternational'] = exports.cleanExtraLines(rateTables['SmallPacketAirInternational']);
     rateTables['SmallPacketSurfaceInternational'] = exports.cleanExtraLines(rateTables['SmallPacketSurfaceInternational']);
+    log_1.logger.debug('Starting loading by type ');
     await exports.loadByType(rateTables, year, type);
+    log_1.logger.debug(`Done loading by type, returning ${rateTables}`);
     return rateTables;
 };
 exports.splitMultiTablePage = (page, rateCodes) => {
@@ -668,10 +697,19 @@ exports.cleanExtraLines = (pageArray) => {
     if (invalidTokens.length > 0) {
         pageArray.shift();
     }
+    // remove duplicate rows
+    let prevRow;
+    for (let i = pageArray.length - 1; i >= 1; i--) {
+        prevRow = pageArray[i - 1];
+        if (pageArray[i].trim() == prevRow.trim()) {
+            delete pageArray[i - 1];
+        }
+    }
     return pageArray;
 };
 exports.convertPacketToTable = (pageArray, rcs) => {
     let firstValidLine = -1;
+    log_1.logger.debug("Page Array Raw " + JSON.stringify(pageArray));
     for (let i = 0; i < pageArray.length; i++) {
         if ((pageArray[i].toUpperCase().indexOf('UPTO') >= 0 || pageArray[i].toUpperCase().indexOf('INKG') >= 0) && firstValidLine < 0) {
             firstValidLine = i;
@@ -679,15 +717,22 @@ exports.convertPacketToTable = (pageArray, rcs) => {
         }
         else if (pageArray[i].toUpperCase().indexOf('INKG') >= 0 && firstValidLine < 0) {
             firstValidLine = i + 1;
-            pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '');
         }
-        else {
-            pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '');
-        }
+        pageArray[i] = pageArray[i].toUpperCase().replace('INKG', '').replace('INLB', '').trim();
         if (pageArray[i].trim().length == 0) {
             delete pageArray[i];
+            firstValidLine++; // since replacing inkg and inlb resulted in blank line it means real values dont start till next line
+            continue;
         }
-        pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ');
+        pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ').trim();
+        // since we know the rate codes, if a row matches the rate codes exactly 
+        // we can more accurately assume that the greater value is the correct first row of data (rather than headers)
+        // this is hacky, rate codes list should be either hardcoded or cleaned long before this
+        if (pageArray[i].trim() == rcs.join(" ").toLowerCase().replace('inkg', '').replace('inlb', '').trim()) {
+            if (i + 1 > firstValidLine) {
+                firstValidLine = i + 1;
+            }
+        }
     }
     pageArray = pageArray.slice(firstValidLine);
     // convert all g/kg tokens to be kg and remove 
@@ -724,6 +769,7 @@ exports.convertPacketToTable = (pageArray, rcs) => {
         ratesCodeIndx = 0;
     }
     finalTableRow.splice(ratesCodeIndx, 0, rateCodes.join(' '));
+    log_1.logger.debug("Final Table Row returning " + JSON.stringify(finalTableRow));
     return finalTableRow;
 };
 exports.loadByType = (rates, year, type) => {
@@ -864,6 +910,7 @@ exports.saveTableEntries = (ratesPage, year, customerType) => {
                     const price = tokens[i];
                     const rate_code = labels[i];
                     const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, 30.1, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
+                    log_1.logger.debug("Insert data OVERLOAD" + insertDataSQL);
                     inputsAll.push(insertDataSQL);
                 }
             }
@@ -871,8 +918,10 @@ exports.saveTableEntries = (ratesPage, year, customerType) => {
         return Promise.all(inputsAll.map(entry => {
             return sqlite3_2.saveToDb(entry);
         })).then(data => {
+            log_1.logger.debug("Data has been successfully loaded");
             resolve(data);
         }).catch(e => {
+            log_1.logger.debug("Data loading failed " + JSON.stringify(e));
             reject(e);
         });
     });

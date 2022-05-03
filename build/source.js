@@ -38,9 +38,9 @@ exports.checkAndUpdate = async () => {
         log_1.logger.info('Updating the fuel surcharge on the source db');
         await autoload_1.updateAllFuelSurcharges();
         await promises_2.copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
-        log_1.logger.info('Copied the db file');
+        log_1.logger.info('Copied the current db file to use for updating (interim)');
         // close all write only db connections, and open to copied db file
-        log_1.logger.info('Make all writes go to the temporary db');
+        log_1.logger.info('Make all writes go to the new temporary db');
         await sqlite3_1.setWriteDB(dataLoadDbPath);
     }
     catch (e) {
@@ -50,13 +50,16 @@ exports.checkAndUpdate = async () => {
     }
     try {
         if (datacheck.regular.update) {
+            log_1.logger.debug("Data check regular update");
             const numberDeletedRows = await sqlite3_1.deleteRatesByYear(datacheck.regular.year, 'regular');
-            log_1.logger.debug(`Number of rows deleted for year ${datacheck.regular.year} type regular: `, numberDeletedRows);
+            log_1.logger.debug(`Number of rows deleted for year ${datacheck.regular.year} type regular: ${numberDeletedRows}`);
             await autoload_1.e2eProcess(datacheck.regular.year, autoload_1.REGULAR);
+            log_1.logger.debug(`Done e2e process for regular`);
         }
         if (datacheck.smallBusiness.update) {
+            log_1.logger.info("Data check small business update");
             const numberDeletedRows = await sqlite3_1.deleteRatesByYear(datacheck.smallBusiness.year, 'small_business');
-            log_1.logger.debug(`Number of rows deleted for year ${datacheck.smallBusiness.year} type small business: `, numberDeletedRows);
+            log_1.logger.debug(`Number of rows deleted for year ${datacheck.smallBusiness.year} type small business: ${numberDeletedRows}`);
             await autoload_1.e2eProcess(datacheck.smallBusiness.year, autoload_1.SMALL_BUSINESS);
         }
         log_1.logger.info('Done e2e process');
@@ -79,7 +82,7 @@ exports.savePDFS = async (year, currentHighestYear) => {
     if (!fs_1.default.existsSync(tmpDir)) {
         const newPath = fs_1.default.mkdirSync(tmpDir, { recursive: true });
     }
-    const regularPDF = `${tmpDir}/Regular_Rates_${year}.pdf`;
+    const regularPDF = `${tmpDir}/RegularRates_${year}.pdf`;
     const regularOptions = {
         followAllRedirects: true,
         hostname: 'www.canadapost-postescanada.ca',
@@ -108,7 +111,7 @@ exports.savePDFS = async (year, currentHighestYear) => {
         });
         req.end();
     });
-    const smallBusinessPDF = `${tmpDir}/Rates_${year}.pdf`;
+    const smallBusinessPDF = `${tmpDir}/SmallBusiness_Rates_${year}.pdf`;
     const smallBusinessOptions = {
         followAllRedirects: true,
         hostname: 'www.canadapost-postescanada.ca',

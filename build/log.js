@@ -22,7 +22,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.logger = void 0;
 const winston = __importStar(require("winston"));
 const logger = winston.createLogger({
-    level: 'info',
+    level: 'debug',
     format: winston.format.combine(winston.format.label({
         label: `cplib`
     }), winston.format.timestamp({

@@ -31,6 +31,7 @@ exports.setDB = async (dbLocation) => {
 exports.setWriteDB = async (dbLocation) => {
     return new Promise((resolve, reject) => {
         exports.writedb.close(err => {
+            log_1.logger.info("Closed previous write db");
             if (err) {
                 log_1.logger.error(`Error closing written DB ${dbname}: Error: ${err}`);
             }
@@ -191,11 +192,15 @@ exports.saveToDb = async (sqlStmt) => {
     return new Promise((resolve, reject) => {
         const stmt = exports.writedb.prepare(sqlStmt, err => {
             if (err) {
+                log_1.logger.debug("Error occurred when preparing statement! " + JSON.stringify(err) + " for statement " + sqlStmt);
+                log_1.logger.debug(err);
                 reject(err);
             }
         });
         stmt.run((error) => {
             if (error) {
+                log_1.logger.debug("Error occurred! " + JSON.stringify(error) + " for statement " + sqlStmt);
+                log_1.logger.debug(error);
                 reject(error);
             }
             else {
