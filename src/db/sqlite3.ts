@@ -27,6 +27,7 @@ export const setDB = async (dbLocation: string) => {
 export const setWriteDB = async (dbLocation: string) => {
   return new Promise<void>((resolve, reject) => {
     writedb.close(err => {
+      logger.info("Closed previous write db");
       if (err) {
         logger.error(`Error closing written DB ${dbname}: Error: ${err}`);
       }
@@ -191,11 +192,15 @@ export const saveToDb = async (sqlStmt: string): Promise<any> => {
   return new Promise((resolve, reject) => {
     const stmt = writedb.prepare(sqlStmt, err => {
       if (err) {
+        logger.debug("Error occurred when preparing statement! " + JSON.stringify(err) + " for statement " + sqlStmt);
+        logger.debug(err);
         reject(err);
       }
     });
     stmt.run((error: Error) => {
       if (error) {
+        logger.debug("Error occurred! " + JSON.stringify(error) + " for statement " + sqlStmt);
+        logger.debug(error);
         reject(error);
       } else {
         resolve('Success');
@@ -231,7 +236,7 @@ export const getRate = (rateCode: string, weight: number,
     getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = (select max(year) from rates) ' +
       'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
   }
-  // console.log(getPrice.replace('$country', getPriceParams.$country).replace('$rateCode', getPriceParams.$rateCode).replace('$weight', getPriceParams.$weight.toString()).replace('$deliverySpeed', getPriceParams.$deliverySpeed).replace('$customerType', getPriceParams.$customerType));
+  //console.log(getPrice.replace('$country', getPriceParams.$country).replace('$rateCode', getPriceParams.$rateCode).replace('$weight', getPriceParams.$weight.toString()).replace('$deliverySpeed', getPriceParams.$deliverySpeed).replace('$customerType', getPriceParams.$customerType));
   return new Promise<number>((resolve, reject) => {
     const stmt = db.prepare(getPrice);
     stmt.get(getPriceParams, (err, row) => {

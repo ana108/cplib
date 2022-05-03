@@ -121,9 +121,8 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
         'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
         'small_business': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
     };
-    logger.debug('Start loading pdf ');
     const pdfData = await loadPDF(dataSources[type]);
-    logger.debug('Done loading pdf data');
+    logger.debug('Done loading data from pdf');
     const pageTables: RatesPages = pageHeaders(pdfData);
     const rateTables = <RateTables>{
         [PRIORITY_CANADA_1]: [],
@@ -156,7 +155,6 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const canadianExpress = EXPRESS_CANADA;
     if (pageTables[canadianExpress] !== 0) {
-        logger.debug("Starting extracting express canada");
         rateTables[EXPRESS_CANADA_1] = extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20, 3);
         rateTables[EXPRESS_CANADA_2] = extractRateTables(pdfData, pageTables[canadianExpress], 20, 3);
 
@@ -188,7 +186,6 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     const expeditedUSALabel = EXPEDITED_USA;
     if (pageTables[expeditedUSALabel] !== 0) {
         rateTables[expeditedUSALabel] = cleanExtraLines(extractRateTables(pdfData, pageTables[expeditedUSALabel], 3, 7));
-        logger.debug('Done extracting expediated USA');
     } else {
         logger.warn(`${type} - ${year}: Failed to populate USA Expedited tables`);
     }
@@ -196,7 +193,7 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     const usaRateCodes: string = (rateTables[expeditedUSALabel] && rateTables[expeditedUSALabel][0]) || '';
     const trackedPacketUSALabel = TRACKED_PACKET_USA;
     if (pageTables[trackedPacketUSALabel] !== 0) {
-        const trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 0); // year 2021 requires last parameter to be 0, 2022 requires it to be 1
+        const trackedPacketUSA = extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 1); // year 2021 requires last parameter to be 0, 2022 requires it to be 1
         rateTables[trackedPacketUSALabel] = convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
     } else {
         logger.warn(`${type} - ${year}: Failed to populate Tracked Packet USA tables`);
@@ -232,7 +229,6 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
 
     const worldwideTrackedPacketLabel = TRACKED_PACKET_INTERNATIONAL;
     if (pageTables[worldwideTrackedPacketLabel] !== 0) {
-        logger.debug("Starting extracting tracked packet international");
         const worldwideTrackedPacket = extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 1);
         rateTables[worldwideTrackedPacketLabel] = convertPacketToTable(worldwideTrackedPacket, worldwideTrackedPacket[0].split(' '));
     } else {
@@ -252,7 +248,6 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     } else {
         logger.warn(`${type} - ${year}: Failed to populate worldwide small packet (air/surface) tables`);
     }
-    logger.debug("Starting small business checks...");
     if (type === SMALL_BUSINESS) {
         const canadianExpeditedParcel = EXPEDITED_CANADA;
         if (pageTables[canadianExpeditedParcel] !== 0) {
@@ -271,31 +266,19 @@ export const e2eProcess = async (year: number, type: string): Promise<RateTables
     rateTables[SURFACE_INTERNATIONAL] = cleanExtraLines(rateTables[SURFACE_INTERNATIONAL]);
     rateTables[SMALL_PACKET_USA] = cleanExtraLines(rateTables[SMALL_PACKET_USA]);
     rateTables[TRACKED_PACKET_USA] = cleanExtraLines(rateTables[TRACKED_PACKET_USA]);
-
     rateTables[REGULAR_CANADA_1] = cleanExtraLines(rateTables[REGULAR_CANADA_1]);
     rateTables[REGULAR_CANADA_2] = cleanExtraLines(rateTables[REGULAR_CANADA_2]);
     rateTables[PRIORITY_CANADA_1] = cleanExtraLines(rateTables[PRIORITY_CANADA_1]);
     rateTables[PRIORITY_CANADA_2] = cleanExtraLines(rateTables[PRIORITY_CANADA_2]);
     rateTables[EXPRESS_CANADA_1] = cleanExtraLines(rateTables[EXPRESS_CANADA_1]);
     rateTables[EXPRESS_CANADA_1] = cleanExtraLines(rateTables[EXPRESS_CANADA_2]);
-
-    logger.debug("State of Rate Tables " + JSON.stringify(rateTables));
-
-    logger.debug("Expedited Canada 1 BEFORE cleaning " + JSON.stringify(rateTables[EXPEDITED_CANADA_1]));
     rateTables[EXPEDITED_CANADA_1] = cleanExtraLines(rateTables[EXPEDITED_CANADA_1]);
-    logger.debug("Expedited Canada 1 after cleaning " + JSON.stringify(rateTables[EXPEDITED_CANADA_1]));
-
-    logger.debug("Expedited Canada 2 BEFORE cleaning " + JSON.stringify(rateTables[EXPEDITED_CANADA_2]));
     rateTables[EXPEDITED_CANADA_2] = cleanExtraLines(rateTables[EXPEDITED_CANADA_2]);
-    logger.debug("International tracked packet before cleaning " + JSON.stringify(rateTables[TRACKED_PACKET_INTERNATIONAL]));
     rateTables[TRACKED_PACKET_INTERNATIONAL] = cleanExtraLines(rateTables[TRACKED_PACKET_INTERNATIONAL]);
-    logger.debug("International tracked packet after cleaning " + JSON.stringify(rateTables[TRACKED_PACKET_INTERNATIONAL]));
-
     rateTables[SMALL_PACKET_AIR_INTERNATIONAL] = cleanExtraLines(rateTables[SMALL_PACKET_AIR_INTERNATIONAL]);
-    logger.debug("Small PAcket Air after cleaning " + JSON.stringify(rateTables[SMALL_PACKET_AIR_INTERNATIONAL]));
 
     rateTables[SMALL_PACKET_SURFACE_INTERNATIONAL] = cleanExtraLines(rateTables[SMALL_PACKET_SURFACE_INTERNATIONAL]);
-    logger.debug('Starting loading by type ');
+    logger.debug('Start data load for type ' + type);
     await loadByType(rateTables, year, type);
     logger.debug(`Done loading by type, returning ${rateTables}`);
     return rateTables;
@@ -774,7 +757,7 @@ export const convertPacketToTable = (pageArray: string[], rcs: string[]): string
         const tokens: any = row.split(' ');
         let maxToken: any, maxTokenInKg: number, maxTokenInLb: number;
         if (firstRow) {
-            // prepend 0g to
+            // prepend 0g
             tokens.unshift("0g");
             firstRow = false;
         }

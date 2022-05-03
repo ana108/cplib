@@ -1,6 +1,8 @@
 To DO:
 1. Convert all instances of __dirname to be compatible with windows
 2. Remove auto update - too unreliable each year
+3. address the discrepency of max year in the rates table being used in absense; we might want to use the max year that is possible for that query instead.
+- will need to have an option to turn it off for debugging; ie to test out if data got loaded successfully for a given year
 
 References Info:
 (regular customer link: https://www.canadapost-postescanada.ca/tools/pg/prices/CPprices-e.pdf)
