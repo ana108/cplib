@@ -1,0 +1,25 @@
+
+export const PRIORITY_CANADA = 'PriorityCanada';
+export const EXPRESS_CANADA = 'ExpressCanada';
+export const EXPEDITED_CANADA = 'ExpeditedCanada';
+export const REGULAR_CANADA = 'RegularCanada';
+export const PRIORITY_WORLDWIDE = 'PriorityWorldwide';
+export const EXPRESS_USA = 'ExpressUSA';
+export const EXPEDITED_USA = 'ExpeditedUSA';
+export const TRACKED_PACKET_USA = 'TrackedPacketUSA';
+export const SMALL_PACKET_USA = 'SmallPacketUSA';
+export const EXPRESS_INTERNATIONAL = 'ExpressInternational';
+export const AIR_INTERNATIONAL = 'AirInternational';
+export const SURFACE_INTERNATIONAL = 'SurfaceInternational';
+export const TRACKED_PACKET_INTERNATIONAL = 'TrackedPacketInternational';
+export const SMALL_PACKET_INTERNATIONAL = 'SmallPacketInternational';
+export const PRIORITY_CANADA_1 = 'PriorityCanada1';
+export const PRIORITY_CANADA_2 = 'PriorityCanada2';
+export const EXPRESS_CANADA_1 = 'ExpressCanada1';
+export const EXPRESS_CANADA_2 = 'ExpressCanada2';
+export const EXPEDITED_CANADA_1 = 'ExpeditedCanada1';
+export const EXPEDITED_CANADA_2 = 'ExpeditedCanada2';
+export const REGULAR_CANADA_1 = 'RegularCanada1';
+export const REGULAR_CANADA_2 = 'RegularCanada2';
+export const SMALL_PACKET_AIR_INTERNATIONAL = 'SmallPacketAirInternational';
+export const SMALL_PACKET_SURFACE_INTERNATIONAL = 'SmallPacketSurfaceInternational';
