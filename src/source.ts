@@ -229,8 +229,9 @@ const setUpdating = async (currentValue: { isUpdating: boolean }, newValue: bool
     });
 }
 
-checkAndUpdate().catch(err => {
+// commented to disable auto update
+/*checkAndUpdate().catch(err => {
     if (err && err.length > 0 && err.indexOf('409') >= 0) {
         (<any>process).send({ isError: '409' });
     }
-})
+}); */

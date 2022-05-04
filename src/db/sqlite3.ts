@@ -233,8 +233,8 @@ export const getRate = (rateCode: string, weight: number,
   };
   if (!options.year) {
     delete getPriceParams.$year;
-    getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = (select max(year) from rates) ' +
-      'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
+    getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 ' + // and year = (select max(year) from rates) 
+      'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price) and max(year)';
   }
   //console.log(getPrice.replace('$country', getPriceParams.$country).replace('$rateCode', getPriceParams.$rateCode).replace('$weight', getPriceParams.$weight.toString()).replace('$deliverySpeed', getPriceParams.$deliverySpeed).replace('$customerType', getPriceParams.$customerType));
   return new Promise<number>((resolve, reject) => {

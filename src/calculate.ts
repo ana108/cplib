@@ -141,12 +141,13 @@ export const calculateShipping = (sourceAddress: Address, destinationAddress: Ad
     const deliverySpeed = deliveryType.trim().toLowerCase();
     return new Promise<number>((resolve, reject) => {
         try {
-            const child = fork(locationOfSource, { silent: false })
+            // disabled auto update
+            /* const child = fork(locationOfSource, { silent: false })
             child.on('exit', (err) => {
                 if (err) {
                     logger.error(`Update service exited with message: ${err}`);
                 }
-            });
+            }); */
             if (!weightInKg || weightInKg <= 0) {
                 throw new Error('Weight must be present and be a non-negative number');
             }
