@@ -18,12 +18,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const calculate_1 = require("../calculate");
 const db = __importStar(require("../db/sqlite3"));
 const chai = __importStar(require("chai"));
 const testcases_1 = require("./testcases");
 const sinon = __importStar(require("sinon"));
+const path_1 = __importDefault(require("path"));
 const child_process = require('child_process');
 const message_handler = {
     on: (event, cb) => {
@@ -31,13 +35,13 @@ const message_handler = {
     }
 };
 const expect = chai.expect;
-const compiledSrcLocation = __dirname + '/../../build/source.js';
+const compiledSrcLocation = path_1.default.join(__dirname, '../../build/source.js');
 describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
     let forkStb;
     before(async () => {
         // setLocation(compiledSrcLocation);
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path_1.default.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();
@@ -75,7 +79,7 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
     before(async () => {
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
         // setLocation(compiledSrcLocation);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path_1.default.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();

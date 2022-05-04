@@ -18,11 +18,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logger = void 0;
 const winston = __importStar(require("winston"));
+const path_1 = __importDefault(require("path"));
 const logger = winston.createLogger({
-    level: 'debug',
+    level: 'info',
     format: winston.format.combine(winston.format.label({
         label: `cplib`
     }), winston.format.timestamp({
@@ -30,7 +34,7 @@ const logger = winston.createLogger({
     }), winston.format.printf(info => `${info.level}: ${info.label}: ${[info.timestamp]}: ${info.message}`)),
     transports: [
         new winston.transports.File({
-            filename: __dirname + '/logs/cplib.log'
+            filename: path_1.default.join(__dirname, 'logs/cplib.log')
         })
     ],
 });

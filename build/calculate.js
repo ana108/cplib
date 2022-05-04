@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLatestFuelSurcharge = exports.calculateShippingInternational = exports.calculateShippingUSA = exports.calculateShippingCanada = exports.calculateTax = exports.calculateShipping = exports.validateAddress = exports.mapProvinceToCode = exports.locationOfSource = void 0;
 const sqlite3_1 = require("./db/sqlite3");
 const autoload_1 = require("./autoload");
-const child_process_1 = require("child_process");
+const path_1 = __importDefault(require("path"));
 const log_1 = require("./log");
 const lodash_1 = __importDefault(require("lodash"));
-exports.locationOfSource = __dirname + '/source.js';
+exports.locationOfSource = path_1.default.resolve(__dirname, 'source.js');
 exports.mapProvinceToCode = (region) => {
     const canadianProvinceMap = {
         'ALBERTA': 'AB',
@@ -142,12 +142,13 @@ exports.calculateShipping = (sourceAddress, destinationAddress, weightInKg, deli
     const deliverySpeed = deliveryType.trim().toLowerCase();
     return new Promise((resolve, reject) => {
         try {
-            const child = child_process_1.fork(exports.locationOfSource, { silent: false });
+            // disabled auto update
+            /* const child = fork(locationOfSource, { silent: false })
             child.on('exit', (err) => {
                 if (err) {
-                    log_1.logger.error(`Update service exited with message: ${err}`);
+                    logger.error(`Update service exited with message: ${err}`);
                 }
-            });
+            }); */
             if (!weightInKg || weightInKg <= 0) {
                 throw new Error('Weight must be present and be a non-negative number');
             }

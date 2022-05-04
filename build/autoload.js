@@ -4,13 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.saveTableEntries = exports.loadByType = exports.convertPacketToTable = exports.cleanExtraLines = exports.extractPriorityWorldwide = exports.extractRateTables = exports.isAllNum = exports.handlePageTitleEntry = exports.pageHeaders = exports.extractPages = exports.extractYear = exports.loadPDF = exports.splitMultiTablePage = exports.e2eProcess = exports.extractFuelTable = exports.getFuelSurchargeTable = exports.updateAllFuelSurcharges = exports.SMALL_BUSINESS = exports.REGULAR = void 0;
-//const axios = require('axios').default;
 const axios_1 = __importDefault(require("axios"));
-// const PDFParser = require("pdf2json");
 const pdf2json_1 = __importDefault(require("pdf2json"));
+const path_1 = __importDefault(require("path"));
 const sqlite3_1 = require("./db/sqlite3");
 const sqlite3_2 = require("./db/sqlite3");
 const log_1 = require("./log");
+const labels_1 = require("./labels");
 exports.REGULAR = 'regular';
 exports.SMALL_BUSINESS = 'small_business';
 exports.updateAllFuelSurcharges = async () => {
@@ -75,192 +75,170 @@ exports.extractFuelTable = (data) => {
 // this will iterate over the two docs; one for small business and one for regular rates
 exports.e2eProcess = async (year, type) => {
     const dataSources = {
-        'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
-        'small_business': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
+        'regular': path_1.default.join(__dirname, `/resources/regular/${year}/Rates_${year}.pdf`),
+        'small_business': path_1.default.join(__dirname, `/resources/small_business/${year}/Rates_${year}.pdf`)
     };
-    log_1.logger.debug('Start loading pdf ');
     const pdfData = await exports.loadPDF(dataSources[type]);
-    log_1.logger.debug('Done loading pdf data');
+    log_1.logger.debug('Done loading data from pdf');
     const pageTables = exports.pageHeaders(pdfData);
     const rateTables = {
-        'PriorityCanada1': [],
-        'PriorityCanada2': [],
-        'ExpressCanada1': [],
-        'ExpressCanada2': [],
-        'ExpeditedCanada1': [],
-        'ExpeditedCanada2': [],
-        'RegularCanada1': [],
-        'RegularCanada2': [],
-        'PriorityWorldwide': [],
-        'ExpressUSA': [],
-        'ExpeditedUSA': [],
-        'TrackedPacketUSA': [],
-        'SmallPacketUSA': [],
-        'ExpressInternational': [],
-        'AirInternational': [],
-        'SurfaceInternational': [],
-        'TrackedPacketInternational': [],
-        'SmallPacketAirInternational': [],
-        'SmallPacketSurfaceInternational': [],
+        [labels_1.PRIORITY_CANADA_1]: [],
+        [labels_1.PRIORITY_CANADA_2]: [],
+        [labels_1.EXPRESS_CANADA_1]: [],
+        [labels_1.EXPRESS_CANADA_2]: [],
+        [labels_1.EXPEDITED_CANADA_1]: [],
+        [labels_1.EXPEDITED_CANADA_2]: [],
+        [labels_1.REGULAR_CANADA_1]: [],
+        [labels_1.REGULAR_CANADA_2]: [],
+        [labels_1.PRIORITY_WORLDWIDE]: [],
+        [labels_1.EXPRESS_USA]: [],
+        [labels_1.EXPEDITED_USA]: [],
+        [labels_1.TRACKED_PACKET_USA]: [],
+        [labels_1.SMALL_PACKET_USA]: [],
+        [labels_1.EXPRESS_INTERNATIONAL]: [],
+        [labels_1.AIR_INTERNATIONAL]: [],
+        [labels_1.SURFACE_INTERNATIONAL]: [],
+        [labels_1.TRACKED_PACKET_INTERNATIONAL]: [],
+        [labels_1.SMALL_PACKET_AIR_INTERNATIONAL]: [],
+        [labels_1.SMALL_PACKET_SURFACE_INTERNATIONAL]: [],
     };
-    const canadianPriority = 'PriorityCanada';
+    const canadianPriority = labels_1.PRIORITY_CANADA;
     if (pageTables[canadianPriority] !== 0) {
-        rateTables['PriorityCanada1'] = exports.extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20, 3);
-        rateTables['PriorityCanada2'] = exports.extractRateTables(pdfData, pageTables[canadianPriority], 20, 3);
+        rateTables[labels_1.PRIORITY_CANADA_1] = exports.extractRateTables(pdfData, pageTables[canadianPriority] - 1, 20, 3);
+        rateTables[labels_1.PRIORITY_CANADA_2] = exports.extractRateTables(pdfData, pageTables[canadianPriority], 20, 3);
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Canadian Priority tables`);
     }
-    const canadianExpress = 'ExpressCanada';
+    const canadianExpress = labels_1.EXPRESS_CANADA;
     if (pageTables[canadianExpress] !== 0) {
-        log_1.logger.debug("Starting extracting express canada");
-        rateTables['ExpressCanada1'] = exports.extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20, 3);
-        rateTables['ExpressCanada2'] = exports.extractRateTables(pdfData, pageTables[canadianExpress], 20, 3);
-        log_1.logger.debug("Successfully express ");
+        rateTables[labels_1.EXPRESS_CANADA_1] = exports.extractRateTables(pdfData, pageTables[canadianExpress] - 1, 20, 3);
+        rateTables[labels_1.EXPRESS_CANADA_2] = exports.extractRateTables(pdfData, pageTables[canadianExpress], 20, 3);
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Canadian Express tables`);
     }
-    const canadianRegularParcel = 'RegularCanada';
+    const canadianRegularParcel = labels_1.REGULAR_CANADA;
     if (pageTables[canadianRegularParcel] !== 0) {
-        rateTables['RegularCanada1'] = exports.extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20, 3);
-        rateTables['RegularCanada2'] = exports.extractRateTables(pdfData, pageTables[canadianRegularParcel], 20, 2);
-        log_1.logger.debug("Successfully regular canada ");
+        rateTables[labels_1.REGULAR_CANADA_1] = exports.extractRateTables(pdfData, pageTables[canadianRegularParcel] - 1, 20, 3);
+        rateTables[labels_1.REGULAR_CANADA_2] = exports.extractRateTables(pdfData, pageTables[canadianRegularParcel], 20, 2);
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Regular canadian parcel tables`);
     }
-    const internationalPriority = 'PriorityWorldwide';
+    const internationalPriority = labels_1.PRIORITY_WORLDWIDE;
     if (pageTables[internationalPriority] !== 0) {
         rateTables[internationalPriority] = exports.extractPriorityWorldwide(pdfData, pageTables[internationalPriority]);
-        log_1.logger.debug("Successfully priority worldwide ");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate worldwide priority tables`);
     }
-    const expressUSALabel = 'ExpressUSA';
+    const expressUSALabel = labels_1.EXPRESS_USA;
     if (pageTables[expressUSALabel] !== 0) {
         rateTables[expressUSALabel] = exports.extractRateTables(pdfData, pageTables[expressUSALabel], 3, 7);
-        log_1.logger.debug("Successfully express usa ");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate express USA tables`);
     }
-    const expeditedUSALabel = 'ExpeditedUSA';
+    const expeditedUSALabel = labels_1.EXPEDITED_USA;
     if (pageTables[expeditedUSALabel] !== 0) {
         rateTables[expeditedUSALabel] = exports.cleanExtraLines(exports.extractRateTables(pdfData, pageTables[expeditedUSALabel], 3, 7));
-        log_1.logger.debug("Successfully cleaned extra lines from expedited usa");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate USA Expedited tables`);
     }
     const usaRateCodes = (rateTables[expeditedUSALabel] && rateTables[expeditedUSALabel][0]) || '';
-    const trackedPacketUSALabel = 'TrackedPacketUSA';
+    const trackedPacketUSALabel = labels_1.TRACKED_PACKET_USA;
     if (pageTables[trackedPacketUSALabel] !== 0) {
-        const trackedPacketUSA = exports.extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 1);
-        log_1.logger.debug("Rate Tables tracked packet usa ");
+        const trackedPacketUSA = exports.extractRateTables(pdfData, pageTables[trackedPacketUSALabel], 2, 1); // year 2021 requires last parameter to be 0, 2022 requires it to be 1
         rateTables[trackedPacketUSALabel] = exports.convertPacketToTable(trackedPacketUSA, usaRateCodes.split(' '));
-        log_1.logger.debug("Rate Tables tracked packet usa - converted to table");
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Tracked Packet USA tables`);
     }
-    const smallPacketUSALabel = 'SmallPacketUSA';
+    const smallPacketUSALabel = labels_1.SMALL_PACKET_USA;
     if (pageTables[smallPacketUSALabel] !== 0) {
         const smallPacketUSA = exports.extractRateTables(pdfData, pageTables[smallPacketUSALabel], 2, 0);
-        log_1.logger.debug("Starting extracting small packet usa");
         rateTables[smallPacketUSALabel] = exports.convertPacketToTable(smallPacketUSA, usaRateCodes.split(' '));
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Small Packet USA tables`);
     }
-    const worldwideExpressLabel = 'ExpressInternational';
+    const worldwideExpressLabel = labels_1.EXPRESS_INTERNATIONAL;
     if (pageTables[worldwideExpressLabel] !== 0) {
-        log_1.logger.debug("Starting extracting express international");
         rateTables[worldwideExpressLabel] = exports.extractRateTables(pdfData, pageTables[worldwideExpressLabel], 10, 3);
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Express International tables`);
     }
-    const worldwideAirLabel = 'AirInternational';
+    const worldwideAirLabel = labels_1.AIR_INTERNATIONAL;
     if (pageTables[worldwideAirLabel] !== 0) {
-        log_1.logger.debug("Starting extracting air international");
         rateTables[worldwideAirLabel] = exports.extractRateTables(pdfData, pageTables[worldwideAirLabel], 10, 4);
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Air International tables`);
     }
-    const worldwideSurfaceLabel = 'SurfaceInternational';
+    const worldwideSurfaceLabel = labels_1.SURFACE_INTERNATIONAL;
     if (pageTables[worldwideSurfaceLabel] !== 0) {
-        log_1.logger.debug("Starting extracting surface international");
         rateTables[worldwideSurfaceLabel] = exports.extractRateTables(pdfData, pageTables[worldwideSurfaceLabel], 10, 3);
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate Air Surface tables`);
     }
-    const worldwideTrackedPacketLabel = 'TrackedPacketInternational';
+    const worldwideTrackedPacketLabel = labels_1.TRACKED_PACKET_INTERNATIONAL;
     if (pageTables[worldwideTrackedPacketLabel] !== 0) {
-        log_1.logger.debug("Starting extracting tracked packet international");
         const worldwideTrackedPacket = exports.extractRateTables(pdfData, pageTables[worldwideTrackedPacketLabel], 10, 1);
         rateTables[worldwideTrackedPacketLabel] = exports.convertPacketToTable(worldwideTrackedPacket, worldwideTrackedPacket[0].split(' '));
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate worldwide tracked packet tables`);
     }
-    const worldwideSmallPacketLabel = 'SmallPacketInternational';
+    const worldwideSmallPacketLabel = labels_1.SMALL_PACKET_INTERNATIONAL;
     if (pageTables[worldwideSmallPacketLabel] !== 0) {
-        log_1.logger.debug("Starting extracting small packet international");
         const worldwideSmallPacket = exports.extractRateTables(pdfData, pageTables[worldwideSmallPacketLabel], 10, 1); // working, beware that it can be split up into two air and surface, air comes first
-        log_1.logger.debug("WorldwideSmallPacket " + JSON.stringify(worldwideSmallPacket));
         const knownRateCodes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-        const worldwideSmallPacketAirLabel = 'SmallPacketAirInternational';
+        const worldwideSmallPacketAirLabel = labels_1.SMALL_PACKET_AIR_INTERNATIONAL;
         const splitOfSmallPackets = exports.splitMultiTablePage(worldwideSmallPacket, knownRateCodes.join(' '));
-        log_1.logger.debug("Split Multi Page Table " + JSON.stringify(splitOfSmallPackets));
         const worldwideSmallAirPacket = splitOfSmallPackets[0];
         rateTables[worldwideSmallPacketAirLabel] = exports.convertPacketToTable(worldwideSmallAirPacket, knownRateCodes);
-        log_1.logger.debug("First page after split " + JSON.stringify(rateTables[worldwideSmallPacketAirLabel]));
-        const worldwideSmallPacketSurfaceLabel = 'SmallPacketSurfaceInternational';
+        const worldwideSmallPacketSurfaceLabel = labels_1.SMALL_PACKET_SURFACE_INTERNATIONAL;
         const worldwideSmallSurfacePacket = splitOfSmallPackets[1];
-        log_1.logger.debug("Second page after split " + JSON.stringify(worldwideSmallSurfacePacket));
         rateTables[worldwideSmallPacketSurfaceLabel] = exports.convertPacketToTable(worldwideSmallSurfacePacket, knownRateCodes);
-        log_1.logger.debug("Packet converted to table " + JSON.stringify(rateTables[worldwideSmallPacketSurfaceLabel]));
     }
     else {
         log_1.logger.warn(`${type} - ${year}: Failed to populate worldwide small packet (air/surface) tables`);
     }
-    log_1.logger.debug("Starting small business checks...");
     if (type === exports.SMALL_BUSINESS) {
-        const canadianExpeditedParcel = 'ExpeditedCanada';
+        const canadianExpeditedParcel = labels_1.EXPEDITED_CANADA;
         if (pageTables[canadianExpeditedParcel] !== 0) {
-            rateTables['ExpeditedCanada1'] = exports.extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23, 3);
-            rateTables['ExpeditedCanada2'] = exports.extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22, 3);
+            rateTables[labels_1.EXPEDITED_CANADA_1] = exports.extractRateTables(pdfData, pageTables[canadianExpeditedParcel] - 1, 23, 3);
+            rateTables[labels_1.EXPEDITED_CANADA_2] = exports.extractRateTables(pdfData, pageTables[canadianExpeditedParcel], 22, 3);
         }
         else {
             log_1.logger.warn(`${type} - ${year}: Failed to populate canada expedited parcel tables`);
         }
     }
     log_1.logger.debug('Starting to clean extra lines');
-    rateTables['ExpressUSA'] = exports.cleanExtraLines(rateTables['ExpressUSA']);
-    rateTables['ExpeditedUSA'] = exports.cleanExtraLines(rateTables['ExpeditedUSA']);
-    rateTables['PriorityWorldwide'] = exports.cleanExtraLines(rateTables['PriorityWorldwide']);
-    rateTables['ExpressInternational'] = exports.cleanExtraLines(rateTables['ExpressInternational']);
-    rateTables['AirInternational'] = exports.cleanExtraLines(rateTables['AirInternational']);
-    rateTables['SurfaceInternational'] = exports.cleanExtraLines(rateTables['SurfaceInternational']);
-    rateTables['SmallPacketUSA'] = exports.cleanExtraLines(rateTables['SmallPacketUSA']);
-    rateTables['TrackedPacketUSA'] = exports.cleanExtraLines(rateTables['TrackedPacketUSA']);
-    rateTables['RegularCanada1'] = exports.cleanExtraLines(rateTables['RegularCanada1']);
-    rateTables['RegularCanada2'] = exports.cleanExtraLines(rateTables['RegularCanada2']);
-    rateTables['PriorityCanada1'] = exports.cleanExtraLines(rateTables['PriorityCanada1']);
-    rateTables['PriorityCanada2'] = exports.cleanExtraLines(rateTables['PriorityCanada2']);
-    rateTables['ExpressCanada1'] = exports.cleanExtraLines(rateTables['ExpressCanada1']);
-    rateTables['ExpressCanada2'] = exports.cleanExtraLines(rateTables['ExpressCanada2']);
-    rateTables['ExpeditedCanada1'] = exports.cleanExtraLines(rateTables['ExpeditedCanada1']);
-    rateTables['ExpeditedCanada2'] = exports.cleanExtraLines(rateTables['ExpeditedCanada2']);
-    rateTables['TrackedPacketInternational'] = exports.cleanExtraLines(rateTables['TrackedPacketInternational']);
-    log_1.logger.debug("International tracked packet after cleaning " + JSON.stringify(rateTables['TrackedPacketInternational']));
-    rateTables['SmallPacketAirInternational'] = exports.cleanExtraLines(rateTables['SmallPacketAirInternational']);
-    rateTables['SmallPacketSurfaceInternational'] = exports.cleanExtraLines(rateTables['SmallPacketSurfaceInternational']);
-    log_1.logger.debug('Starting loading by type ');
+    rateTables[labels_1.EXPRESS_USA] = exports.cleanExtraLines(rateTables[labels_1.EXPRESS_USA]);
+    rateTables[labels_1.EXPEDITED_USA] = exports.cleanExtraLines(rateTables[labels_1.EXPEDITED_USA]);
+    rateTables[labels_1.PRIORITY_WORLDWIDE] = exports.cleanExtraLines(rateTables[labels_1.PRIORITY_WORLDWIDE]);
+    rateTables[labels_1.EXPRESS_INTERNATIONAL] = exports.cleanExtraLines(rateTables[labels_1.EXPRESS_INTERNATIONAL]);
+    rateTables[labels_1.AIR_INTERNATIONAL] = exports.cleanExtraLines(rateTables[labels_1.AIR_INTERNATIONAL]);
+    rateTables[labels_1.SURFACE_INTERNATIONAL] = exports.cleanExtraLines(rateTables[labels_1.SURFACE_INTERNATIONAL]);
+    rateTables[labels_1.SMALL_PACKET_USA] = exports.cleanExtraLines(rateTables[labels_1.SMALL_PACKET_USA]);
+    rateTables[labels_1.TRACKED_PACKET_USA] = exports.cleanExtraLines(rateTables[labels_1.TRACKED_PACKET_USA]);
+    rateTables[labels_1.REGULAR_CANADA_1] = exports.cleanExtraLines(rateTables[labels_1.REGULAR_CANADA_1]);
+    rateTables[labels_1.REGULAR_CANADA_2] = exports.cleanExtraLines(rateTables[labels_1.REGULAR_CANADA_2]);
+    rateTables[labels_1.PRIORITY_CANADA_1] = exports.cleanExtraLines(rateTables[labels_1.PRIORITY_CANADA_1]);
+    rateTables[labels_1.PRIORITY_CANADA_2] = exports.cleanExtraLines(rateTables[labels_1.PRIORITY_CANADA_2]);
+    rateTables[labels_1.EXPRESS_CANADA_1] = exports.cleanExtraLines(rateTables[labels_1.EXPRESS_CANADA_1]);
+    rateTables[labels_1.EXPRESS_CANADA_1] = exports.cleanExtraLines(rateTables[labels_1.EXPRESS_CANADA_2]);
+    rateTables[labels_1.EXPEDITED_CANADA_1] = exports.cleanExtraLines(rateTables[labels_1.EXPEDITED_CANADA_1]);
+    rateTables[labels_1.EXPEDITED_CANADA_2] = exports.cleanExtraLines(rateTables[labels_1.EXPEDITED_CANADA_2]);
+    rateTables[labels_1.TRACKED_PACKET_INTERNATIONAL] = exports.cleanExtraLines(rateTables[labels_1.TRACKED_PACKET_INTERNATIONAL]);
+    rateTables[labels_1.SMALL_PACKET_AIR_INTERNATIONAL] = exports.cleanExtraLines(rateTables[labels_1.SMALL_PACKET_AIR_INTERNATIONAL]);
+    rateTables[labels_1.SMALL_PACKET_SURFACE_INTERNATIONAL] = exports.cleanExtraLines(rateTables[labels_1.SMALL_PACKET_SURFACE_INTERNATIONAL]);
+    log_1.logger.debug('Start data load for type ' + type);
     await exports.loadByType(rateTables, year, type);
     log_1.logger.debug(`Done loading by type, returning ${rateTables}`);
     return rateTables;
@@ -343,36 +321,37 @@ exports.extractYear = (pdfData) => {
 };
 exports.extractPages = (pdfData) => {
     const pages = {
-        'PriorityCanada': 0,
-        'ExpressCanada': 0,
-        'ExpeditedCanada': 0,
-        'RegularCanada': 0,
-        'PriorityWorldwide': 0,
-        'ExpressUSA': 0,
-        'ExpeditedUSA': 0,
-        'TrackedPacketUSA': 0,
-        'SmallPacketUSA': 0,
-        'ExpressInternational': 0,
-        'AirInternational': 0,
-        'SurfaceInternational': 0,
-        'TrackedPacketInternational': 0,
-        'SmallPacketInternational': 0
+        [labels_1.PRIORITY_CANADA]: 0,
+        [labels_1.EXPRESS_CANADA]: 0,
+        [labels_1.EXPEDITED_CANADA]: 0,
+        [labels_1.REGULAR_CANADA]: 0,
+        [labels_1.PRIORITY_WORLDWIDE]: 0,
+        [labels_1.EXPRESS_USA]: 0,
+        [labels_1.EXPEDITED_USA]: 0,
+        [labels_1.TRACKED_PACKET_USA]: 0,
+        [labels_1.SMALL_PACKET_USA]: 0,
+        [labels_1.EXPRESS_INTERNATIONAL]: 0,
+        [labels_1.AIR_INTERNATIONAL]: 0,
+        [labels_1.SURFACE_INTERNATIONAL]: 0,
+        [labels_1.TRACKED_PACKET_INTERNATIONAL]: 0,
+        [labels_1.SMALL_PACKET_INTERNATIONAL]: 0
     };
     const pageTitleMapping = {
-        'Priority Prices': 'PriorityCanada',
-        'Xpresspost Prices': 'ExpressCanada',
-        'Regular Parcel Prices': 'RegularCanada',
-        'ExpeditedParcelPrices': 'ExpeditedCanada',
-        'Xpresspost USA Prices': 'ExpressUSA',
-        'Expedited Parcel USA Prices': 'ExpeditedUSA',
-        'Tracked Packet USA Prices': 'TrackedPacketUSA',
-        'Small Packet USA Prices': 'SmallPacketUSA',
-        'Priority Worldwide International Prices': 'PriorityWorldwide',
-        'Xpresspost International Prices': 'ExpressInternational',
-        'International Parcel Air Prices': 'AirInternational',
-        'International Parcel Surface Prices': 'SurfaceInternational',
-        'Tracked Packet International Prices': 'TrackedPacketInternational',
-        'Small Packet International Prices': 'SmallPacketInternational'
+        'Priority Prices': labels_1.PRIORITY_CANADA,
+        'Xpresspost Prices': labels_1.EXPRESS_CANADA,
+        'Regular Parcel Prices': labels_1.REGULAR_CANADA,
+        'ExpeditedParcelPrices': labels_1.EXPEDITED_CANADA,
+        'Xpresspost USA Prices': labels_1.EXPRESS_USA,
+        'Expedited Parcel USA Prices': labels_1.EXPEDITED_USA,
+        'Tracked Packet USA Prices': labels_1.TRACKED_PACKET_USA,
+        'Small Packet USA Prices': labels_1.SMALL_PACKET_USA,
+        'Small Packet USA Air Prices': labels_1.SMALL_PACKET_USA,
+        'Priority Worldwide International Prices': labels_1.PRIORITY_WORLDWIDE,
+        'Xpresspost International Prices': labels_1.EXPRESS_INTERNATIONAL,
+        'International Parcel Air Prices': labels_1.AIR_INTERNATIONAL,
+        'International Parcel Surface Prices': labels_1.SURFACE_INTERNATIONAL,
+        'Tracked Packet International Prices': labels_1.TRACKED_PACKET_INTERNATIONAL,
+        'Small Packet International Prices': labels_1.SMALL_PACKET_INTERNATIONAL
     };
     const pageTextLength = pdfData[1]['Texts'].length;
     let title = '';
@@ -411,20 +390,20 @@ exports.extractPages = (pdfData) => {
 };
 exports.pageHeaders = (pdfData) => {
     const pages = {
-        'PriorityCanada': 0,
-        'ExpressCanada': 0,
-        'ExpeditedCanada': 0,
-        'RegularCanada': 0,
-        'PriorityWorldwide': 0,
-        'ExpressUSA': 0,
-        'ExpeditedUSA': 0,
-        'TrackedPacketUSA': 0,
-        'SmallPacketUSA': 0,
-        'ExpressInternational': 0,
-        'AirInternational': 0,
-        'SurfaceInternational': 0,
-        'TrackedPacketInternational': 0,
-        'SmallPacketInternational': 0
+        [labels_1.PRIORITY_CANADA]: 0,
+        [labels_1.EXPRESS_CANADA]: 0,
+        [labels_1.EXPEDITED_CANADA]: 0,
+        [labels_1.REGULAR_CANADA]: 0,
+        [labels_1.PRIORITY_WORLDWIDE]: 0,
+        [labels_1.EXPRESS_USA]: 0,
+        [labels_1.EXPEDITED_USA]: 0,
+        [labels_1.TRACKED_PACKET_USA]: 0,
+        [labels_1.SMALL_PACKET_USA]: 0,
+        [labels_1.EXPRESS_INTERNATIONAL]: 0,
+        [labels_1.AIR_INTERNATIONAL]: 0,
+        [labels_1.SURFACE_INTERNATIONAL]: 0,
+        [labels_1.TRACKED_PACKET_INTERNATIONAL]: 0,
+        [labels_1.SMALL_PACKET_INTERNATIONAL]: 0
     };
     let pageNum = 0;
     pdfData.forEach(page => {
@@ -455,26 +434,27 @@ exports.pageHeaders = (pdfData) => {
 };
 exports.handlePageTitleEntry = (rawText, ptrRateTable, pageNum) => {
     const pageTitleMapping = {
-        'PriorityPrices': 'PriorityCanada',
-        'XpresspostPrices': 'ExpressCanada',
-        'ExpeditedParcelPrices': 'ExpeditedCanada',
-        'RegularParcelPrices': 'RegularCanada',
-        'XpresspostUSAPrices': 'ExpressUSA',
-        'ExpeditedParcelUSAPrices': 'ExpeditedUSA',
-        'TrackedPacketUSAPrices': 'TrackedPacketUSA',
-        'USApricesTrackedPacket': 'TrackedPacketUSA',
-        'SmallPacketU.S.A.Prices': 'SmallPacketUSA',
-        'usapricessmallpacket': 'SmallPacketUSA',
-        'PriorityWorldwideInternationalPrices': 'PriorityWorldwide',
-        'PriorityWorldwidePrices': 'PriorityWorldwide',
-        'XpresspostInternationalPrices': 'ExpressInternational',
-        'InternationalParcelAirPrices': 'AirInternational',
-        'InternationalParcelSurfacePrices': 'SurfaceInternational',
-        'TrackedPacketInternationalPrices': 'TrackedPacketInternational',
-        'SmallPacketInternationalPrices': 'SmallPacketInternational'
+        'PriorityPrices': labels_1.PRIORITY_CANADA,
+        'XpresspostPrices': labels_1.EXPRESS_CANADA,
+        'ExpeditedParcelPrices': labels_1.EXPEDITED_CANADA,
+        'RegularParcelPrices': labels_1.REGULAR_CANADA,
+        'XpresspostUSAPrices': labels_1.EXPRESS_USA,
+        'ExpeditedParcelUSAPrices': labels_1.EXPEDITED_USA,
+        'TrackedPacketUSAPrices': labels_1.TRACKED_PACKET_USA,
+        'USApricesTrackedPacket': labels_1.TRACKED_PACKET_USA,
+        'SmallPacketU.S.A.Prices': labels_1.SMALL_PACKET_USA,
+        'usapricessmallpacket': labels_1.SMALL_PACKET_USA,
+        'SmallPacketUSAAir': labels_1.SMALL_PACKET_USA,
+        'PriorityWorldwideInternationalPrices': labels_1.PRIORITY_WORLDWIDE,
+        'PriorityWorldwidePrices': labels_1.PRIORITY_WORLDWIDE,
+        'XpresspostInternationalPrices': labels_1.EXPRESS_INTERNATIONAL,
+        'InternationalParcelAirPrices': labels_1.AIR_INTERNATIONAL,
+        'InternationalParcelSurfacePrices': labels_1.SURFACE_INTERNATIONAL,
+        'TrackedPacketInternationalPrices': labels_1.TRACKED_PACKET_INTERNATIONAL,
+        'SmallPacketInternationalPrices': labels_1.SMALL_PACKET_INTERNATIONAL
     };
-    const overwriteEligible = ['ExpressUSA', 'ExpeditedUSA', 'PriorityWorldwide', 'ExpressInternational',
-        'AirInternational', 'SurfaceInternational', 'SmallPacketInternational'];
+    const overwriteEligible = [labels_1.EXPRESS_USA, labels_1.EXPEDITED_USA, labels_1.PRIORITY_WORLDWIDE, labels_1.EXPRESS_INTERNATIONAL,
+        labels_1.AIR_INTERNATIONAL, labels_1.SURFACE_INTERNATIONAL, labels_1.SMALL_PACKET_INTERNATIONAL];
     let pageFound = -1;
     let matchingTitle = '';
     Object.keys(pageTitleMapping).forEach(expectedHeader => {
@@ -709,7 +689,6 @@ exports.cleanExtraLines = (pageArray) => {
 };
 exports.convertPacketToTable = (pageArray, rcs) => {
     let firstValidLine = -1;
-    log_1.logger.debug("Page Array Raw " + JSON.stringify(pageArray));
     for (let i = 0; i < pageArray.length; i++) {
         if ((pageArray[i].toUpperCase().indexOf('UPTO') >= 0 || pageArray[i].toUpperCase().indexOf('INKG') >= 0) && firstValidLine < 0) {
             firstValidLine = i;
@@ -727,7 +706,7 @@ exports.convertPacketToTable = (pageArray, rcs) => {
         pageArray[i] = pageArray[i].toLowerCase().replace('upto', ' ').trim();
         // since we know the rate codes, if a row matches the rate codes exactly 
         // we can more accurately assume that the greater value is the correct first row of data (rather than headers)
-        // this is hacky, rate codes list should be either hardcoded or cleaned long before this
+        // this is hacky, rate codes list should be either hardcoded or cleaned before
         if (pageArray[i].trim() == rcs.join(" ").toLowerCase().replace('inkg', '').replace('inlb', '').trim()) {
             if (i + 1 > firstValidLine) {
                 firstValidLine = i + 1;
@@ -738,12 +717,19 @@ exports.convertPacketToTable = (pageArray, rcs) => {
     // convert all g/kg tokens to be kg and remove 
     const finalTableRow = [];
     const rateCodes = rcs.join(' ').toUpperCase().replace('INKG ', '').replace('INLB', '').trim().split(' ');
+    let firstRow = true;
     pageArray.forEach(row => {
         row = row.replace('$', '');
         const tokens = row.split(' ');
-        let maxToken = tokens[1].toLowerCase();
-        let maxTokenInKg = tokens[0];
-        let maxTokenInLb = tokens[1];
+        let maxToken, maxTokenInKg, maxTokenInLb;
+        if (firstRow) {
+            // prepend 0g
+            tokens.unshift("0g");
+            firstRow = false;
+        }
+        maxToken = tokens[1].toLowerCase();
+        maxTokenInKg = tokens[0];
+        maxTokenInLb = tokens[1];
         if (maxToken.indexOf('kg') >= 0) {
             maxToken = maxToken.replace('kg', '');
             maxTokenInKg = maxToken;
@@ -751,6 +737,12 @@ exports.convertPacketToTable = (pageArray, rcs) => {
         else if (maxToken.indexOf('g') >= 0) {
             maxToken = maxToken.replace('g', '');
             maxTokenInKg = maxToken / 1000;
+        }
+        // sometimes the max tokens get reversed because of y-axis mixup
+        if (maxTokenInKg > maxTokenInLb) {
+            let temp = maxTokenInKg;
+            maxTokenInKg = maxTokenInLb;
+            maxTokenInLb = temp;
         }
         tokens[1] = maxTokenInKg;
         maxTokenInLb = Number((maxTokenInKg * 2.2).toFixed(2));
@@ -769,7 +761,6 @@ exports.convertPacketToTable = (pageArray, rcs) => {
         ratesCodeIndx = 0;
     }
     finalTableRow.splice(ratesCodeIndx, 0, rateCodes.join(' '));
-    log_1.logger.debug("Final Table Row returning " + JSON.stringify(finalTableRow));
     return finalTableRow;
 };
 exports.loadByType = (rates, year, type) => {
@@ -786,97 +777,97 @@ exports.saveTableEntries = (ratesPage, year, customerType) => {
     return new Promise((resolve, reject) => {
         const inputsAll = [];
         const mapToDeliveryType = {
-            'PriorityCanada1': {
+            [labels_1.PRIORITY_CANADA_1]: {
                 type: 'priority',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'PriorityCanada2': {
+            [labels_1.PRIORITY_CANADA_2]: {
                 type: 'priority',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'ExpressCanada1': {
+            [labels_1.EXPRESS_CANADA_1]: {
                 type: 'express',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'ExpressCanada2': {
+            [labels_1.EXPRESS_CANADA_2]: {
                 type: 'express',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'ExpeditedCanada1': {
+            [labels_1.EXPEDITED_CANADA_1]: {
                 type: 'expedited',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'ExpeditedCanada2': {
+            [labels_1.EXPEDITED_CANADA_2]: {
                 type: 'expedited',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'RegularCanada1': {
+            [labels_1.REGULAR_CANADA_1]: {
                 type: 'regular',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'RegularCanada2': {
+            [labels_1.REGULAR_CANADA_2]: {
                 type: 'regular',
                 country: 'Canada',
                 overloadIncl: true,
             },
-            'ExpressUSA': {
+            [labels_1.EXPRESS_USA]: {
                 type: 'express',
                 country: 'USA',
                 overloadIncl: true,
             },
-            'ExpeditedUSA': {
+            [labels_1.EXPEDITED_USA]: {
                 type: 'expedited',
                 country: 'USA',
                 overloadIncl: true,
             },
-            'PriorityWorldwide': {
+            [labels_1.PRIORITY_WORLDWIDE]: {
                 type: 'priority',
                 country: 'INTERNATIONAL',
                 overloadIncl: true,
             },
-            'ExpressInternational': {
+            [labels_1.EXPRESS_INTERNATIONAL]: {
                 type: 'express',
                 country: 'INTERNATIONAL',
                 overloadIncl: true,
             },
-            'AirInternational': {
+            [labels_1.AIR_INTERNATIONAL]: {
                 type: 'air',
                 country: 'INTERNATIONAL',
                 overloadIncl: true,
             },
-            'SurfaceInternational': {
+            [labels_1.SURFACE_INTERNATIONAL]: {
                 type: 'surface',
                 country: 'INTERNATIONAL',
                 overloadIncl: true,
             },
-            'TrackedPacketUSA': {
+            [labels_1.TRACKED_PACKET_USA]: {
                 type: 'tracked_packet',
                 country: 'USA',
                 overloadIncl: false,
             },
-            'SmallPacketUSA': {
+            [labels_1.SMALL_PACKET_USA]: {
                 type: 'small_packet',
                 country: 'USA',
                 overloadIncl: false,
             },
-            'TrackedPacketInternational': {
+            [labels_1.TRACKED_PACKET_INTERNATIONAL]: {
                 type: 'tracked_packet',
                 country: 'INTERNATIONAL',
                 overloadIncl: false,
             },
-            'SmallPacketAirInternational': {
+            [labels_1.SMALL_PACKET_AIR_INTERNATIONAL]: {
                 type: 'small_packet_air',
                 country: 'INTERNATIONAL',
                 overloadIncl: false
             },
-            'SmallPacketSurfaceInternational': {
+            [labels_1.SMALL_PACKET_SURFACE_INTERNATIONAL]: {
                 type: 'small_packet_surface',
                 country: 'INTERNATIONAL',
                 overloadIncl: false
@@ -910,7 +901,6 @@ exports.saveTableEntries = (ratesPage, year, customerType) => {
                     const price = tokens[i];
                     const rate_code = labels[i];
                     const insertDataSQL = `insert into RATES(year, max_weight, weight_type, rate_code, price, type, country, customer_type) VALUES(${year}, 30.1, 'kg', '${rate_code}', ${price}, '${type}', '${country}', '${customerType}')`;
-                    log_1.logger.debug("Insert data OVERLOAD" + insertDataSQL);
                     inputsAll.push(insertDataSQL);
                 }
             }

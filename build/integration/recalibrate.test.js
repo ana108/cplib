@@ -27,6 +27,7 @@ const db = __importStar(require("../db/sqlite3"));
 const fs_1 = __importDefault(require("fs"));
 const tc = __importStar(require("./testcases"));
 const sinon = __importStar(require("sinon"));
+const path_1 = __importDefault(require("path"));
 const child_process = require('child_process');
 const message_handler = {
     on: (event, cb) => {
@@ -39,7 +40,7 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
     let forkStb;
     before(async () => {
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path_1.default.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();
@@ -78,7 +79,7 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
     let forkStb;
     before(async () => {
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path_1.default.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();
@@ -117,13 +118,13 @@ describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5k
     let forkStb;
     before(async () => {
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path_1.default.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();
         const recalibratedInternational = "export let internationalTestCases = " + JSON.stringify(tc.internationalTestCases, null, 4);
         allRecalibrations = allRecalibrations + "\n" + recalibratedInternational;
-        fs_1.default.writeFile(__dirname + "/testcases.ts", allRecalibrations, function (err) {
+        fs_1.default.writeFile(path_1.default.join(__dirname, "testcases.ts"), allRecalibrations, function (err) {
             if (err) {
                 console.log(err);
             }

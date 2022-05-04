@@ -1,7 +1,7 @@
 import * as winston from 'winston';
 import path from 'path';
 const logger = winston.createLogger({
-    level: 'debug',
+    level: 'info',
     format: winston.format.combine(
         winston.format.label({
             label: `cplib`

@@ -67,6 +67,10 @@ describe('Download and save pdfs - integration', () => {
         }
     });
     it('Check and update e2e', async () => {
-        // do nothing, by virtue of importing it calls the function
+        source_1.checkAndUpdate().catch(err => {
+            if (err && err.length > 0 && err.indexOf('409') >= 0) {
+                process.send({ isError: '409' });
+            }
+        });
     });
 });

@@ -11,12 +11,13 @@ const follow_redirects_1 = require("follow-redirects");
 const autoload_1 = require("./autoload");
 const sqlite3_1 = require("./db/sqlite3");
 const log_1 = require("./log");
+const path_1 = __importDefault(require("path"));
 exports.checkAndUpdate = async () => {
     const currentYear = new Date().getFullYear();
     let currentHighestYear;
     let datacheck;
     let dataLoadDbPath;
-    const fileReading = fs_1.default.readFileSync(__dirname + '/resources/isUpdating.json');
+    const fileReading = fs_1.default.readFileSync(path_1.default.join(__dirname, 'resources/isUpdating.json'));
     const state = JSON.parse(fileReading.toString());
     try {
         if (state.isUpdating) {
@@ -34,10 +35,10 @@ exports.checkAndUpdate = async () => {
             log_1.logger.info('Nothing updated, because data check came back as not needed');
             return Promise.resolve(); // all good
         }
-        dataLoadDbPath = `${__dirname}/cplib_interim.db`;
+        dataLoadDbPath = path_1.default.join(__dirname, `cplib_interim.db`);
         log_1.logger.info('Updating the fuel surcharge on the source db');
         await autoload_1.updateAllFuelSurcharges();
-        await promises_2.copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
+        await promises_2.copyFile(path_1.default.join(__dirname, `resources/cplib.db`), dataLoadDbPath);
         log_1.logger.info('Copied the current db file to use for updating (interim)');
         // close all write only db connections, and open to copied db file
         log_1.logger.info('Make all writes go to the new temporary db');
@@ -64,7 +65,7 @@ exports.checkAndUpdate = async () => {
         }
         log_1.logger.info('Done e2e process');
         log_1.logger.info(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
-        await promises_2.copyFile(dataLoadDbPath, `${__dirname}/resources/cplib.db`);
+        await promises_2.copyFile(dataLoadDbPath, path_1.default.join(__dirname, `resources/cplib.db`));
         log_1.logger.info('Closing db');
         await sqlite3_1.resetDB();
         log_1.logger.info('Delete temp db');
@@ -77,7 +78,7 @@ exports.checkAndUpdate = async () => {
     }
 };
 exports.savePDFS = async (year, currentHighestYear) => {
-    const tmpDir = __dirname + '/resources/tmp';
+    const tmpDir = path_1.default.join(__dirname, 'resources/tmp');
     // tmp directory to load the pdf into so we can check if new pdf has been posted
     if (!fs_1.default.existsSync(tmpDir)) {
         const newPath = fs_1.default.mkdirSync(tmpDir, { recursive: true });
@@ -162,7 +163,7 @@ exports.savePDFS = async (year, currentHighestYear) => {
     if (currentHighestYear !== yearOfRegular && yearOfRegular > currentHighestYear) {
         // copy the regular pdf, rename it to its final destination
         updateRates.regular.update = true;
-        let regularPdfDest = __dirname + `/resources/regular/${yearOfRegular}`;
+        let regularPdfDest = path_1.default.join(__dirname, `resources/regular/${yearOfRegular}`);
         if (!fs_1.default.existsSync(regularPdfDest)) {
             fs_1.default.mkdirSync(regularPdfDest);
         }
@@ -185,11 +186,11 @@ exports.savePDFS = async (year, currentHighestYear) => {
     if (currentHighestYear !== yearOfSmallBusiness && yearOfSmallBusiness > currentHighestYear) {
         updateRates.smallBusiness.update = true;
         updateRates.smallBusiness.year = yearOfSmallBusiness;
-        let smallBusinessPdfDest = __dirname + `/resources/small_business/${yearOfRegular}`;
+        let smallBusinessPdfDest = path_1.default.join(__dirname, `resources/small_business/${yearOfRegular}`);
         if (!fs_1.default.existsSync(smallBusinessPdfDest)) {
             fs_1.default.mkdirSync(smallBusinessPdfDest);
         }
-        smallBusinessPdfDest = smallBusinessPdfDest + `/Rates_${yearOfRegular}.pdf`;
+        smallBusinessPdfDest = path_1.default.join(smallBusinessPdfDest, `Rates_${yearOfRegular}.pdf`);
         try {
             await promises_2.copyFile(smallBusinessPDF, smallBusinessPdfDest);
         }
@@ -201,7 +202,7 @@ exports.savePDFS = async (year, currentHighestYear) => {
     return Promise.resolve(updateRates);
 };
 exports.cleanUp = async () => {
-    const tmpDir = __dirname + '/resources/tmp';
+    const tmpDir = path_1.default.join(__dirname, 'resources/tmp');
     return new Promise((resolve, reject) => {
         fs_1.default.rmdir(tmpDir, { recursive: true }, (err) => {
             if (err) {
@@ -221,7 +222,7 @@ const setUpdating = async (currentValue, newValue) => {
         currentValue.isUpdating = false;
     }
     return new Promise((resolve, reject) => {
-        fs_1.default.writeFile(__dirname + '/resources/isUpdating.json', JSON.stringify(currentValue, null, 4), err => {
+        fs_1.default.writeFile(path_1.default.join(__dirname, 'resources/isUpdating.json'), JSON.stringify(currentValue, null, 4), err => {
             if (err) {
                 reject(err);
             }
@@ -231,8 +232,9 @@ const setUpdating = async (currentValue, newValue) => {
         });
     });
 };
-exports.checkAndUpdate().catch(err => {
+// commented to disable auto update
+/*checkAndUpdate().catch(err => {
     if (err && err.length > 0 && err.indexOf('409') >= 0) {
-        process.send({ isError: '409' });
+        (<any>process).send({ isError: '409' });
     }
-});
+}); */ 

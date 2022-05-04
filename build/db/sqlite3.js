@@ -5,8 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getHighestYear = exports.executeCustomSQL = exports.deleteRatesByYear = exports.getFuelSurcharge = exports.getProvince = exports.getMaxRate = exports.getRate = exports.saveToDb = exports.updateFuelSurcharge = exports.getRateCode = exports.openForWrite = exports.resetDB = exports.setWriteDB = exports.setDB = exports.writedb = exports.db = void 0;
 const sqlite3_1 = __importDefault(require("sqlite3"));
+const path_1 = __importDefault(require("path"));
 const log_1 = require("../log");
-const dbname = __dirname + "/../resources/cplib.db";
+const dbname = path_1.default.join(__dirname, '../resources/cplib.db');
 let dbToOpen = dbname;
 exports.db = new sqlite3_1.default.Database(dbToOpen, sqlite3_1.default.OPEN_READONLY);
 exports.writedb = new sqlite3_1.default.Database(dbToOpen, sqlite3_1.default.OPEN_READWRITE);
@@ -225,10 +226,10 @@ exports.getRate = (rateCode, weight, opts = { country: 'CANADA', weight_type: 'k
     };
     if (!options.year) {
         delete getPriceParams.$year;
-        getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 and year = (select max(year) from rates) ' +
-            'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price)';
+        getPrice = 'select price from rates where upper(country) = upper($country) and rate_code = $rateCode and max_weight >= $weight and max_weight <= 30.0 ' + // and year = (select max(year) from rates) 
+            'and type = $deliverySpeed and customer_type = $customerType group by(rate_code) having min(price) and max(year)';
     }
-    // console.log(getPrice.replace('$country', getPriceParams.$country).replace('$rateCode', getPriceParams.$rateCode).replace('$weight', getPriceParams.$weight.toString()).replace('$deliverySpeed', getPriceParams.$deliverySpeed).replace('$customerType', getPriceParams.$customerType));
+    //console.log(getPrice.replace('$country', getPriceParams.$country).replace('$rateCode', getPriceParams.$rateCode).replace('$weight', getPriceParams.$weight.toString()).replace('$deliverySpeed', getPriceParams.$deliverySpeed).replace('$customerType', getPriceParams.$customerType));
     return new Promise((resolve, reject) => {
         const stmt = exports.db.prepare(getPrice);
         stmt.get(getPriceParams, (err, row) => {
