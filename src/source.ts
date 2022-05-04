@@ -5,7 +5,7 @@ import { https } from 'follow-redirects';
 import { loadPDF, extractYear, updateAllFuelSurcharges, REGULAR, SMALL_BUSINESS, e2eProcess } from './autoload';
 import { getHighestYear, resetDB, deleteRatesByYear, setWriteDB } from './db/sqlite3';
 import { logger } from './log';
-
+import path from 'path';
 export interface updateresults {
     regular: { update: boolean, year: number },
     smallBusiness: { update: boolean, year: number }
@@ -15,7 +15,7 @@ export const checkAndUpdate = async (): Promise<void> => {
     let currentHighestYear;
     let datacheck: updateresults;
     let dataLoadDbPath: string;
-    const fileReading = fs.readFileSync(__dirname + '/resources/isUpdating.json');
+    const fileReading = fs.readFileSync(path.join(__dirname,'resources/isUpdating.json'));
     const state = JSON.parse(fileReading.toString());
     try {
         if (state.isUpdating) {
@@ -35,10 +35,10 @@ export const checkAndUpdate = async (): Promise<void> => {
             return Promise.resolve(); // all good
         }
 
-        dataLoadDbPath = `${__dirname}/cplib_interim.db`;
+        dataLoadDbPath = path.join(__dirname, `cplib_interim.db`);
         logger.info('Updating the fuel surcharge on the source db');
         await updateAllFuelSurcharges();
-        await copyFile(`${__dirname}/resources/cplib.db`, dataLoadDbPath);
+        await copyFile(path.join(__dirname, `resources/cplib.db`), dataLoadDbPath);
         logger.info('Copied the current db file to use for updating (interim)');
         // close all write only db connections, and open to copied db file
         logger.info('Make all writes go to the new temporary db');
@@ -64,7 +64,7 @@ export const checkAndUpdate = async (): Promise<void> => {
         }
         logger.info('Done e2e process');
         logger.info(`Copy over the updated db from ${dataLoadDbPath} to ${__dirname}/resources/cplib.db`);
-        await copyFile(dataLoadDbPath, `${__dirname}/resources/cplib.db`);
+        await copyFile(dataLoadDbPath, path.join(__dirname, `resources/cplib.db`));
         logger.info('Closing db');
         await resetDB();
         logger.info('Delete temp db');
@@ -77,7 +77,7 @@ export const checkAndUpdate = async (): Promise<void> => {
 }
 
 export const savePDFS = async (year: number, currentHighestYear: number): Promise<updateresults> => {
-    const tmpDir = __dirname + '/resources/tmp';
+    const tmpDir = path.join(__dirname, 'resources/tmp');
     // tmp directory to load the pdf into so we can check if new pdf has been posted
     if (!fs.existsSync(tmpDir)) {
         const newPath = fs.mkdirSync(tmpDir, { recursive: true });
@@ -164,7 +164,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
     if (currentHighestYear !== yearOfRegular && yearOfRegular > currentHighestYear) {
         // copy the regular pdf, rename it to its final destination
         updateRates.regular.update = true;
-        let regularPdfDest = __dirname + `/resources/regular/${yearOfRegular}`;
+        let regularPdfDest = path.join(__dirname, `resources/regular/${yearOfRegular}`);
         if (!fs.existsSync(regularPdfDest)) {
             fs.mkdirSync(regularPdfDest);
         }
@@ -185,11 +185,11 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
     if (currentHighestYear !== yearOfSmallBusiness && yearOfSmallBusiness > currentHighestYear) {
         updateRates.smallBusiness.update = true;
         updateRates.smallBusiness.year = yearOfSmallBusiness;
-        let smallBusinessPdfDest = __dirname + `/resources/small_business/${yearOfRegular}`;
+        let smallBusinessPdfDest = path.join(__dirname, `resources/small_business/${yearOfRegular}`);
         if (!fs.existsSync(smallBusinessPdfDest)) {
             fs.mkdirSync(smallBusinessPdfDest);
         }
-        smallBusinessPdfDest = smallBusinessPdfDest + `/Rates_${yearOfRegular}.pdf`;
+        smallBusinessPdfDest = path.join(smallBusinessPdfDest, `Rates_${yearOfRegular}.pdf`);
         try {
             await copyFile(smallBusinessPDF, smallBusinessPdfDest);
         } catch (e) {
@@ -201,7 +201,7 @@ export const savePDFS = async (year: number, currentHighestYear: number): Promis
 }
 
 export const cleanUp = async (): Promise<boolean> => {
-    const tmpDir = __dirname + '/resources/tmp';
+    const tmpDir = path.join(__dirname, 'resources/tmp');
     return new Promise<boolean>((resolve, reject) => {
         fs.rmdir(tmpDir, { recursive: true }, (err) => {
             if (err) {
@@ -219,7 +219,7 @@ const setUpdating = async (currentValue: { isUpdating: boolean }, newValue: bool
         currentValue.isUpdating = false;
     }
     return new Promise<void>((resolve, reject) => {
-        fs.writeFile(__dirname + '/resources/isUpdating.json', JSON.stringify(currentValue, null, 4), err => {
+        fs.writeFile(path.join(__dirname, 'resources/isUpdating.json'), JSON.stringify(currentValue, null, 4), err => {
             if (err) {
                 reject(err);
             } else {

@@ -1,5 +1,5 @@
 import * as winston from 'winston';
-
+import path from 'path';
 const logger = winston.createLogger({
     level: 'debug',
     format: winston.format.combine(
@@ -13,7 +13,7 @@ const logger = winston.createLogger({
     ),
     transports: [
         new winston.transports.File({
-            filename: __dirname + '/logs/cplib.log'
+            filename: path.join(__dirname, 'logs/cplib.log')
         })
     ],
 });

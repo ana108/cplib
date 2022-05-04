@@ -1,6 +1,6 @@
 import axios from 'axios';
 import PDFParser from 'pdf2json';
-
+import path from 'path';
 import { updateFuelSurcharge } from './db/sqlite3';
 import { saveToDb } from './db/sqlite3';
 import { logger } from './log';
@@ -118,8 +118,8 @@ export interface RateTables {
 // this will iterate over the two docs; one for small business and one for regular rates
 export const e2eProcess = async (year: number, type: string): Promise<RateTables> => {
     const dataSources = {
-        'regular': __dirname + `/resources/regular/${year}/Rates_${year}.pdf`,
-        'small_business': __dirname + `/resources/small_business/${year}/Rates_${year}.pdf`
+        'regular': path.join(__dirname,`/resources/regular/${year}/Rates_${year}.pdf`),
+        'small_business': path.join(__dirname, `/resources/small_business/${year}/Rates_${year}.pdf`)
     };
     const pdfData = await loadPDF(dataSources[type]);
     logger.debug('Done loading data from pdf');

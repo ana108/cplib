@@ -4,6 +4,7 @@ import * as db from '../db/sqlite3';
 import fs from 'fs';
 import * as tc from './testcases';
 import * as sinon from 'sinon';
+import path from 'path';
 const child_process = require('child_process');
 
 const message_handler = {
@@ -19,7 +20,7 @@ describe('Table Tests - Canada Regular Parcel - 0.75 - 2.5kg', () => {
     let forkStb;
     before(async () => {
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();
@@ -59,7 +60,7 @@ describe('Table Tests - American Small_Packet and Expedited - 0.75 - 2.5kg', () 
     let forkStb;
     before(async () => {
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();
@@ -99,13 +100,13 @@ describe('Table Tests - International Small_Packet_Air and Surface - 0.75 - 2.5k
     let forkStb;
     before(async () => {
         forkStb = sinon.stub(child_process, 'fork').returns(message_handler);
-        await db.setDB(__dirname + "/cplib_int.db");
+        await db.setDB(path.join(__dirname, "cplib_int.db"));
     });
     after(async () => {
         forkStb.restore();
         const recalibratedInternational = "export let internationalTestCases = " + JSON.stringify(tc.internationalTestCases, null, 4);
         allRecalibrations = allRecalibrations + "\n" + recalibratedInternational;
-        fs.writeFile(__dirname + "/testcases.ts", allRecalibrations, function (err) {
+        fs.writeFile(path.join(__dirname, "testcases.ts"), allRecalibrations, function (err) {
             if (err) {
                 console.log(err);
             }

@@ -1,10 +1,10 @@
 import { getRateCode, getRate, getFuelSurcharge, maxRates, getMaxRate, FuelSurcharge } from './db/sqlite3';
 import { updateAllFuelSurcharges } from './autoload';
-import { fork } from 'child_process';
+import path from 'path';
 import { logger } from './log';
 import _ from 'lodash';
 
-export const locationOfSource = __dirname + '/source.js';
+export const locationOfSource = path.resolve(__dirname, 'source.js');
 
 export interface Address {
     streetAddress: string, // full street address, number + apartment

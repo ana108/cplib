@@ -1,8 +1,9 @@
 import sqlite3 from 'sqlite3';
+import path from 'path';
 import { FuelTable } from '../autoload';
 import { logger } from '../log';
 
-const dbname = __dirname + "/../resources/cplib.db";
+const dbname = path.join(__dirname, '../resources/cplib.db');
 let dbToOpen = dbname;
 export let db = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READONLY);
 export let writedb = new sqlite3.Database(dbToOpen, sqlite3.OPEN_READWRITE);
